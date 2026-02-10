@@ -37,9 +37,9 @@ export interface Product {
   _id: string;
   name: string;
   description?: string;
-  price: number;
+  salePrice: number;
   costPrice?: number;
-  quantity: number;
+  stockQuantity: number;
   minStock?: number;
   category?: Category;
   supplier?: Supplier;
@@ -64,6 +64,7 @@ export interface Category {
   name: string;
   description?: string;
   createdAt?: string;
+  active?: boolean;
 }
 
 export interface CategoryFormData {
@@ -135,7 +136,7 @@ export interface Sale {
   _id: string;
   customer?: Customer | string;
   items: SaleItem[];
-  total: number;
+  totalValue: number;
   user?: User | string;
   createdAt?: string;
 }

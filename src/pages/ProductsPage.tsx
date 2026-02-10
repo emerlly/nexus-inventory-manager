@@ -45,8 +45,8 @@ export default function ProductsPage() {
   const openEdit = (p: Product) => {
     setEditing(p);
     setForm({
-      name: p.name, description: p.description, price: p.price, costPrice: p.costPrice,
-      quantity: p.quantity, minStock: p.minStock,
+      name: p.name, description: p.description, price: p.salePrice, costPrice: p.costPrice,
+      quantity: p.stockQuantity, minStock: p.minStock,
       category: typeof p.category === "object" ? p.category?._id : p.category,
       supplier: typeof p.supplier === "object" ? p.supplier?._id : p.supplier,
     });
@@ -60,9 +60,9 @@ export default function ProductsPage() {
         <DataTable
           columns={[
             { key: "name", label: "Nome" },
-            { key: "price", label: "Preço", render: (p) => `R$ ${p.price?.toFixed(2)}` },
-            { key: "category", label: "Categoria", render: (p) => typeof p.category === "object" ? p.category?.name : "—" },
-            { key: "quantity", label: "Estoque", render: (p) => <StockBadge quantity={p.quantity} minStock={p.minStock} /> },
+            { key: "price", label: "Preço", render: (p) => `R$ ${p.salePrice?.toFixed(2)}` },
+            { key: "category", label: "Categoria", render: (p) => typeof p.category === "object" ? p.category?.description : "—" },
+            { key: "quantity", label: "Estoque", render: (p) => <StockBadge quantity={p.stockQuantity} minStock={p.minStock} /> },
           ]}
           data={data}
           loading={isLoading}

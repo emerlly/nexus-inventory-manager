@@ -8,6 +8,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { log } from "console";
 
 function StatCard({ title, value, icon: Icon, variant = "default" }: {
   title: string; value: string | number; icon: React.ElementType; variant?: string;
@@ -39,7 +40,7 @@ export default function DashboardPage() {
   const stockLow = useQuery({ queryKey: ["reports", "stockLow"], queryFn: reportService.stockLow });
 
   const totalProducts = products.data?.length ?? 0;
-  const totalStock = products.data?.reduce((s, p) => s + (p.quantity || 0), 0) ?? 0;
+  const totalStock = products.data?.reduce((s, p) => s + (p.stockQuantity || 0), 0) ?? 0;
   const lowStockCount = stockLow.data?.length ?? 0;
 
   return (

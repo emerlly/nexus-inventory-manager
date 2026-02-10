@@ -48,7 +48,7 @@ export default function SalesPage() {
     (newItems[i] as any)[field] = value;
     if (field === "product") {
       const p = products.data?.find((p) => p._id === value);
-      if (p) { newItems[i].unitPrice = p.price; newItems[i].productName = p.name; }
+      if (p) { newItems[i].unitPrice = p.salePrice; newItems[i].productName = p.name; }
     }
     setItems(newItems);
   };
@@ -75,7 +75,7 @@ export default function SalesPage() {
             { key: "createdAt", label: "Data", render: (s) => s.createdAt ? new Date(s.createdAt).toLocaleDateString("pt-BR") : "—" },
             { key: "customer", label: "Cliente", render: (s) => typeof s.customer === "object" ? s.customer?.name : "—" },
             { key: "items", label: "Itens", render: (s) => s.items?.length ?? 0 },
-            { key: "total", label: "Total", render: (s) => `R$ ${s.total?.toFixed(2)}` },
+            { key: "total", label: "Total", render: (s) => `R$ ${s.totalValue?.toFixed(2)}` },
           ]}
           data={data}
           loading={isLoading}
@@ -112,7 +112,7 @@ export default function SalesPage() {
                     <Select value={item.product} onValueChange={(v) => updateItem(i, "product", v)}>
                       <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
                       <SelectContent>
-                        {(products.data || []).map((p) => <SelectItem key={p._id} value={p._id}>{p.name} (est: {p.quantity})</SelectItem>)}
+                        {(products.data || []).map((p) => <SelectItem key={p._id} value={p._id}>{p.name} (est: {p.stockQuantity})</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>

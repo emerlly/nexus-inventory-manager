@@ -42,6 +42,8 @@ export default function CategoriesPage() {
           columns={[
             { key: "name", label: "Nome" },
             { key: "description", label: "Descrição" },
+            { key: "active", label: "Situação", 
+              render: (c: Category) => c.active ? <span className="text-green-600">Ativa</span> : <span className="text-red-600">Inativa</span> },    
           ]}
           data={data}
           loading={isLoading}

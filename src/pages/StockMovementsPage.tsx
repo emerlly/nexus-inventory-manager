@@ -48,7 +48,6 @@ export default function StockMovementsPage() {
               </Badge>
             )},
             { key: "quantity", label: "Quantidade" },
-            { key: "reason", label: "Motivo" },
           ]}
           data={data}
           loading={isLoading}
