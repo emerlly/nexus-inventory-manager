@@ -184,3 +184,64 @@ export interface StockLow {
   quantity: number;
   minStock: number;
 }
+
+// ===== Order =====
+export type OrderStatus = "pendente" | "separando" | "produzindo" | "enviado" | "entregue";
+
+export interface Order {
+  _id: string;
+  customer?: Customer | string;
+  items: SaleItem[];
+  totalValue: number;
+  status: OrderStatus;
+  user?: User | string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface OrderFormData {
+  customer?: string;
+  items: { product: string; quantity: number; unitPrice: number }[];
+  status?: OrderStatus;
+}
+
+// ===== Payment =====
+export type PaymentStatus = "pendente" | "pago" | "atrasado" | "cancelado";
+export type PaymentType = "receita" | "despesa";
+
+export interface Payment {
+  _id: string;
+  description: string;
+  type: PaymentType;
+  amount: number;
+  status: PaymentStatus;
+  dueDate: string;
+  paidAt?: string;
+  customer?: Customer | string;
+  supplier?: Supplier | string;
+  sale?: Sale | string;
+  user?: User | string;
+  createdAt?: string;
+}
+
+export interface PaymentFormData {
+  description: string;
+  type: PaymentType;
+  amount: number;
+  status: PaymentStatus;
+  dueDate: string;
+  customer?: string;
+  supplier?: string;
+}
+
+// ===== Company =====
+export interface Company {
+  _id: string;
+  name: string;
+  cnpj?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  logo?: string;
+  updatedAt?: string;
+}

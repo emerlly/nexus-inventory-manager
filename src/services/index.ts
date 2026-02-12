@@ -8,6 +8,9 @@ import type {
   Supplier, SupplierFormData,
   StockMovement, StockMovementFormData,
   Sale, SaleFormData,
+  Order, OrderFormData,
+  Payment, PaymentFormData,
+  Company,
 } from "@/types";
 
 export { authService } from "./authService";
@@ -19,6 +22,13 @@ export const customerService = createCrudService<Customer, CustomerFormData>("/c
 export const supplierService = createCrudService<Supplier, SupplierFormData>("/suppliers");
 export const stockMovementService = createCrudService<StockMovement, StockMovementFormData>("/stock/history");
 export const saleService = createCrudService<Sale, SaleFormData>("/sales" as string);
+export const orderService = createCrudService<Order, OrderFormData>("/orders");
+export const paymentService = createCrudService<Payment, PaymentFormData>("/payments");
+
+export const companyService = {
+  get: () => api.get("/company").then((r) => r.data),
+  update: (data: Partial<Company>) => api.put("/company", data).then((r) => r.data),
+};
 
 export const reportService = {
   
