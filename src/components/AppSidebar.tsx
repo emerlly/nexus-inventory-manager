@@ -8,6 +8,10 @@ import {
   ShoppingCart,
   ArrowLeftRight,
   LogOut,
+  ClipboardList,
+  CreditCard,
+  Building2,
+  Settings,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,18 +32,25 @@ const mainNav = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Produtos", url: "/products", icon: Package },
   { title: "Vendas", url: "/sales", icon: ShoppingCart },
+  { title: "Pedidos", url: "/orders", icon: ClipboardList },
+  { title: "Pagamentos", url: "/payments", icon: CreditCard },
   { title: "Movimentações", url: "/stock/movements", icon: ArrowLeftRight },
 ];
 
 const registerNav = [
-  { title: "Usuários", url: "/users", icon: Users },
   { title: "Clientes", url: "/customers", icon: UserCheck },
   { title: "Fornecedores", url: "/suppliers", icon: Truck },
   { title: "Categorias", url: "/categories", icon: FolderOpen },
 ];
 
+const settingsNav = [
+  { title: "Usuários", url: "/users", icon: Users },
+  { title: "Empresa", url: "/settings/company", icon: Building2 },
+];
+
 export function AppSidebar() {
   const { user, logout } = useAuth();
+  const isAdminOrManager = user?.role === "admin" || user?.role === "gerente";
 
   return (
     <Sidebar>
@@ -97,6 +108,33 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {isAdminOrManager && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-sidebar-muted">
+              <Settings className="mr-1 inline h-3 w-3" />
+              Configurações
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {settingsNav.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        className="hover:bg-sidebar-accent"
+                        activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-4">
