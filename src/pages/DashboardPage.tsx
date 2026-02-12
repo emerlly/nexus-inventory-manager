@@ -1,13 +1,20 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { CalendarIcon, Package, ShoppingCart, AlertTriangle } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { reportService, productService } from "@/services";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, ShoppingCart, TrendingUp, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-  BarChart, Bar, LineChart, Line, AreaChart, Area,
+  BarChart, Bar, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 
 function StatCard({ title, value, icon: Icon, variant = "default" }: {
@@ -32,25 +39,25 @@ function StatCard({ title, value, icon: Icon, variant = "default" }: {
 }
 
 export default function DashboardPage() {
+  const [startDate, setStartDate] = useState<Date>(() => {
+    const d = new Date(); d.setMonth(d.getMonth() - 1); return d;
+  });
+  const [endDate, setEndDate] = useState<Date>(new Date());
+
+  const startStr = format(startDate, "yyyy-MM-dd");
+  const endStr = format(endDate, "yyyy-MM-dd");
+
   const products = useQuery({ queryKey: ["products"], queryFn: () => productService.getAll() });
   const salesByProduct = useQuery({ queryKey: ["reports", "salesByProduct"], queryFn: reportService.salesByProduct });
-
   const stockLow = useQuery({ queryKey: ["reports", "stockLow"], queryFn: reportService.stockLow });
   const salesByPeriod = useQuery({
-    queryKey: ["reports", "salesByPeriod"],
-    queryFn: () =>
-      reportService.salesByPeriod("2000-01-01", "2027-01-01"),
+    queryKey: ["reports", "salesByPeriod", startStr, endStr],
+    queryFn: () => reportService.salesByPeriod(startStr, endStr),
   });
-//criar um filtro de data para os relatórios de período, usando um datepicker ou algo do tipo, 
-// e passar as datas selecionadas para as queries de salesByPeriod e profitByPeriod. 
-// Assim o usuário pode escolher o período que deseja analisar no dashboard.
-
 
   const totalProducts = products.data?.length ?? 0;
   const totalStock = products.data?.reduce((s, p) => s + (p.stockQuantity || 0), 0) ?? 0;
   const lowStockCount = stockLow.data?.length ?? 0;
-
-  console.log("vedas", salesByPeriod.data);
 
   return (
     <div className="flex flex-col">
@@ -62,6 +69,34 @@ export default function DashboardPage() {
           <StatCard title="Quantidade em Estoque" value={totalStock} icon={Package} variant="success" />
           <StatCard title="Vendas no Período" value={salesByPeriod.data?.length ?? "—"} icon={ShoppingCart} />
           <StatCard title="Estoque Baixo" value={lowStockCount} icon={AlertTriangle} variant="warning" />
+        </div>
+
+        {/* Date filters */}
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-sm font-medium text-muted-foreground">Período:</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("w-[180px] justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {format(startDate, "dd/MM/yyyy")}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={startDate} onSelect={(d) => d && setStartDate(d)} initialFocus className="p-3 pointer-events-auto" locale={ptBR} />
+            </PopoverContent>
+          </Popover>
+          <span className="text-sm text-muted-foreground">até</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("w-[180px] justify-start text-left font-normal", !endDate && "text-muted-foreground")}>
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {format(endDate, "dd/MM/yyyy")}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={endDate} onSelect={(d) => d && setEndDate(d)} initialFocus className="p-3 pointer-events-auto" locale={ptBR} />
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Charts */}
