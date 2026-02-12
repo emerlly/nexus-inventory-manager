@@ -174,6 +174,8 @@ export interface ProfitByPeriod {
   revenue: number;
   cost: number;
   profit: number;
+  startDate: string;
+  endDate: string;
 }
 
 export interface StockLow {

@@ -30,6 +30,9 @@ export default function ProductsPage() {
   const categories = useQuery({ queryKey: ["categories"], queryFn: categoryService.getAll });
   const suppliers = useQuery({ queryKey: ["suppliers"], queryFn: supplierService.getAll });
 
+console.log("data", data);
+console.log("categories", categories.data);
+
   const save = useMutation({
     mutationFn: (d: ProductFormData) => editing ? productService.update(editing._id, d) : productService.create(d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["products"] }); setOpen(false); toast({ title: "Salvo!" }); },
@@ -61,7 +64,7 @@ export default function ProductsPage() {
           columns={[
             { key: "name", label: "Nome" },
             { key: "price", label: "Preço", render: (p) => `R$ ${p.salePrice?.toFixed(2)}` },
-            { key: "category", label: "Categoria", render: (p) => typeof p.category === "object" ? p.category?.description : "—" },
+            { key: "category", label: "Categoria", render: (p) => typeof p.category === "object" ? p.category?.name : p.category },
             { key: "quantity", label: "Estoque", render: (p) => <StockBadge quantity={p.stockQuantity} minStock={p.minStock} /> },
           ]}
           data={data}

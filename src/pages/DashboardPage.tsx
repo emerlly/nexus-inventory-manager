@@ -8,7 +8,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
-import { log } from "console";
+
 
 function StatCard({ title, value, icon: Icon, variant = "default" }: {
   title: string; value: string | number; icon: React.ElementType; variant?: string;
@@ -16,11 +16,10 @@ function StatCard({ title, value, icon: Icon, variant = "default" }: {
   return (
     <Card>
       <CardContent className="flex items-center gap-4 p-6">
-        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${
-          variant === "warning" ? "bg-warning/10 text-warning" :
-          variant === "success" ? "bg-success/10 text-success" :
-          "bg-primary/10 text-primary"
-        }`}>
+        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${variant === "warning" ? "bg-warning/10 text-warning" :
+            variant === "success" ? "bg-success/10 text-success" :
+              "bg-primary/10 text-primary"
+          }`}>
           <Icon className="h-6 w-6" />
         </div>
         <div>
@@ -34,14 +33,24 @@ function StatCard({ title, value, icon: Icon, variant = "default" }: {
 
 export default function DashboardPage() {
   const products = useQuery({ queryKey: ["products"], queryFn: () => productService.getAll() });
-  const salesByPeriod = useQuery({ queryKey: ["reports", "salesByPeriod"], queryFn: reportService.salesByPeriod });
   const salesByProduct = useQuery({ queryKey: ["reports", "salesByProduct"], queryFn: reportService.salesByProduct });
-  const profitByPeriod = useQuery({ queryKey: ["reports", "profitByPeriod"], queryFn: reportService.profitByPeriod });
+
   const stockLow = useQuery({ queryKey: ["reports", "stockLow"], queryFn: reportService.stockLow });
+  const salesByPeriod = useQuery({
+    queryKey: ["reports", "salesByPeriod"],
+    queryFn: () =>
+      reportService.salesByPeriod("2000-01-01", "2027-01-01"),
+  });
+//criar um filtro de data para os relatórios de período, usando um datepicker ou algo do tipo, 
+// e passar as datas selecionadas para as queries de salesByPeriod e profitByPeriod. 
+// Assim o usuário pode escolher o período que deseja analisar no dashboard.
+
 
   const totalProducts = products.data?.length ?? 0;
   const totalStock = products.data?.reduce((s, p) => s + (p.stockQuantity || 0), 0) ?? 0;
   const lowStockCount = stockLow.data?.length ?? 0;
+
+  console.log("vedas", salesByPeriod.data);
 
   return (
     <div className="flex flex-col">
@@ -77,9 +86,9 @@ export default function DashboardPage() {
           <Card>
             <CardHeader><CardTitle>Lucro por Período</CardTitle></CardHeader>
             <CardContent className="h-72">
-              {profitByPeriod.isLoading ? <Skeleton className="h-full w-full" /> : (
+              {salesByPeriod.isLoading ? <Skeleton className="h-full w-full" /> : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={profitByPeriod.data || []}>
+                  <AreaChart data={salesByPeriod.data || []}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                     <XAxis dataKey="period" className="text-xs" />
                     <YAxis className="text-xs" />
@@ -112,7 +121,7 @@ export default function DashboardPage() {
             <CardHeader><CardTitle>Estoque Baixo</CardTitle></CardHeader>
             <CardContent>
               {stockLow.isLoading ? <Skeleton className="h-48 w-full" /> : !stockLow.data?.length ? (
-                <p className="py-8 text-center text-muted-foreground">Nenhum produto com estoque baixo 🎉</p>
+                <p className="py-8 text-center text-muted-foreground">Nenhum produto com estoque baixo!</p>
               ) : (
                 <div className="space-y-3 max-h-56 overflow-y-auto">
                   {stockLow.data.map((item: any) => (
