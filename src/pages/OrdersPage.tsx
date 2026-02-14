@@ -66,7 +66,7 @@ export default function OrdersPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
-  const { data = [], isLoading } = useQuery({ queryKey: ["quotes"], queryFn: orderService.getAll });
+  const { data = [], isLoading } = useQuery({ queryKey: ["orders"], queryFn: orderService.getAll });
 
   console.log("data:", data);
 
@@ -74,7 +74,7 @@ export default function OrdersPage() {
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>
       orderService.update(id, { status }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["quotes"] });
+      qc.invalidateQueries({ queryKey: ["orders"] });
       toast({ title: "Status atualizado!" });
     },
     onError: () => toast({ variant: "destructive", title: "Erro ao atualizar status" }),
@@ -136,12 +136,12 @@ export default function OrdersPage() {
                       {/* Order info */}
                       <div className="space-y-1">
                         <div className="flex items-center gap-3">
-                          <span className="font-mono text-sm text-muted-foreground">#{order._id.slice(-6)}</span>
+                          <span className="font-mono text-sm text-muted-foreground">#{order._id.slice(-15)}</span>
                           <Badge className={statusColors[order.status]}>{order.status}</Badge>
                         </div>
                         <p className="font-medium">{customerName}</p>
                         <p className="text-sm text-muted-foreground">
-                          {order.items?.length ?? 0} {order.items?.length === 1 ? "item" : "itens"} · R$ {order.totalValue?.toFixed(2)}
+                          {order.items?.length ?? 0} {order.items?.length === 1 ? "item" : "itens"} · R$ {order.totalOrder?.toFixed(2)}
                         </p>
                         {order.createdAt && (
                           <p className="text-xs text-muted-foreground">

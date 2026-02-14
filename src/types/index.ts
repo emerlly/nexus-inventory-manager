@@ -192,7 +192,7 @@ export interface Order {
   _id: string;
   customer?: Customer | string;
   items: SaleItem[];
-  totalValue: number;
+  totalOrder: number;
   status: OrderStatus;
   user?: User | string;
   createdAt?: string;

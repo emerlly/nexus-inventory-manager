@@ -18,6 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  console.log('user', user);
   useEffect(() => {
     const savedToken = localStorage.getItem("nexus_token");
     const savedUser = localStorage.getItem("nexus_user");
