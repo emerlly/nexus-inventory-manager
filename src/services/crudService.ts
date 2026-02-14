@@ -4,7 +4,6 @@ export function createCrudService<T, F>(endpoint: string) {
   return {
     getAll: async (): Promise<T[]> => {
       const res = await api.get(endpoint);
-
       return res.data;
     },
     getById: async (id: string): Promise<T> => {

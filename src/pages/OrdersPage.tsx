@@ -38,13 +38,12 @@ function StatusStepper({ currentStatus }: { currentStatus: OrderStatus }) {
         return (
           <div key={step.key} className="flex items-center gap-1">
             <div
-              className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors ${
-                isDone
+              className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors ${isDone
                   ? "bg-success text-success-foreground"
                   : isCurrent
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
-              }`}
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                }`}
             >
               {isDone ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
             </div>
@@ -67,13 +66,15 @@ export default function OrdersPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
-  const { data = [], isLoading } = useQuery({ queryKey: ["orders"], queryFn: orderService.getAll });
+  const { data = [], isLoading } = useQuery({ queryKey: ["quotes"], queryFn: orderService.getAll });
+
+  console.log("data:", data);
 
   const updateStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>
       orderService.update(id, { status }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["orders"] });
+      qc.invalidateQueries({ queryKey: ["quotes"] });
       toast({ title: "Status atualizado!" });
     },
     onError: () => toast({ variant: "destructive", title: "Erro ao atualizar status" }),

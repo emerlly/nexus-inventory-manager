@@ -8,7 +8,7 @@ import type {
   Supplier, SupplierFormData,
   StockMovement, StockMovementFormData,
   Sale, SaleFormData,
-  Order, OrderFormData,
+  Order, OrderFormData, OrderStatus,
   Payment, PaymentFormData,
   Company,
 } from "@/types";
@@ -22,7 +22,7 @@ export const customerService = createCrudService<Customer, CustomerFormData>("/c
 export const supplierService = createCrudService<Supplier, SupplierFormData>("/suppliers");
 export const stockMovementService = createCrudService<StockMovement, StockMovementFormData>("/stock/history");
 export const saleService = createCrudService<Sale, SaleFormData>("/sales" as string);
-export const orderService = createCrudService<Order, OrderFormData>("/orders");
+//export const orderService = createCrudService<Order, OrderFormData>("/quotes");
 export const paymentService = createCrudService<Payment, PaymentFormData>("/payments");
 
 export const companyService = {
@@ -54,4 +54,22 @@ export const reportService = {
 
   stockLow: () =>
     api.get("/reports/low-stock").then((r) => r.data),
+};
+
+
+export const orderService = {
+  getAll: async (): Promise<Order[]> => {
+    const res = await api.get("/orders");
+    return res.data;
+  },
+
+  create: async (data: OrderFormData): Promise<Order> => {
+    const res = await api.post("/orders", data);
+    return res.data;
+  },
+
+  update: async (id: string, data: Partial<Order>): Promise<Order> => {
+    const res = await api.put(`/orders/${id}`, data);
+    return res.data;
+  },
 };
