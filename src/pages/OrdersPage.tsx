@@ -68,8 +68,6 @@ export default function OrdersPage() {
 
   const { data = [], isLoading } = useQuery({ queryKey: ["orders"], queryFn: orderService.getAll });
 
-  console.log("data:", data);
-
   const updateStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>
       orderService.update(id, { status }),

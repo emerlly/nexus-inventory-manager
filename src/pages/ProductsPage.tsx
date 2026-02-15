@@ -30,9 +30,6 @@ export default function ProductsPage() {
   const categories = useQuery({ queryKey: ["categories"], queryFn: categoryService.getAll });
   const suppliers = useQuery({ queryKey: ["suppliers"], queryFn: supplierService.getAll });
 
-console.log("data", data);
-console.log("categories", categories.data);
-
   const save = useMutation({
     mutationFn: (d: ProductFormData) => editing ? productService.update(editing._id, d) : productService.create(d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["products"] }); setOpen(false); toast({ title: "Salvo!" }); },

@@ -8,12 +8,14 @@ import type {
   Supplier, SupplierFormData,
   StockMovement, StockMovementFormData,
   Sale, SaleFormData,
-  Order, OrderFormData, OrderStatus,
+  Order, OrderFormData,
   Payment, PaymentFormData,
   Company,
 } from "@/types";
 
 export { authService } from "./authService";
+
+/* ================= CRUD ================= */
 
 export const userService = createCrudService<User, UserFormData>("/users");
 export const productService = createCrudService<Product, ProductFormData>("/products");
@@ -21,55 +23,76 @@ export const categoryService = createCrudService<Category, CategoryFormData>("/c
 export const customerService = createCrudService<Customer, CustomerFormData>("/customers");
 export const supplierService = createCrudService<Supplier, SupplierFormData>("/suppliers");
 export const stockMovementService = createCrudService<StockMovement, StockMovementFormData>("/stock/history");
-export const saleService = createCrudService<Sale, SaleFormData>("/sales" as string);
-//export const orderService = createCrudService<Order, OrderFormData>("/quotes");
+export const saleService = createCrudService<Sale, SaleFormData>("/sales");
+export const orderService = createCrudService<Order, OrderFormData>("/orders");
 export const paymentService = createCrudService<Payment, PaymentFormData>("/payments");
+
+/* ================= COMPANY ================= */
 
 export const companyService = {
   get: () => api.get("/company").then((r) => r.data),
-  update: (data: Partial<Company>) => api.put("/company", data).then((r) => r.data),
+  update: (data: Partial<Company>) =>
+    api.put("/company", data).then((r) => r.data),
 };
 
-export const reportService = {
-  
-  salesByPeriod: (start?: string, end?: string) =>
-    api.get("/reports/sales-by-period", {
-        params: { startDate: start, endDate: end },
-      })
-      .then((r) => r.data),
-      
+/* ================= ANALYTICS ================= */
 
-  salesByProduct: () =>
-    api.get("/reports/sales").then((r) => r.data),
+export type AnalyticsSource = "reports" | "dashboard";
 
-  salesByUser: () =>
-    api.get("/reports/sales-by-user").then((r) => r.data),
+const buildBase = (source: AnalyticsSource = "dashboard") => `/${source}`;
 
-  profitByPeriod: (start?: string, end?: string) =>
-    api
-      .get("/reports/profit-by-period", {
-        params: { start, end },
-      })
-      .then((r) => r.data),
+const request = (url: string, params?: any) =>
+  api.get(url, { params }).then((r) => r.data);
 
-  stockLow: () =>
-    api.get("/reports/low-stock").then((r) => r.data),
+export const analyticsService = {
+
+  summary: (start?: string, end?: string) =>
+    request("/dashboard/summary", {
+      startDate: start,
+      endDate: end,
+    }),
+   
+  salesByPeriod: (
+    start?: string,
+    end?: string,
+    source: AnalyticsSource = "dashboard"
+  ) =>
+    request(`${buildBase(source)}/sales-by-period`, {
+      startDate: start,
+      endDate: end,
+    }),
+
+  salesByProduct: (
+    start?: string,
+    end?: string,
+    limit = 5,
+    source: AnalyticsSource = "dashboard"
+  ) =>
+    request(`${buildBase(source)}/top-products`, {
+      startDate: start,
+      endDate: end,
+      limit,
+    }),
+
+  stockLow: (source: AnalyticsSource = "dashboard") =>
+    request(`${buildBase(source)}/alerts`),
+
+  salesByUser: (source: AnalyticsSource = "reports") =>
+    request(`${buildBase(source)}/sales-by-user`),
+
+  profitByPeriod: (
+    start?: string,
+    end?: string,
+    source: AnalyticsSource = "reports"
+  ) =>
+    request(`${buildBase(source)}/profit-by-period`, {
+      startDate: start,
+      endDate: end,
+    }),
 };
 
 
-export const orderService = {
-  getAll: async (): Promise<Order[]> => {
-    const res = await api.get("/orders");
-    return res.data;
-  },
+/* ================= COMPATIBILIDADE ================= */
+/* telas antigas continuam funcionando */
 
-  create: async (data: OrderFormData): Promise<Order> => {
-    const res = await api.post("/orders", data);
-    return res.data;
-  },
-
-  update: async (id: string, data: Partial<Order>): Promise<Order> => {
-    const res = await api.put(`/orders/${id}`, data);
-    return res.data;
-  },
-};
+export const reportService = analyticsService;

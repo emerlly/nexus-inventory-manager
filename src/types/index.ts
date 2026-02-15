@@ -245,3 +245,11 @@ export interface Company {
   logo?: string;
   updatedAt?: string;
 }
+
+export interface Reports {
+  salesByPeriod: SalesByPeriod[];
+  salesByProduct: SalesByProduct[];
+  salesByUser: SalesByUser[];
+  profitByPeriod: ProfitByPeriod[];
+  stockLow: StockLow[];
+}
