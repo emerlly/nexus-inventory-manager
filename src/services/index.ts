@@ -12,6 +12,8 @@ import type {
   Payment, PaymentFormData,
   Company,
 } from "@/types";
+import { a } from "vitest/dist/chunks/suite.d.FvehnV49.js";
+import { start } from "repl";
 
 export { authService } from "./authService";
 
@@ -51,7 +53,7 @@ export const analyticsService = {
       startDate: start,
       endDate: end,
     }),
-   
+    
   salesByPeriod: (
     start?: string,
     end?: string,
@@ -83,16 +85,13 @@ export const analyticsService = {
   profitByPeriod: (
     start?: string,
     end?: string,
-    source: AnalyticsSource = "reports"
+    source: AnalyticsSource = "dashboard"
   ) =>
     request(`${buildBase(source)}/profit-by-period`, {
       startDate: start,
       endDate: end,
     }),
+
 };
-
-
-/* ================= COMPATIBILIDADE ================= */
-/* telas antigas continuam funcionando */
 
 export const reportService = analyticsService;

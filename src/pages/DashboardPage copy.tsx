@@ -5,7 +5,7 @@ import { ptBR } from "date-fns/locale";
 import { CalendarIcon, Package, DollarSign, TrendingUp, ShoppingCart, AlertTriangle } from "lucide-react";
 
 import { AppHeader } from "@/components/AppHeader";
-import { reportService, productService } from "@/services";
+import { productService } from "@/services";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -17,6 +17,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { analyticsService } from "@/services";
+import { C } from "vitest/dist/chunks/reporters.d.BFLkQcL6.js";
 
 
 function StatCard({ title, value, icon: Icon, variant = "default" }: {
@@ -67,7 +68,7 @@ export default function DashboardPage() {
 
   // gráficos auxiliares
   const salesByPeriod = useQuery({
-    queryKey: ["salesByPeriod", startStr, endStr],
+    queryKey: ["dashboard", startStr, endStr],
     queryFn: () => analyticsService.salesByPeriod(startStr, endStr),
   });
 
@@ -76,11 +77,15 @@ export default function DashboardPage() {
     queryFn: () => analyticsService.stockLow(),
   });
   
+  const profitByPeriod = useQuery({
+    queryKey: ["dashboard", startStr, endStr],
+    queryFn: () => analyticsService.profitByPeriod(startStr, endStr),
+  }); 
 
 
   // dados vindos PRONTOS do backend
   const receita = dashboard.data?.revenue ?? 0;
-  const profit = dashboard.data?.profit ?? 0;
+  const profit = salesByPeriod.data?.profit ?? 0;
   const salesCount = dashboard.data?.salesCount ?? 0;
   const ticket = dashboard.data?.ticketAverage ?? 0;
   const todayRevenue = dashboard.data?.today?.revenue ?? 0;
@@ -92,6 +97,7 @@ export default function DashboardPage() {
   const totalStock =
   products.data?.reduce((s, p) => s + (p.stockQuantity || 0), 0) ?? 0;
   
+
   return (
     <div className="flex flex-col">
       <AppHeader title="Dashboard" />
@@ -100,7 +106,7 @@ export default function DashboardPage() {
         {/* ================= KPIs ================= */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard title="Faturamento" value={`R$ ${receita.toFixed(2)}`} icon={DollarSign} />
-          <StatCard title="Lucro" value={`R$ ${profit.toFixed(2)}`} icon={TrendingUp} variant="success" />
+          <StatCard title="Lucro" value={`R$ ${profit.toFixed(4)}`} icon={TrendingUp} variant="success" />
           <StatCard title="Vendas" value={salesCount} icon={ShoppingCart} />
           <StatCard title="Ticket Médio" value={`R$ ${ticket.toFixed(2)}`} icon={DollarSign} />
         </div>
