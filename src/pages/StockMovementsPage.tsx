@@ -10,13 +10,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { DetailDialog } from "@/components/DetailDialog";
 
 export default function StockMovementsPage() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<StockMovementFormData>({ product: "", type: "entry", quantity: 1 });
+  const [detailMov, setDetailMov] = useState<StockMovement | null>(null);
 
   const { data = [], isLoading } = useQuery({ queryKey: ["stockMovements"], queryFn: stockMovementService.getAll });
   const products = useQuery({ queryKey: ["products"], queryFn: productService.getAll });
@@ -34,6 +37,15 @@ export default function StockMovementsPage() {
 
   const openNew = () => { setForm({ product: "", type: "entry", quantity: 1, reason: "" }); setOpen(true); };
 
+  const getDetailFields = (m: StockMovement) => [
+    { label: "Data", value: m.createdAt ? new Date(m.createdAt).toLocaleDateString("pt-BR") : "—" },
+    { label: "Produto", value: typeof m.product === "object" ? m.product?.name : "—" },
+    { label: "Tipo", value: m.type === "entry" ? "Entrada" : "Saída" },
+    { label: "Quantidade", value: String(m.quantity) },
+    { label: "Motivo", value: m.reason || "—" },
+    { label: "Usuário", value: typeof m.user === "object" ? (m.user as any)?.name : "—" },
+  ];
+
   return (
     <div className="flex flex-col">
       <AppHeader title="Movimentações de Estoque" />
@@ -48,6 +60,13 @@ export default function StockMovementsPage() {
               </Badge>
             )},
             { key: "quantity", label: "Quantidade" },
+            {
+              key: "_detail", label: "", render: (m) => (
+                <Button variant="ghost" size="icon" onClick={() => setDetailMov(m)} title="Ver detalhes">
+                  <Eye className="h-4 w-4" />
+                </Button>
+              ),
+            },
           ]}
           data={data}
           loading={isLoading}
@@ -55,6 +74,15 @@ export default function StockMovementsPage() {
           addLabel="Nova Movimentação"
         />
       </div>
+
+      {detailMov && (
+        <DetailDialog
+          open={!!detailMov}
+          onOpenChange={() => setDetailMov(null)}
+          title="Detalhes da Movimentação"
+          fields={getDetailFields(detailMov)}
+        />
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

@@ -3,14 +3,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppHeader } from "@/components/AppHeader";
 import { DataTable } from "@/components/DataTable";
 import { saleService, customerService, productService } from "@/services";
-import type { Sale, SaleFormData, Product } from "@/types";
+import type { Sale, SaleFormData } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { DetailDialog } from "@/components/DetailDialog";
 
 interface SaleLineItem {
   product: string;
@@ -25,6 +26,7 @@ export default function SalesPage() {
   const [open, setOpen] = useState(false);
   const [customer, setCustomer] = useState("");
   const [items, setItems] = useState<SaleLineItem[]>([]);
+  const [detailSale, setDetailSale] = useState<Sale | null>(null);
 
   const { data = [], isLoading } = useQuery({ queryKey: ["sales"], queryFn: saleService.getAll });
   const customers = useQuery({ queryKey: ["customers"], queryFn: customerService.getAll });
@@ -66,6 +68,28 @@ export default function SalesPage() {
 
   const openNew = () => { setCustomer(""); setItems([]); setOpen(true); };
 
+  const getDetailFields = (s: Sale) => [
+    { label: "Data", value: s.createdAt ? new Date(s.createdAt).toLocaleDateString("pt-BR") : "—" },
+    { label: "Cliente", value: typeof s.customer === "object" ? s.customer?.name : "—" },
+    { label: "Total", value: `R$ ${s.totalValue?.toFixed(2)}` },
+    { label: "Vendedor", value: typeof s.user === "object" ? (s.user as any)?.name : "—" },
+  ];
+
+  const getDetailItems = (s: Sale) => ({
+    columns: [
+      { key: "product", label: "Produto" },
+      { key: "quantity", label: "Qtd" },
+      { key: "unitPrice", label: "Preço Unit." },
+      { key: "total", label: "Subtotal" },
+    ],
+    data: (s.items || []).map((item) => ({
+      product: typeof item.product === "object" ? item.product?.name : item.product,
+      quantity: item.quantity,
+      unitPrice: `R$ ${item.unitPrice?.toFixed(2)}`,
+      total: `R$ ${item.total?.toFixed(2)}`,
+    })),
+  });
+
   return (
     <div className="flex flex-col">
       <AppHeader title="Vendas" />
@@ -76,6 +100,13 @@ export default function SalesPage() {
             { key: "customer", label: "Cliente", render: (s) => typeof s.customer === "object" ? s.customer?.name : "—" },
             { key: "items", label: "Itens", render: (s) => s.items?.length ?? 0 },
             { key: "total", label: "Total", render: (s) => `R$ ${s.totalValue?.toFixed(2)}` },
+            {
+              key: "_detail", label: "", render: (s) => (
+                <Button variant="ghost" size="icon" onClick={() => setDetailSale(s)} title="Ver detalhes">
+                  <Eye className="h-4 w-4" />
+                </Button>
+              ),
+            },
           ]}
           data={data}
           loading={isLoading}
@@ -83,6 +114,16 @@ export default function SalesPage() {
           addLabel="Nova Venda"
         />
       </div>
+
+      {detailSale && (
+        <DetailDialog
+          open={!!detailSale}
+          onOpenChange={() => setDetailSale(null)}
+          title="Detalhes da Venda"
+          fields={getDetailFields(detailSale)}
+          items={getDetailItems(detailSale)}
+        />
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
