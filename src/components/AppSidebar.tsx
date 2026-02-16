@@ -12,6 +12,7 @@ import {
   CreditCard,
   Building2,
   Settings,
+  FileText,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,6 +34,7 @@ const mainNav = [
   { title: "Produtos", url: "/products", icon: Package },
   { title: "Vendas", url: "/sales", icon: ShoppingCart },
   { title: "Pedidos", url: "/orders", icon: ClipboardList },
+  { title: "Orçamentos", url: "/budgets", icon: FileText },
   { title: "Pagamentos", url: "/payments", icon: CreditCard },
   { title: "Movimentações", url: "/stock/movements", icon: ArrowLeftRight },
 ];

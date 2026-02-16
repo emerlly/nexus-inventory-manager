@@ -12,8 +12,6 @@ import type {
   Payment, PaymentFormData,
   Company,
 } from "@/types";
-import { a } from "vitest/dist/chunks/suite.d.FvehnV49.js";
-import { start } from "repl";
 
 export { authService } from "./authService";
 
@@ -28,6 +26,16 @@ export const stockMovementService = createCrudService<StockMovement, StockMoveme
 export const saleService = createCrudService<Sale, SaleFormData>("/sales");
 export const orderService = createCrudService<Order, OrderFormData>("/orders");
 export const paymentService = createCrudService<Payment, PaymentFormData>("/payments");
+
+/* ================= BUDGET ================= */
+
+export const budgetService = {
+  getAll: () => api.get("/budgets").then((r) => r.data),
+  getById: (id: string) => api.get(`/budgets/${id}`).then((r) => r.data),
+  create: (data: any) => api.post("/budgets", data).then((r) => r.data),
+  update: (id: string, data: any) => api.put(`/budgets/${id}`, data).then((r) => r.data),
+  delete: (id: string) => api.delete(`/budgets/${id}`).then((r) => r.data),
+};
 
 /* ================= COMPANY ================= */
 
