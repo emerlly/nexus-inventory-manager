@@ -24,13 +24,13 @@ export default function ProductsPage() {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
-  const [form, setForm] = useState<ProductFormData>({ name: "", price: 0, quantity: 0 });
+  const [form, setForm] = useState<ProductFormData>({ name: "", price: 0, quantity: 0, sku: "" });
 
   const { data = [], isLoading } = useQuery({ queryKey: ["products"], queryFn: productService.getAll });
   const categories = useQuery({ queryKey: ["categories"], queryFn: categoryService.getAll });
   const suppliers = useQuery({ queryKey: ["suppliers"], queryFn: supplierService.getAll });
 
-    console.log("data", data);
+    
   const save = useMutation({
     mutationFn: (d: ProductFormData) => editing ? productService.update(editing._id, d) : productService.create(d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["products"] }); setOpen(false); toast({ title: "Salvo!" }); },
@@ -42,11 +42,11 @@ export default function ProductsPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["products"] }); toast({ title: "Excluído!" }); },
   });
 
-  const openNew = () => { setEditing(null); setForm({ name: "", price: 0, costPrice: 0, quantity: 0, minStock: 10 }); setOpen(true); };
+  const openNew = () => { setEditing(null); setForm({ name: "", price: 0, costPrice: 0, quantity: 0, minStock: 10, sku: "" }); setOpen(true); };
   const openEdit = (p: Product) => {
     setEditing(p);
     setForm({
-      name: p.name, description: p.description, price: p.salePrice, costPrice: p.costPrice,
+      name: p.name, description: p.description, sku: p.sku, price: p.salePrice, costPrice: p.costPrice,
       quantity: p.stockQuantity, minStock: p.minStock,
       category: typeof p.category === "object" ? p.category?._id : p.category,
       supplier: typeof p.supplier === "object" ? p.supplier?._id : p.supplier,
@@ -60,6 +60,7 @@ export default function ProductsPage() {
       <div className="flex-1 p-6">
         <DataTable
           columns={[
+            { key: "sku", label: "SKU", render: (p) => p.sku || "—" },
             { key: "name", label: "Nome" },
             { key: "price", label: "Preço", render: (p) => `R$ ${p.salePrice?.toFixed(2)}` },
             { key: "category", label: "Categoria", render: (p) => typeof p.category === "object" ? p.category?.name : p.category },
@@ -79,7 +80,10 @@ export default function ProductsPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>{editing ? "Editar Produto" : "Novo Produto"}</DialogTitle></DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); save.mutate(form); }} className="space-y-4">
-            <div className="space-y-2"><Label>Nome</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Nome</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></div>
+              <div className="space-y-2"><Label>SKU</Label><Input value={form.sku || ""} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="Ex: PROD-001" /></div>
+            </div>
             <div className="space-y-2"><Label>Descrição</Label><Input value={form.description || ""} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Preço Venda</Label><Input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: +e.target.value })} required /></div>

@@ -13,6 +13,8 @@ import {
   Building2,
   Settings,
   FileText,
+  BarChart3,
+  Calculator,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,10 +35,12 @@ const mainNav = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Produtos", url: "/products", icon: Package },
   { title: "Vendas", url: "/sales", icon: ShoppingCart },
+  { title: "Análise de Vendas", url: "/sales/analytics", icon: BarChart3 },
   { title: "Pedidos", url: "/orders", icon: ClipboardList },
   { title: "Orçamentos", url: "/budgets", icon: FileText },
   { title: "Pagamentos", url: "/payments", icon: CreditCard },
   { title: "Movimentações", url: "/stock/movements", icon: ArrowLeftRight },
+  { title: "Precificação", url: "/pricing", icon: Calculator },
 ];
 
 const registerNav = [

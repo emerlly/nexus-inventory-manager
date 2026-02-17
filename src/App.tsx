@@ -15,11 +15,13 @@ import SuppliersPage from "@/pages/SuppliersPage";
 import CategoriesPage from "@/pages/CategoriesPage";
 import ProductsPage from "@/pages/ProductsPage";
 import SalesPage from "@/pages/SalesPage";
+import SalesAnalyticsPage from "@/pages/SalesAnalyticsPage";
 import StockMovementsPage from "@/pages/StockMovementsPage";
 import OrdersPage from "@/pages/OrdersPage";
 import PaymentsPage from "@/pages/PaymentsPage";
 import CompanySettingsPage from "@/pages/CompanySettingsPage";
 import BudgetsPage from "@/pages/BudgetsPage";
+import PricingCalculatorPage from "@/pages/PricingCalculatorPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,10 +48,12 @@ const App = () => (
               <Route path="/categories" element={<CategoriesPage />} />
               <Route path="/products" element={<ProductsPage />} />
               <Route path="/sales" element={<SalesPage />} />
+              <Route path="/sales/analytics" element={<SalesAnalyticsPage />} />
               <Route path="/stock/movements" element={<StockMovementsPage />} />
               <Route path="/orders" element={<OrdersPage />} />
               <Route path="/payments" element={<PaymentsPage />} />
               <Route path="/budgets" element={<BudgetsPage />} />
+              <Route path="/pricing" element={<PricingCalculatorPage />} />
               {/* Admin/Gerente only */}
               <Route path="/users" element={<RoleGuard allowedRoles={["admin", "gerente"]}><UsersPage /></RoleGuard>} />
               <Route path="/settings/company" element={<RoleGuard allowedRoles={["admin", "gerente"]}><CompanySettingsPage /></RoleGuard>} />
