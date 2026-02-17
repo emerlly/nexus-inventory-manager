@@ -27,6 +27,8 @@ interface DataTableProps<T> {
   onDelete?: (item: T) => void;
   addLabel?: string;
   getId?: (item: T) => string;
+  getDetailFields?: (row: T) => { label: string; value: any }[];
+  getDetailItems?: (row: T) => { columns: { key: string; label: string }[]; data: any[] };
 }
 
 export function DataTable<T>({
@@ -38,6 +40,8 @@ export function DataTable<T>({
   onEdit,
   onDelete,
   addLabel = "Novo",
+  getDetailFields,
+  getDetailItems,
   getId = (item: any) => item._id,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");

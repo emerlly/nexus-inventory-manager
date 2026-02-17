@@ -98,6 +98,15 @@ export interface Supplier {
   address?: string;
   createdAt?: string;
 }
+export interface seller {
+  _id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  createdAt?: string;
+  role: string;
+}
 
 export interface SupplierFormData {
   name: string;
@@ -139,6 +148,7 @@ export interface Sale {
   totalValue: number;
   user?: User | string;
   createdAt?: string;
+  seller?: seller | string;
 }
 
 export interface SaleFormData {
