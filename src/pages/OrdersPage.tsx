@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppHeader } from "@/components/AppHeader";
-import { orderService } from "@/services";
-import type { Order, OrderStatus } from "@/types";
+import { orderService, productService } from "@/services";
+import type { Order, OrderStatus, SaleItem } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Package, CheckCircle2, Eye } from "lucide-react";
+import { Search, Package, CheckCircle2, Eye, ChevronDown, ChevronUp, Pencil, Trash2, Plus } from "lucide-react";
 import { DetailDialog } from "@/components/DetailDialog";
 
 const STATUS_STEPS: { key: OrderStatus; label: string }[] = [
@@ -50,19 +53,42 @@ function StatusStepper({ currentStatus }: { currentStatus: OrderStatus }) {
   );
 }
 
+interface EditItemForm {
+  product: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+}
+
 export default function OrdersPage() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [detailOrder, setDetailOrder] = useState<Order | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editingItems, setEditingItems] = useState<EditItemForm[] | null>(null);
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
 
   const { data = [], isLoading } = useQuery({ queryKey: ["orders"], queryFn: orderService.getAll });
+  const products = useQuery({ queryKey: ["products"], queryFn: productService.getAll });
 
   const updateStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) => orderService.update(id, { status }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["orders"] }); toast({ title: "Status atualizado!" }); },
     onError: () => toast({ variant: "destructive", title: "Erro ao atualizar status" }),
+  });
+
+  const updateItems = useMutation({
+    mutationFn: ({ id, items }: { id: string; items: { product: string; quantity: number; unitPrice: number }[] }) =>
+      orderService.update(id, { items }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      toast({ title: "Itens atualizados!" });
+      setEditingItems(null);
+      setEditingOrderId(null);
+    },
+    onError: () => toast({ variant: "destructive", title: "Erro ao atualizar itens" }),
   });
 
   const filtered = data.filter((o: Order) => {
@@ -71,6 +97,46 @@ export default function OrdersPage() {
     const matchStatus = filterStatus === "all" || o.status === filterStatus;
     return matchSearch && matchStatus;
   });
+
+  const toggleExpand = (id: string) => setExpandedId(expandedId === id ? null : id);
+
+  const startEditItems = (order: Order) => {
+    const items: EditItemForm[] = (order.items || []).map((item) => ({
+      product: typeof item.product === "object" ? item.product?._id : item.product,
+      productName: typeof item.product === "object" ? item.product?.name || "" : "",
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+    }));
+    setEditingItems(items);
+    setEditingOrderId(order._id);
+  };
+
+  const addEditItem = () => {
+    setEditingItems([...(editingItems || []), { product: "", productName: "", quantity: 1, unitPrice: 0 }]);
+  };
+
+  const removeEditItem = (idx: number) => {
+    setEditingItems((editingItems || []).filter((_, i) => i !== idx));
+  };
+
+  const updateEditItem = (idx: number, field: keyof EditItemForm, value: any) => {
+    const items = [...(editingItems || [])];
+    items[idx] = { ...items[idx], [field]: value };
+    if (field === "product") {
+      const prod = (products.data || []).find((p: any) => p._id === value);
+      if (prod) {
+        items[idx].productName = prod.name;
+        items[idx].unitPrice = prod.salePrice || 0;
+      }
+    }
+    setEditingItems(items);
+  };
+
+  const saveEditItems = () => {
+    if (!editingOrderId || !editingItems) return;
+    const items = editingItems.map((i) => ({ product: i.product, quantity: i.quantity, unitPrice: i.unitPrice }));
+    updateItems.mutate({ id: editingOrderId, items });
+  };
 
   const getDetailFields = (o: Order) => [
     { label: "ID", value: `#${o._id.slice(-15)}` },
@@ -125,6 +191,7 @@ export default function OrdersPage() {
           <div className="space-y-4">
             {filtered.map((order: Order) => {
               const customerName = typeof order.customer === "object" ? order.customer?.name : "—";
+              const isExpanded = expandedId === order._id;
               return (
                 <Card key={order._id} className="overflow-hidden">
                   <CardContent className="p-5">
@@ -145,14 +212,54 @@ export default function OrdersPage() {
                       </div>
                       <div className="flex flex-col items-start gap-3 lg:items-end">
                         <StatusStepper currentStatus={order.status} />
-                        {order.status !== "entregue" && (
-                          <Select value={order.status} onValueChange={(v) => updateStatus.mutate({ id: order._id, status: v as OrderStatus })}>
-                            <SelectTrigger className="h-8 w-40 text-xs"><SelectValue /></SelectTrigger>
-                            <SelectContent>{STATUS_STEPS.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}</SelectContent>
-                          </Select>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" onClick={() => toggleExpand(order._id)}>
+                            {isExpanded ? <ChevronUp className="mr-1 h-4 w-4" /> : <ChevronDown className="mr-1 h-4 w-4" />}
+                            Itens
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => startEditItems(order)}>
+                            <Pencil className="mr-1 h-4 w-4" /> Editar Itens
+                          </Button>
+                          {order.status !== "entregue" && (
+                            <Select value={order.status} onValueChange={(v) => updateStatus.mutate({ id: order._id, status: v as OrderStatus })}>
+                              <SelectTrigger className="h-8 w-40 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent>{STATUS_STEPS.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}</SelectContent>
+                            </Select>
+                          )}
+                        </div>
                       </div>
                     </div>
+
+                    {/* Expanded items view */}
+                    {isExpanded && (
+                      <div className="mt-4 rounded-lg border bg-muted/30 p-4">
+                        <h4 className="mb-3 text-sm font-semibold text-foreground">Itens do Pedido</h4>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Produto</TableHead>
+                              <TableHead className="text-right">Qtd</TableHead>
+                              <TableHead className="text-right">Preço Unit.</TableHead>
+                              <TableHead className="text-right">Subtotal</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {(order.items || []).map((item, idx) => (
+                              <TableRow key={idx}>
+                                <TableCell>{typeof item.product === "object" ? item.product?.name : item.product}</TableCell>
+                                <TableCell className="text-right">{item.quantity}</TableCell>
+                                <TableCell className="text-right">R$ {item.unitPrice?.toFixed(2)}</TableCell>
+                                <TableCell className="text-right">R$ {item.total?.toFixed(2)}</TableCell>
+                              </TableRow>
+                            ))}
+                            <TableRow className="font-semibold">
+                              <TableCell colSpan={3} className="text-right">Total</TableCell>
+                              <TableCell className="text-right">R$ {order.totalOrder?.toFixed(2)}</TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );
@@ -160,6 +267,64 @@ export default function OrdersPage() {
           </div>
         )}
       </div>
+
+      {/* Edit Items Dialog */}
+      <Dialog open={!!editingItems} onOpenChange={() => { setEditingItems(null); setEditingOrderId(null); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Editar Itens do Pedido</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Produto</TableHead>
+                  <TableHead>Qtd</TableHead>
+                  <TableHead>Preço Unit.</TableHead>
+                  <TableHead>Subtotal</TableHead>
+                  <TableHead className="w-12"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(editingItems || []).map((item, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell>
+                      <Select value={item.product} onValueChange={(v) => updateEditItem(idx, "product", v)}>
+                        <SelectTrigger className="w-full"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                        <SelectContent>
+                          {(products.data || []).map((p: any) => <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Input type="number" min={1} value={item.quantity} onChange={(e) => updateEditItem(idx, "quantity", +e.target.value)} className="w-20" />
+                    </TableCell>
+                    <TableCell>
+                      <Input type="number" step="0.01" value={item.unitPrice} onChange={(e) => updateEditItem(idx, "unitPrice", +e.target.value)} className="w-28" />
+                    </TableCell>
+                    <TableCell className="text-right font-medium">R$ {(item.quantity * item.unitPrice).toFixed(2)}</TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="icon" onClick={() => removeEditItem(idx)} className="text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="flex items-center justify-between">
+              <Button variant="outline" size="sm" onClick={addEditItem}><Plus className="mr-1 h-4 w-4" /> Adicionar Item</Button>
+              <p className="text-sm font-semibold">
+                Total: R$ {(editingItems || []).reduce((s, i) => s + i.quantity * i.unitPrice, 0).toFixed(2)}
+              </p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { setEditingItems(null); setEditingOrderId(null); }}>Cancelar</Button>
+              <Button onClick={saveEditItems} disabled={updateItems.isPending}>
+                {updateItems.isPending ? "Salvando..." : "Salvar Itens"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {detailOrder && (
         <DetailDialog

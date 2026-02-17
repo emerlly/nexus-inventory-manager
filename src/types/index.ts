@@ -37,6 +37,7 @@ export interface Product {
   _id: string;
   name: string;
   description?: string;
+  sku?: string;
   salePrice: number;
   costPrice?: number;
   stockQuantity: number;
@@ -50,6 +51,7 @@ export interface Product {
 export interface ProductFormData {
   name: string;
   description?: string;
+  sku?: string;
   price: number;
   costPrice?: number;
   quantity: number;
