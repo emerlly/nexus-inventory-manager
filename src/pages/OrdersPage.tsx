@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppHeader } from "@/components/AppHeader";
 import { orderService, productService } from "@/services";
-import type { Order, OrderStatus, SaleItem } from "@/types";
+import type { Order, OrderStatus } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Package, CheckCircle2, Eye, ChevronDown, ChevronUp, Pencil, Trash2, Plus } from "lucide-react";
@@ -100,16 +99,7 @@ export default function OrdersPage() {
 
   const toggleExpand = (id: string) => setExpandedId(expandedId === id ? null : id);
 
-  const startEditItems = (order: Order) => {
-    const items: EditItemForm[] = (order.items || []).map((item) => ({
-      product: typeof item.product === "object" ? item.product?._id : item.product,
-      productName: typeof item.product === "object" ? item.product?.name || "" : "",
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-    }));
-    setEditingItems(items);
-    setEditingOrderId(order._id);
-  };
+
 
   const addEditItem = () => {
     setEditingItems([...(editingItems || []), { product: "", productName: "", quantity: 1, unitPrice: 0 }]);
@@ -217,9 +207,6 @@ export default function OrdersPage() {
                             {isExpanded ? <ChevronUp className="mr-1 h-4 w-4" /> : <ChevronDown className="mr-1 h-4 w-4" />}
                             Itens
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => startEditItems(order)}>
-                            <Pencil className="mr-1 h-4 w-4" /> Editar Itens
-                          </Button>
                           {order.status !== "entregue" && (
                             <Select value={order.status} onValueChange={(v) => updateStatus.mutate({ id: order._id, status: v as OrderStatus })}>
                               <SelectTrigger className="h-8 w-40 text-xs"><SelectValue /></SelectTrigger>
@@ -268,7 +255,7 @@ export default function OrdersPage() {
         )}
       </div>
 
-      {/* Edit Items Dialog */}
+      {/* Edit Items Dialog 
       <Dialog open={!!editingItems} onOpenChange={() => { setEditingItems(null); setEditingOrderId(null); }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle>Editar Itens do Pedido</DialogTitle></DialogHeader>
@@ -325,7 +312,7 @@ export default function OrdersPage() {
           </div>
         </DialogContent>
       </Dialog>
-
+*/}
       {detailOrder && (
         <DetailDialog
           open={!!detailOrder}

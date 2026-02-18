@@ -30,11 +30,11 @@ export const paymentService = createCrudService<Payment, PaymentFormData>("/paym
 /* ================= BUDGET ================= */
 
 export const budgetService = {
-  getAll: () => api.get("/budgets").then((r) => r.data),
-  getById: (id: string) => api.get(`/budgets/${id}`).then((r) => r.data),
-  create: (data: any) => api.post("/budgets", data).then((r) => r.data),
-  update: (id: string, data: any) => api.put(`/budgets/${id}`, data).then((r) => r.data),
-  delete: (id: string) => api.delete(`/budgets/${id}`).then((r) => r.data),
+  getAll: () => api.get("/quotes").then((r) => r.data),
+  getById: (id: string) => api.get(`/quotes/${id}`).then((r) => r.data),
+  create: (data: any) => api.post("/quotes", data).then((r) => r.data),
+  update: (id: string, data: any) => api.put(`/quotes/${id}`, data).then((r) => r.data),
+  delete: (id: string) => api.delete(`/quotes/${id}`).then((r) => r.data),
 };
 
 /* ================= COMPANY ================= */
