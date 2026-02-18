@@ -22,6 +22,8 @@ import PaymentsPage from "@/pages/PaymentsPage";
 import CompanySettingsPage from "@/pages/CompanySettingsPage";
 import BudgetsPage from "@/pages/BudgetsPage";
 import PricingCalculatorPage from "@/pages/PricingCalculatorPage";
+import CashFlowPage from "@/pages/CashFlowPage";
+import CrmPage from "@/pages/CrmPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +56,8 @@ const App = () => (
               <Route path="/payments" element={<PaymentsPage />} />
               <Route path="/budgets" element={<BudgetsPage />} />
               <Route path="/pricing" element={<PricingCalculatorPage />} />
+              <Route path="/cashflow" element={<CashFlowPage />} />
+              <Route path="/crm" element={<CrmPage />} />
               {/* Admin/Gerente only */}
               <Route path="/users" element={<RoleGuard allowedRoles={["admin", "gerente"]}><UsersPage /></RoleGuard>} />
               <Route path="/settings/company" element={<RoleGuard allowedRoles={["admin", "gerente"]}><CompanySettingsPage /></RoleGuard>} />

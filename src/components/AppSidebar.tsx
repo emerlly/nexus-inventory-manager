@@ -15,6 +15,8 @@ import {
   FileText,
   BarChart3,
   Calculator,
+  Wallet,
+  Heart,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,6 +42,8 @@ const mainNav = [
   { title: "Orçamentos", url: "/budgets", icon: FileText },
   { title: "Pagamentos", url: "/payments", icon: CreditCard },
   { title: "Movimentações", url: "/stock/movements", icon: ArrowLeftRight },
+  { title: "Fluxo de Caixa", url: "/cashflow", icon: Wallet },
+  { title: "CRM", url: "/crm", icon: Heart },
   { title: "Precificação", url: "/pricing", icon: Calculator },
 ];
 

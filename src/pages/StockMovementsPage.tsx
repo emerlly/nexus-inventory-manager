@@ -23,8 +23,8 @@ export default function StockMovementsPage() {
 
   const { data = [], isLoading } = useQuery({ queryKey: ["stockMovements"], queryFn: stockMovementService.getAll });
   const products = useQuery({ queryKey: ["products"], queryFn: productService.getAll });
-  
-  console.log("data", data);
+
+
   const create = useMutation({
     mutationFn: (d: StockMovementFormData) => stockMovementService.create(d),
     onSuccess: () => {
