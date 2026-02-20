@@ -46,21 +46,21 @@ export default function ProductsPage() {
   const openEdit = (p: Product) => {
     setEditing(p);
     setForm({
-      name: p.name, description: p.description, sku: p.sku, price: p.salePrice, costPrice: p.costPrice,
+      name: p.name, description: p.description, sku: p.SKU, price: p.salePrice, costPrice: p.costPrice,
       quantity: p.stockQuantity, minStock: p.minStock,
       category: typeof p.category === "object" ? p.category?._id : p.category,
       supplier: typeof p.supplier === "object" ? p.supplier?._id : p.supplier,
     });
     setOpen(true);
   };
-
+ 
   return (
     <div className="flex flex-col">
       <AppHeader title="Produtos" />
       <div className="flex-1 p-6">
         <DataTable
           columns={[
-            { key: "sku", label: "SKU", render: (p) => p.sku || "—" },
+            { key: "sku", label: "SKU", render: (p) => p.SKU || "—" },
             { key: "name", label: "Nome" },
             { key: "price", label: "Preço", render: (p) => `R$ ${p.salePrice?.toFixed(2)}` },
             { key: "category", label: "Categoria", render: (p) => typeof p.category === "object" ? p.category?.name : p.category },

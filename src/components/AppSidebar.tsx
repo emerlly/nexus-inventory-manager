@@ -63,17 +63,26 @@ export function AppSidebar() {
   const isAdminOrManager = user?.role === "admin" || user?.role === "gerente";
 
   return (
-    <Sidebar>
+    <Sidebar className="h-full border-r border-white/10">
       <SidebarHeader className="border-b border-sidebar-border px-4 py-5">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary">
-            <Package className="h-4 w-4 text-sidebar-primary-foreground" />
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sidebar-primary shadow-sm">
+            <Package className="h-5 w-5 text-sidebar-primary-foreground" />
           </div>
-          <span className="text-lg font-bold text-sidebar-foreground">NexusSystems</span>
+
+          <div className="flex flex-col leading-tight min-w-0">
+            <span className="text-base font-bold text-sidebar-foreground truncate">
+              NexusSystems
+            </span>
+
+            <span className="text-xs text-sidebar-muted truncate">
+              {user?.company?.name || "Minha Empresa"}
+            </span>
+          </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+    <SidebarContent className="flex-1 overflow-y-auto scrollbar-hide">
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-muted">Principal</SidebarGroupLabel>
           <SidebarGroupContent>

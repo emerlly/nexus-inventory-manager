@@ -23,6 +23,7 @@ export interface User {
   role: string;
   createdAt?: string;
   updatedAt?: string;
+  companyName?: string;
 }
 
 export interface UserFormData {
@@ -37,7 +38,7 @@ export interface Product {
   _id: string;
   name: string;
   description?: string;
-  sku?: string;
+  SKU?: string;
   salePrice: number;
   costPrice?: number;
   stockQuantity: number;
