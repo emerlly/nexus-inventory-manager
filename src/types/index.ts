@@ -23,7 +23,7 @@ export interface User {
   role: string;
   createdAt?: string;
   updatedAt?: string;
-  companyName?: string;
+  company?: string;
 }
 
 export interface UserFormData {

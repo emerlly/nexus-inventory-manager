@@ -76,7 +76,7 @@ export function AppSidebar() {
             </span>
 
             <span className="text-xs text-sidebar-muted truncate">
-              {user?.company?.name || "Minha Empresa"}
+              {user?.company || "Minha Empresa"}
             </span>
           </div>
         </div>
