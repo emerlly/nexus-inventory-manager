@@ -50,6 +50,16 @@
     --sidebar-border: 217 33% 17%;
     --sidebar-ring: 221 83% 53%;
     --sidebar-muted: 215 16% 47%;
+    --shadow-sm: 0px 1px 11.75px 0px hsla(0, 0%, 0%, 0.29);
+    --shadow: 0px 1px 23.5px 0px hsla(0, 0%, 0%, 0.29);
+    --shadow-md: 0px 1px 35.25px 0px hsla(0, 0%, 0%, 0.29);
+    --shadow-lg: 0px 1px 58.75px 0px hsla(0, 0%, 0%, 0.29);
+  }
+  .dark {
+    --shadow-sm: 0px 1px 11.75px 0px hsla(0, 0%, 0%, 0.29);
+    --shadow: 0px 1px 23.5px 0px hsla(0, 0%, 0%, 0.29);
+    --shadow-md: 0px 1px 35.25px 0px hsla(0, 0%, 0%, 0.29);
+    --shadow-lg: 0px 1px 58.75px 0px hsla(0, 0%, 0%, 0.29);
   }
 }
 
