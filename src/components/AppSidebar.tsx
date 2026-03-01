@@ -19,7 +19,6 @@ import {
   Heart,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar,
@@ -169,7 +168,6 @@ export function AppSidebar() {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <ThemeToggle className="text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" />
             <button onClick={logout} className="rounded-md p-1.5 text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" title="Sair">
               <LogOut className="h-4 w-4" />
             </button>
