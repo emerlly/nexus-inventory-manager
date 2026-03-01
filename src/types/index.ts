@@ -24,6 +24,7 @@ export interface User {
   createdAt?: string;
   updatedAt?: string;
   companyName?: string;
+  company?: { name: string };
 }
 
 export interface UserFormData {
