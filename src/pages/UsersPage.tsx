@@ -19,7 +19,7 @@ export default function UsersPage() {
   const [form, setForm] = useState<UserFormData>({ name: "", email: "", password: "", role: "user" });
 
   const { data = [], isLoading } = useQuery({ queryKey: ["users"], queryFn: userService.getAll });
-
+  console.log("dads", data);
   const save = useMutation({
     mutationFn: (d: UserFormData) => editing ? userService.update(editing._id, d) : userService.create(d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["users"] }); setOpen(false); toast({ title: "Salvo com sucesso!" }); },
@@ -44,6 +44,8 @@ export default function UsersPage() {
             { key: "name", label: "Nome" },
             { key: "email", label: "E-mail" },
             { key: "role", label: "Perfil" },
+            { key: "companyId", label: "Empresa" },
+            { key: "active", label: "Situação", render: (u: User) => u.active ? <span className="text-green-600">Ativo</span> : <span className="text-red-600">Inativo</span> },
           ]}
           data={data}
           loading={isLoading}

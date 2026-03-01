@@ -95,16 +95,18 @@ export default function SalesPage() {
   });
 
   return (
-    <>
+    <div className="flex flex-col">
       <AppHeader title="Vendas" />
+      <div className="flex-1 p-6">
 
-      <DataTable
-        columns={columns}
-        data={data}
-        loading={isLoading}
-        getDetailFields={getDetailFields}
-        getDetailItems={getDetailItems}
-      />
-    </>
+        <DataTable
+          columns={columns}
+          data={data}
+          loading={isLoading}
+          getDetailFields={getDetailFields}
+          getDetailItems={getDetailItems}
+        />
+      </div>
+    </div>
   );
 }

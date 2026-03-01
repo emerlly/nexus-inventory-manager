@@ -24,6 +24,7 @@ export interface User {
   createdAt?: string;
   updatedAt?: string;
   company?: string;
+  active?: boolean;
 }
 
 export interface UserFormData {
@@ -31,6 +32,10 @@ export interface UserFormData {
   email: string;
   password?: string;
   role: string;
+  cpf?: string;
+  active?: boolean;
+  address?: string;
+  
 }
 
 // ===== Product =====
@@ -74,6 +79,8 @@ export interface Category {
 export interface CategoryFormData {
   name: string;
   description?: string;
+  prefix?: string;
+  active?: boolean;
 }
 
 // ===== Customer =====
@@ -84,6 +91,12 @@ export interface Customer {
   phone?: string;
   address?: string;
   createdAt?: string;
+  cpf?: string;
+  active?: boolean;
+  password?: string;
+  company?: string;
+  companyId?: string;
+  role?: string;
 }
 
 export interface CustomerFormData {
@@ -91,6 +104,12 @@ export interface CustomerFormData {
   email?: string;
   phone?: string;
   address?: string;
+  cpf?: string;
+  password?: string;
+  active?: boolean;
+  company?: string;
+  companyId?: string;
+  role?: string;
 }
 
 // ===== Supplier =====

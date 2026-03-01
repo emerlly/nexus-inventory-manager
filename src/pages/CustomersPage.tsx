@@ -15,7 +15,7 @@ export default function CustomersPage() {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
-  const [form, setForm] = useState<CustomerFormData>({ name: "" });
+  const [form, setForm] = useState<CustomerFormData>({ name: "", email: "", phone: "", address: "", cpf: "" });
 
   const { data = [], isLoading } = useQuery({ queryKey: ["customers"], queryFn: customerService.getAll });
 
@@ -42,6 +42,12 @@ export default function CustomersPage() {
             { key: "name", label: "Nome" },
             { key: "email", label: "E-mail" },
             { key: "phone", label: "Telefone" },
+            { key: "address", label: "Endereço" },
+            { key: "cpf", label: "CPF" },
+            {
+              key: "active", label: "Situação",
+              render: (c: Customer) => c.active ? <span className="text-green-600">Ativo</span> : <span className="text-red-600">Inativo</span>
+            }
           ]}
           data={data}
           loading={isLoading}
@@ -56,9 +62,16 @@ export default function CustomersPage() {
         <DialogContent>
           <DialogHeader><DialogTitle>{editing ? "Editar Cliente" : "Novo Cliente"}</DialogTitle></DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); save.mutate(form); }} className="space-y-4">
-            <div className="space-y-2"><Label>Nome</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></div>
+            <div className="space-y-2"><Label>Nome Completo</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></div>
             <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={form.email || ""} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-            <div className="space-y-2"><Label>Telefone</Label><Input value={form.phone || ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+            <div className="space-y-2">
+              <Label>Telefone</Label>
+              <Input value={form.phone || ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>CPF</Label>
+              <Input value={form.cpf || ""} onChange={(e) => setForm({ ...form, cpf: e.target.value })} />
+            </div>
             <div className="space-y-2"><Label>Endereço</Label><Input value={form.address || ""} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" type="button" onClick={() => setOpen(false)}>Cancelar</Button>

@@ -10,13 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function CategoriesPage() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
-  const [form, setForm] = useState<CategoryFormData>({ name: "", description: "" });
+  const [form, setForm] = useState<CategoryFormData>({ name: "", description: "", prefix: "", active: true });
 
   const { data = [], isLoading } = useQuery({ queryKey: ["categories"], queryFn: categoryService.getAll });
 
@@ -40,10 +41,13 @@ export default function CategoriesPage() {
       <div className="flex-1 p-6">
         <DataTable
           columns={[
+            { key: "prefix", label: "Prefixo" },
             { key: "name", label: "Nome" },
             { key: "description", label: "Descrição" },
-            { key: "active", label: "Situação", 
-              render: (c: Category) => c.active ? <span className="text-green-600">Ativa</span> : <span className="text-red-600">Inativa</span> },    
+            {
+              key: "active", label: "Situação",
+              render: (c: Category) => c.active ? <span className="text-green-600">Ativa</span> : <span className="text-red-600">Inativa</span>
+            },
           ]}
           data={data}
           loading={isLoading}
@@ -59,7 +63,19 @@ export default function CategoriesPage() {
           <DialogHeader><DialogTitle>{editing ? "Editar Categoria" : "Nova Categoria"}</DialogTitle></DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); save.mutate(form); }} className="space-y-4">
             <div className="space-y-2"><Label>Nome</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></div>
+            <div className="space-y-2"><Label>Prefixo</Label><Input value={form.prefix || ""} onChange={(e) => setForm({ ...form, prefix: e.target.value })} /></div>
             <div className="space-y-2"><Label>Descrição</Label><Textarea value={form.description || ""} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+              <p className="text-sm">Situação da categoria</p>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="active"
+                checked={form.active !== false}
+                onCheckedChange={(checked) =>
+                  setForm({ ...form, active: checked === true })
+                }
+              />
+              <Label htmlFor="active">Ativo</Label>
+            </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" type="button" onClick={() => setOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={save.isPending}>{save.isPending ? "Salvando..." : "Salvar"}</Button>

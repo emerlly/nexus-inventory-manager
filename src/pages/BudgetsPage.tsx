@@ -25,7 +25,7 @@ interface BudgetItem {
 interface Budget {
   _id: string;
   customer?: any;
-  items: { product: any; quantity: number; unitPrice: number; total: number }[];
+  items: { product: any; quantity: number; unitPrice: number; totalPrice: number }[];
   totalValue: number;
   status: "pendente" | "aprovado" | "rejeitado";
   notes?: string;
@@ -116,7 +116,7 @@ export default function BudgetsPage() {
 
   const exportPNG = useCallback(async () => {
     if (!printRef.current) return;
-    const canvas = await html2canvas(printRef.current, { scale: 2, backgroundColor: "#ffffff" });
+    const canvas = await html2canvas(printRef.current, { scale: 2, backgroundColor: null });
     const link = document.createElement("a");
     link.download = `orcamento-${viewBudget?._id?.slice(-8)}.png`;
     link.href = canvas.toDataURL("image/png");
@@ -126,7 +126,7 @@ export default function BudgetsPage() {
 
   const exportPDF = useCallback(async () => {
     if (!printRef.current) return;
-    const canvas = await html2canvas(printRef.current, { scale: 2, backgroundColor: "#ffffff" });
+    const canvas = await html2canvas(printRef.current, { scale: 2, backgroundColor: null });
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF("p", "mm", "a4");
     const pdfW = pdf.internal.pageSize.getWidth();
@@ -145,6 +145,7 @@ export default function BudgetsPage() {
             { key: "createdAt", label: "Data", render: (b) => b.createdAt ? new Date(b.createdAt).toLocaleDateString("pt-BR") : "—" },
             { key: "customer", label: "Cliente", render: (b) => typeof b.customer === "object" ? b.customer?.name : "—" },
             { key: "items", label: "Itens", render: (b) => b.items?.length ?? 0 },
+            { key: "Description", label: "Descrição", render: (b) => b.notes ? b.notes.slice(0, 55) + (b.notes.length > 50 ? "..." : "") : "—" }, 
             { key: "totalValue", label: "Total", render: (b) => `R$ ${b.totalValue?.toFixed(2)}` },
             { key: "status", label: "Status", render: (b) => <Badge className={statusColors[b.status] || ""}>{b.status}</Badge> },
             {
@@ -165,10 +166,10 @@ export default function BudgetsPage() {
       </div>
 
       {/* View / Export Dialog */}
-      <Dialog open={!!viewBudget} onOpenChange={() => setViewBudget(null)}>
+      <Dialog open={!!viewBudget} onOpenChange={() => setViewBudget(null)} >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
+            <DialogTitle className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <span>Orçamento</span>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={exportPNG}><FileImage className="mr-1 h-4 w-4" /> PNG</Button>
@@ -178,7 +179,7 @@ export default function BudgetsPage() {
           </DialogHeader>
 
           {viewBudget && (
-            <div ref={printRef} className="space-y-4 rounded-lg border bg-white p-6 text-foreground">
+            <div ref={printRef} className="max-w-2xl max-h-[90vh] overflow-y-auto">
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div>
@@ -222,7 +223,7 @@ export default function BudgetsPage() {
                       <td className="py-2">{typeof item.product === "object" ? item.product?.name : item.product}</td>
                       <td className="py-2 text-center">{item.quantity}</td>
                       <td className="py-2 text-right">R$ {item.unitPrice?.toFixed(2)}</td>
-                      <td className="py-2 text-right">R$ {item.total?.toFixed(2)}</td>
+                      <td className="py-2 text-right">R$ {item.totalPrice?.toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
