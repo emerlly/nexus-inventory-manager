@@ -6,6 +6,12 @@ export function createCrudService<T, F>(endpoint: string) {
       const res = await api.get(endpoint);
       return res.data;
     },
+    getLowStock: async (lowStock?: boolean) => {
+      const { data } = await api.get("/products", {
+        params: lowStock ? { lowStock: true } : {}
+      });
+      return data;
+    },
     getById: async (id: string): Promise<T> => {
       const res = await api.get(`${endpoint}/${id}`);
       return res.data;

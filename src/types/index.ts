@@ -52,13 +52,13 @@ export interface Product {
 export interface ProductFormData {
   name: string;
   description?: string;
-  sku?: string;
-  price: number;
+  salePrice: number;
   costPrice?: number;
-  quantity: number;
+  stockQuantity: number;
   minStock?: number;
-  category?: string;
-  supplier?: string;
+  categoryId?: string;
+  supplierId?: string;
+ 
 }
 
 // ===== Category =====
@@ -68,6 +68,7 @@ export interface Category {
   description?: string;
   createdAt?: string;
   active?: boolean;
+  prefix?: string; 
 }
 
 export interface CategoryFormData {

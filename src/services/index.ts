@@ -61,7 +61,7 @@ export const analyticsService = {
       startDate: start,
       endDate: end,
     }),
-    
+
   salesByPeriod: (
     start?: string,
     end?: string,
@@ -89,6 +89,12 @@ export const analyticsService = {
 
   salesByUser: (source: AnalyticsSource = "reports") =>
     request(`${buildBase(source)}/sales-by-user`),
+
+  stockLowCount: async () => {
+    const { data } = await api.get("/products/low-stock/count");
+    return data;
+  },
+
 
   profitByPeriod: (
     start?: string,

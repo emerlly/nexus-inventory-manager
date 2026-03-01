@@ -108,7 +108,8 @@ export default function DashboardPage() {
   const salesByPeriod = useQuery({ queryKey: ["analytics", "salesByPeriod", startStr, endStr], queryFn: () => analyticsService.salesByPeriod(startStr, endStr) });
   const prevPeriod = useQuery({ queryKey: ["analytics", "salesByPeriod", prevStart, prevEnd], queryFn: () => analyticsService.salesByPeriod(prevStart, prevEnd) });
   const profitByPeriod = useQuery({ queryKey: ["analytics", "profitByPeriod", startStr, endStr], queryFn: () => analyticsService.profitByPeriod(startStr, endStr) });
-  const stockAlerts = useQuery({ queryKey: ["analytics", "stockLow"], queryFn: () => analyticsService.stockLow() });
+  const stockAlerts = useQuery({ queryKey: ["analytics", "stockLow"], queryFn: () => analyticsService.stockLowCount() });;
+
   const allSales = useQuery({ queryKey: ["sales"], queryFn: saleService.getAll });
   const allPayments = useQuery({ queryKey: ["payments"], queryFn: paymentService.getAll });
   const products = useQuery({ queryKey: ["products"], queryFn: productService.getAll });
@@ -116,7 +117,6 @@ export default function DashboardPage() {
   const periodData = salesByPeriod.data as any[] | undefined;
   const prevData = prevPeriod.data as any[] | undefined;
   const profitData = profitByPeriod.data as any[] | undefined;
-  const stockData = stockAlerts.data as any[] | undefined;
   const salesData = (allSales.data || []) as Sale[];
   const paymentsData = (allPayments.data || []) as Payment[];
 
@@ -127,7 +127,7 @@ export default function DashboardPage() {
   const revenueChange = prevRevenue > 0 ? ((revenue - prevRevenue) / prevRevenue) * 100 : 0;
   const salesCount = periodData?.length ?? 0;
   const ticket = salesCount ? revenue / salesCount : 0;
-  const lowStockCount = stockData?.length ?? 0;
+  const lowStockCount = stockAlerts.data?.count ?? 0;
 
   // Cash flow from payments
   const totalReceitas = useMemo(() => paymentsData.filter(p => p.type === "receita" && p.status === "pago").reduce((s, p) => s + (p.amount || 0), 0), [paymentsData]);
@@ -234,7 +234,7 @@ export default function DashboardPage() {
             icon={DollarSign} variant={revenueChange >= 0 ? "success" : "warning"} onClick={showSales} badge="Clique p/ detalhar" />
           <KpiCard title="Lucro Bruto" value={`R$ ${profit.toFixed(2)}`} icon={TrendingUp} variant="success" onClick={() => navigate("/sales/analytics")} />
           <KpiCard title="Ticket Médio" value={`R$ ${ticket.toFixed(2)}`} icon={ShoppingCart} onClick={() => navigate("/sales/analytics")} />
-          <KpiCard title="Estoque Crítico" value={lowStockCount} icon={AlertTriangle} variant={lowStockCount > 0 ? "danger" : "default"} onClick={() => navigate("/stock/movements")} />
+          <KpiCard title="Estoque Crítico" value={lowStockCount} icon={AlertTriangle} variant={lowStockCount > 0 ? "danger" : "default"} onClick={() => navigate("/products")} />
         </div>
 
         {/* Row 2: Cash Flow KPIs */}
