@@ -82,7 +82,7 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
-    <SidebarContent className="flex-1 overflow-y-auto scrollbar-hide">
+    <SidebarContent className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-sidebar-border hover:[&::-webkit-scrollbar-thumb]:bg-sidebar-accent">
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-muted">Principal</SidebarGroupLabel>
           <SidebarGroupContent>
