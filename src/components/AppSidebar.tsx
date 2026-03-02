@@ -19,7 +19,9 @@ import {
   Heart,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
+import { hasRouteAccess } from "@/config/permissions";
 import {
   Sidebar,
   SidebarContent,
@@ -60,7 +62,14 @@ const settingsNav = [
 
 export function AppSidebar() {
   const { user, logout } = useAuth();
-  const isAdminOrManager = user?.role === "admin" || user?.role === "gerente";
+  const role = user?.role;
+
+  const filterByAccess = (items: typeof mainNav) =>
+    items.filter((item) => hasRouteAccess(role, item.url));
+
+  const visibleMain = filterByAccess(mainNav);
+  const visibleRegister = filterByAccess(registerNav);
+  const visibleSettings = filterByAccess(settingsNav);
 
   return (
     <Sidebar className="h-full border-r border-white/10">
@@ -69,66 +78,68 @@ export function AppSidebar() {
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sidebar-primary shadow-sm">
             <Package className="h-5 w-5 text-sidebar-primary-foreground" />
           </div>
-
           <div className="flex flex-col leading-tight min-w-0">
             <span className="text-base font-bold text-sidebar-foreground truncate">
               NexusSystems
             </span>
-
             <span className="text-xs text-sidebar-muted truncate">
-              {user?.company || "Minha Empresa"}
+              {(typeof user?.company === "object" && user?.company !== null) ? (user.company as any).name : (user?.company || "Minha Empresa")}
             </span>
           </div>
         </div>
       </SidebarHeader>
 
-    <SidebarContent className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-sidebar-border hover:[&::-webkit-scrollbar-thumb]:bg-sidebar-accent">
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-muted">Principal</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {mainNav.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === "/"}
-                      className="hover:bg-sidebar-accent"
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      <SidebarContent className="flex-1 overflow-y-auto">
+        {visibleMain.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-sidebar-muted">Principal</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {visibleMain.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        end={item.url === "/"}
+                        className="hover:bg-sidebar-accent"
+                        activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-muted">Cadastros</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {registerNav.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      className="hover:bg-sidebar-accent"
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {visibleRegister.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-sidebar-muted">Cadastros</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {visibleRegister.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        className="hover:bg-sidebar-accent"
+                        activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
-        {isAdminOrManager && (
+        {visibleSettings.length > 0 && (
           <SidebarGroup>
             <SidebarGroupLabel className="text-sidebar-muted">
               <Settings className="mr-1 inline h-3 w-3" />
@@ -136,7 +147,7 @@ export function AppSidebar() {
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {settingsNav.map((item) => (
+                {visibleSettings.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <NavLink
@@ -168,6 +179,7 @@ export function AppSidebar() {
             </div>
           </div>
           <div className="flex items-center gap-1">
+            <ThemeToggle />
             <button onClick={logout} className="rounded-md p-1.5 text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" title="Sair">
               <LogOut className="h-4 w-4" />
             </button>

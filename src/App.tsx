@@ -29,6 +29,11 @@ import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Wrap each route with RoleGuard (it auto-checks permissions by path)
+const guarded = (Component: React.ComponentType) => (
+  <RoleGuard><Component /></RoleGuard>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -46,23 +51,22 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route path="/" element={<DashboardPage />} />
-              <Route path="/customers" element={<CustomersPage />} />
-              <Route path="/suppliers" element={<SuppliersPage />} />
-              <Route path="/categories" element={<CategoriesPage />} />
-              <Route path="/products" element={<ProductsPage />} />
-              <Route path="/sales" element={<SalesPage />} />
-              <Route path="/sales/analytics" element={<SalesAnalyticsPage />} />
-              <Route path="/stock/movements" element={<StockMovementsPage />} />
-              <Route path="/orders" element={<OrdersPage />} />
-              <Route path="/payments" element={<PaymentsPage />} />
-              <Route path="/budgets" element={<BudgetsPage />} />
-              <Route path="/pricing" element={<PricingCalculatorPage />} />
-              <Route path="/cashflow" element={<CashFlowPage />} />
-              <Route path="/crm" element={<CrmPage />} />
-              {/* Admin/Gerente only */}
-              <Route path="/users" element={<RoleGuard allowedRoles={["admin", "gerente"]}><UsersPage /></RoleGuard>} />
-              <Route path="/settings/company" element={<RoleGuard allowedRoles={["admin", "gerente"]}><CompanySettingsPage /></RoleGuard>} />
+              <Route path="/" element={guarded(DashboardPage)} />
+              <Route path="/customers" element={guarded(CustomersPage)} />
+              <Route path="/suppliers" element={guarded(SuppliersPage)} />
+              <Route path="/categories" element={guarded(CategoriesPage)} />
+              <Route path="/products" element={guarded(ProductsPage)} />
+              <Route path="/sales" element={guarded(SalesPage)} />
+              <Route path="/sales/analytics" element={guarded(SalesAnalyticsPage)} />
+              <Route path="/stock/movements" element={guarded(StockMovementsPage)} />
+              <Route path="/orders" element={guarded(OrdersPage)} />
+              <Route path="/payments" element={guarded(PaymentsPage)} />
+              <Route path="/budgets" element={guarded(BudgetsPage)} />
+              <Route path="/pricing" element={guarded(PricingCalculatorPage)} />
+              <Route path="/cashflow" element={guarded(CashFlowPage)} />
+              <Route path="/crm" element={guarded(CrmPage)} />
+              <Route path="/users" element={guarded(UsersPage)} />
+              <Route path="/settings/company" element={guarded(CompanySettingsPage)} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
