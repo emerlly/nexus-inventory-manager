@@ -151,15 +151,11 @@ export default function ProductsPage() {
   return (
     <div className="flex flex-col">
       <AppHeader title="Produtos" />
-
       <div className="flex-1 p-6">
 
-        {/* 🔥 BOTÃO DE FILTRO */}
+        {/* BOTÃO DE FILTRO */}
         <div className="flex justify-end mb-4">
-          <Button
-            variant={showLowStock ? "destructive" : "outline"}
-            onClick={() => setShowLowStock((prev) => !prev)}
-          >
+          <Button variant={showLowStock ? "destructive" : "outline"} onClick={() => setShowLowStock((prev) => !prev)}>
             {showLowStock
               ? "Mostrar Todos"
               : "Somente Estoque Baixo"}
@@ -168,49 +164,13 @@ export default function ProductsPage() {
 
         <DataTable
           columns={[
-            {
-              key: "SKU",
-              label: "SKU",
-              render: (p) => p.SKU || "—",
-            },
+            { key: "SKU", label: "SKU", render: (p) => p.SKU || "—",},
             { key: "name", label: "Nome" },
-            {
-              key: "description",
-              label: "Descrição",
-              render: (p) => p.description || "—",
-            },
-            {
-              key: "price",
-              label: "Preço",
-              render: (p) =>
-                `R$ ${p.salePrice?.toFixed(2)}`,
-            },
-            {
-              key: "category",
-              label: "Categoria",
-              render: (p) =>
-                typeof p.category === "object"
-                  ? p.category?.name
-                  : p.category,
-            },
-            {
-              key: "quantity",
-              label: "Estoque",
-              render: (p) => (
-                <StockBadge
-                  quantity={p.stockQuantity}
-                  minStock={p.minStock}
-                />
-              ),
-            },
-            {
-              key: "supplier",
-              label: "Fornecedor",
-              render: (p) =>
-                typeof p.supplier === "object"
-                  ? p.supplier?.name
-                  : p.supplier,
-            },
+            { key: "description", label: "Descrição", render: (p) => p.description || "—",},
+            { key: "price", label: "Preço", render: (p) => `R$ ${p.salePrice?.toFixed(2)}`,},
+            { key: "category", label: "Categoria", render: (p) => typeof p.category === "object" ? p.category?.name : p.category, },
+            { key: "quantity", label: "Estoque", render: (p) => ( <StockBadge quantity={p.stockQuantity} minStock={p.minStock} /> )},
+            { key: "supplier", label: "Fornecedor", render: (p) => typeof p.supplier === "object" ? p.supplier?.name : p.supplier,},
           ]}
           data={products}
           loading={isLoading}
@@ -230,91 +190,55 @@ export default function ProductsPage() {
             </DialogTitle>
           </DialogHeader>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              save.mutate(form);
-            }}
-            className="space-y-4"
-          >
+          <form onSubmit={(e) => { e.preventDefault(); save.mutate(form); }} className="space-y-4" >
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Nome</Label>
-                <Input
-                  value={form.name}
-                  onChange={(e) =>
-                    setForm({
+              <div><Label>Nome</Label><Input value={form.name} onChange={(e) => setForm({
                       ...form,
                       name: e.target.value,
                     })
                   }
-                  required
-                />
+                  required />
               </div>
 
               <div>
-                <Label>SKU</Label>
-                <Input
-                  value="Gerado automaticamente"
-                  disabled
-                />
+                <Label>SKU</Label> <Input value="Gerado automaticamente" disabled />
               </div>
             </div>
 
             <div>
               <Label>Descrição</Label>
-              <Input
-                value={form.description || ""}
-                onChange={(e) =>
-                  setForm({
+              <Input value={form.description || ""} onChange={(e) => setForm({
                     ...form,
                     description: e.target.value,
                   })
-                }
-              />
+                } />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Preço Venda</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={form.salePrice}
-                  onChange={(e) =>
-                    setForm({
+                <Input type="number" step="0.01" value={form.salePrice || ""} onChange={(e) => setForm({
                       ...form,
                       salePrice: +e.target.value,
                     })
                   }
-                  required
-                />
+                  required />
               </div>
 
               <div>
                 <Label>Preço Custo</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={form.costPrice}
-                  onChange={(e) =>
-                    setForm({
+                <Input type="number" step="0.01" value={form.costPrice || ""} onChange={(e) => setForm({
                       ...form,
                       costPrice: +e.target.value,
                     })
-                  }
-                />
+                  } />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
+              <div> 
                 <Label>Quantidade</Label>
-                <Input
-                  type="number"
-                  value={form.stockQuantity}
-                  onChange={(e) =>
-                    setForm({
+                <Input type="number" value={form.stockQuantity || ""} onChange={(e) => setForm({
                       ...form,
                       stockQuantity: +e.target.value,
                     })
@@ -324,36 +248,23 @@ export default function ProductsPage() {
 
               <div>
                 <Label>Estoque Mínimo</Label>
-                <Input
-                  type="number"
-                  value={form.minStock}
-                  onChange={(e) =>
-                    setForm({
+                <Input type="number" value={form.minStock || ""} onChange={(e) => setForm({
                       ...form,
                       minStock: +e.target.value,
                     })
-                  }
-                />
+                  } />
               </div>
             </div>
 
             <div>
               <Label>Categoria</Label>
-              <Select
-                value={form.categoryId}
-                onValueChange={(v) =>
-                  setForm({ ...form, categoryId: v })
-                }
-              >
+              <Select value={form.categoryId} onValueChange={(v) => setForm({ ...form, categoryId: v })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecionar..." />
                 </SelectTrigger>
                 <SelectContent>
                   {(categories.data || []).map((c) => (
-                    <SelectItem
-                      key={c._id}
-                      value={c._id}
-                    >
+                    <SelectItem key={c._id} value={c._id} >
                       {c.name}
                     </SelectItem>
                   ))}
@@ -363,12 +274,7 @@ export default function ProductsPage() {
 
             <div>
               <Label>Fornecedor</Label>
-              <Select
-                value={form.supplierId}
-                onValueChange={(v) =>
-                  setForm({ ...form, supplierId: v })
-                }
-              >
+              <Select value={form.supplierId} onValueChange={(v) => setForm({ ...form, supplierId: v })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecionar..." />
                 </SelectTrigger>
@@ -386,17 +292,10 @@ export default function ProductsPage() {
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => setOpen(false)}
-              >
+              <Button variant="outline" type="button" onClick={() => setOpen(false)} >
                 Cancelar
               </Button>
-              <Button
-                type="submit"
-                disabled={!form.categoryId || !form.supplierId}
-              >
+              <Button type="submit" disabled={!form.categoryId || !form.supplierId} >
                 {save.isPending ? "Salvando..." : "Salvar"}
               </Button>
             </div>
