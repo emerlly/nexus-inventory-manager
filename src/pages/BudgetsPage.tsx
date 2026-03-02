@@ -179,73 +179,118 @@ export default function BudgetsPage() {
           </DialogHeader>
 
           {viewBudget && (
-            <div ref={printRef} className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div ref={printRef} className="max-w-2xl max-h-[90vh] overflow-y-auto p-6 bg-background text-foreground">
               {/* Header */}
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h2 className="text-xl font-bold">{company.data?.name || "NexusSystems"}</h2>
+                  <h2 className="text-xl font-bold text-foreground">{company.data?.name || "NexusSystems"}</h2>
                   {company.data?.cnpj && <p className="text-xs text-muted-foreground">CNPJ: {company.data.cnpj}</p>}
                   {company.data?.phone && <p className="text-xs text-muted-foreground">Tel: {company.data.phone}</p>}
+                  {company.data?.email && <p className="text-xs text-muted-foreground">Email: {company.data.email}</p>}
+                  {company.data?.address && <p className="text-xs text-muted-foreground">{company.data.address}</p>}
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-semibold">ORÇAMENTO</p>
-                  <p className="text-xs text-muted-foreground">#{viewBudget._id?.slice(-8)}</p>
-                  <p className="text-xs text-muted-foreground">{viewBudget.createdAt ? new Date(viewBudget.createdAt).toLocaleDateString("pt-BR") : ""}</p>
+                  <p className="text-sm font-semibold text-foreground">ORÇAMENTO</p>
+                  <p className="text-xs text-muted-foreground">Nº #{viewBudget._id?.slice(-8).toUpperCase()}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Emissão: {viewBudget.createdAt ? new Date(viewBudget.createdAt).toLocaleDateString("pt-BR") : "—"}
+                  </p>
                 </div>
               </div>
 
-              <Separator />
+              <Separator className="my-3" />
 
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                 <div>
                   <p className="text-xs text-muted-foreground">Cliente</p>
-                  <p className="font-medium">{typeof viewBudget.customer === "object" ? viewBudget.customer?.name : "—"}</p>
+                  <p className="font-medium text-foreground">{typeof viewBudget.customer === "object" ? viewBudget.customer?.name : "—"}</p>
+                  {typeof viewBudget.customer === "object" && viewBudget.customer?.email && (
+                    <p className="text-xs text-muted-foreground">{viewBudget.customer.email}</p>
+                  )}
+                  {typeof viewBudget.customer === "object" && viewBudget.customer?.phone && (
+                    <p className="text-xs text-muted-foreground">Tel: {viewBudget.customer.phone}</p>
+                  )}
                 </div>
-                <div>
+                <div className="text-right">
                   <p className="text-xs text-muted-foreground">Validade</p>
-                  <p className="font-medium">{viewBudget.validUntil ? new Date(viewBudget.validUntil).toLocaleDateString("pt-BR") : "—"}</p>
+                  <p className="font-medium text-foreground">
+                    {viewBudget.validUntil
+                      ? new Date(viewBudget.validUntil).toLocaleDateString("pt-BR")
+                      : "—"}
+                  </p>
                 </div>
               </div>
 
               {/* Items table */}
-              <table className="w-full text-sm">
+              <table className="w-full text-sm mb-4">
                 <thead>
-                  <tr className="border-b text-left">
-                    <th className="py-2 font-medium">Produto</th>
-                    <th className="py-2 font-medium text-center">Qtd</th>
-                    <th className="py-2 font-medium text-right">Preço Unit.</th>
-                    <th className="py-2 font-medium text-right">Subtotal</th>
+                  <tr className="border-b border-border text-left">
+                    <th className="py-2 font-semibold text-foreground">#</th>
+                    <th className="py-2 font-semibold text-foreground">Produto</th>
+                    <th className="py-2 font-semibold text-center text-foreground">Qtd</th>
+                    <th className="py-2 font-semibold text-right text-foreground">Preço Unit.</th>
+                    <th className="py-2 font-semibold text-right text-foreground">Subtotal</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(viewBudget.items || []).map((item, i) => (
-                    <tr key={i} className="border-b">
-                      <td className="py-2">{typeof item.product === "object" ? item.product?.name : item.product}</td>
-                      <td className="py-2 text-center">{item.quantity}</td>
-                      <td className="py-2 text-right">R$ {item.unitPrice?.toFixed(2)}</td>
-                      <td className="py-2 text-right">R$ {item.totalPrice?.toFixed(2)}</td>
+                    <tr key={i} className="border-b border-border/50">
+                      <td className="py-2 text-muted-foreground">{i + 1}</td>
+                      <td className="py-2 text-foreground">{typeof item.product === "object" ? item.product?.name : item.product}</td>
+                      <td className="py-2 text-center text-foreground">{item.quantity}</td>
+                      <td className="py-2 text-right text-foreground">R$ {item.unitPrice?.toFixed(2)}</td>
+                      <td className="py-2 text-right font-medium text-foreground">R$ {item.totalPrice?.toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
 
-              <div className="flex justify-end">
-                <div className="text-right">
-                  <p className="text-lg font-bold">Total: R$ {viewBudget.totalValue?.toFixed(2)}</p>
+              <div className="flex justify-end mb-4">
+                <div className="text-right border-t-2 border-primary pt-2 px-4">
+                  <p className="text-xs text-muted-foreground">Total do Orçamento</p>
+                  <p className="text-xl font-bold text-foreground">R$ {viewBudget.totalValue?.toFixed(2)}</p>
                 </div>
               </div>
 
               {viewBudget.notes && (
                 <>
-                  <Separator />
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Observações</p>
-                    <p className="text-sm">{viewBudget.notes}</p>
+                  <Separator className="my-3" />
+                  <div className="mb-4">
+                    <p className="text-xs font-semibold text-muted-foreground mb-1">Observações / Condições</p>
+                    <p className="text-sm text-foreground whitespace-pre-wrap">{viewBudget.notes}</p>
                   </div>
                 </>
               )}
 
-              <p className="text-center text-xs text-muted-foreground mt-4">
+              {/* Validity notice */}
+              <div className="rounded-md border border-border bg-muted/30 p-3 mb-6 text-center">
+                <p className="text-xs text-muted-foreground">
+                  {viewBudget.validUntil
+                    ? `Este orçamento é válido até ${new Date(viewBudget.validUntil).toLocaleDateString("pt-BR")}.`
+                    : "Validade não informada. Consulte o emitente."}
+                  {" "}Valores sujeitos a alteração sem aviso prévio após o vencimento.
+                </p>
+              </div>
+
+              {/* Signature area */}
+              <div className="grid grid-cols-2 gap-8 mt-8 mb-4">
+                <div className="text-center">
+                  <div className="border-t border-foreground/30 pt-2 mx-4">
+                    <p className="text-xs text-muted-foreground">{company.data?.name || "NexusSystems"}</p>
+                    <p className="text-[10px] text-muted-foreground">Emitente</p>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="border-t border-foreground/30 pt-2 mx-4">
+                    <p className="text-xs text-muted-foreground">
+                      {typeof viewBudget.customer === "object" ? viewBudget.customer?.name : "Cliente"}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">Assinatura do Cliente</p>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-center text-[10px] text-muted-foreground mt-6">
                 © {new Date().getFullYear()} {company.data?.name || "NexusSystems"} — Todos os direitos reservados.
               </p>
             </div>
