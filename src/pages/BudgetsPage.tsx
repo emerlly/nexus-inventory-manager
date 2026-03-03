@@ -4,7 +4,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { AppHeader } from "@/components/AppHeader";
 import { DataTable } from "@/components/DataTable";
-import { budgetService, customerService, productService, companyService } from "@/services";
+import { budgetService, customerService, productService, companyService, saleService } from "@/services";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2, Eye, FileImage, FileText, Pencil } from "lucide-react";
+import { Plus, Trash2, Eye, FileImage, FileText, Pencil, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ConfirmSaveDialog } from "@/components/ConfirmSaveDialog";
 
 interface BudgetItem {
   product: string;
@@ -71,6 +72,32 @@ export default function BudgetsPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["budgets"] }); toast({ title: "Orçamento excluído!" }); },
   });
 
+  const approveBudget = useMutation({
+    mutationFn: async (b: Budget) => {
+      // Create sale from budget items
+      await saleService.create({
+        customer: typeof b.customer === "object" ? b.customer?._id : b.customer,
+        items: (b.items || []).map((it) => ({
+          product: typeof it.product === "object" ? it.product?._id : it.product,
+          quantity: it.quantity,
+          unitPrice: it.unitPrice,
+        })),
+      });
+      // Update budget status to approved
+      await budgetService.update(b._id, { status: "aprovado" });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgets"] });
+      qc.invalidateQueries({ queryKey: ["sales"] });
+      toast({ title: "Orçamento aprovado e venda registrada!" });
+      setApproveTarget(null);
+    },
+    onError: () => toast({ variant: "destructive", title: "Erro ao aprovar orçamento" }),
+  });
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [approveTarget, setApproveTarget] = useState<Budget | null>(null);
+
   const addItem = () => setItems([...items, { product: "", productName: "", quantity: 1, unitPrice: 0 }]);
   const removeItem = (i: number) => setItems(items.filter((_, idx) => idx !== i));
   const updateItem = (i: number, field: string, value: any) => {
@@ -88,6 +115,11 @@ export default function BudgetsPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0) { toast({ variant: "destructive", title: "Adicione ao menos um item" }); return; }
+    setConfirmOpen(true);
+  };
+
+  const confirmSave = () => {
+    setConfirmOpen(false);
     save.mutate({
       customer: customer || undefined,
       items: items.map((i) => ({ product: i.product, quantity: i.quantity, unitPrice: i.unitPrice })),
@@ -153,6 +185,11 @@ export default function BudgetsPage() {
                 <div className="flex gap-1">
                   <Button variant="ghost" size="icon" onClick={() => setViewBudget(b)} title="Visualizar"><Eye className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => openEdit(b)} title="Editar"><Pencil className="h-4 w-4" /></Button>
+                  {b.status === "pendente" && (
+                    <Button variant="ghost" size="icon" onClick={() => setApproveTarget(b)} title="Aprovar e converter em venda" className="text-success hover:text-success">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               ),
             },
@@ -370,6 +407,25 @@ export default function BudgetsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmSaveDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirm={confirmSave}
+        title={editId ? "Confirmar edição" : "Confirmar cadastro"}
+        description={editId ? "Deseja salvar as alterações deste orçamento?" : "Deseja cadastrar este novo orçamento?"}
+        isPending={save.isPending}
+      />
+
+      <ConfirmSaveDialog
+        open={!!approveTarget}
+        onOpenChange={() => setApproveTarget(null)}
+        onConfirm={() => approveTarget && approveBudget.mutate(approveTarget)}
+        title="Aprovar orçamento"
+        description={`Deseja aprovar este orçamento de R$ ${approveTarget?.totalValue?.toFixed(2) || "0.00"} e convertê-lo em uma venda? O estoque será atualizado automaticamente.`}
+        confirmLabel="Aprovar e Vender"
+        isPending={approveBudget.isPending}
+      />
     </div>
   );
 }

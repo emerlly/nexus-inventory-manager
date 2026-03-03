@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmSaveDialog } from "@/components/ConfirmSaveDialog";
 
 export default function CategoriesPage() {
   const qc = useQueryClient();
@@ -18,6 +19,7 @@ export default function CategoriesPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [form, setForm] = useState<CategoryFormData>({ name: "", description: "", prefix: "", active: true });
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const { data = [], isLoading } = useQuery({ queryKey: ["categories"], queryFn: categoryService.getAll });
 
@@ -34,6 +36,11 @@ export default function CategoriesPage() {
 
   const openNew = () => { setEditing(null); setForm({ name: "", description: "" }); setOpen(true); };
   const openEdit = (c: Category) => { setEditing(c); setForm({ name: c.name, description: c.description }); setOpen(true); };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setConfirmOpen(true);
+  };
 
   return (
     <div className="flex flex-col">
@@ -61,19 +68,13 @@ export default function CategoriesPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>{editing ? "Editar Categoria" : "Nova Categoria"}</DialogTitle></DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); save.mutate(form); }} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2"><Label>Nome</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></div>
             <div className="space-y-2"><Label>Prefixo</Label><Input value={form.prefix || ""} onChange={(e) => setForm({ ...form, prefix: e.target.value })} /></div>
             <div className="space-y-2"><Label>Descrição</Label><Textarea value={form.description || ""} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-              <p className="text-sm">Situação da categoria</p>
+            <p className="text-sm">Situação da categoria</p>
             <div className="flex items-center space-x-2">
-              <Checkbox
-                id="active"
-                checked={form.active !== false}
-                onCheckedChange={(checked) =>
-                  setForm({ ...form, active: checked === true })
-                }
-              />
+              <Checkbox id="active" checked={form.active !== false} onCheckedChange={(checked) => setForm({ ...form, active: checked === true })} />
               <Label htmlFor="active">Ativo</Label>
             </div>
             <div className="flex justify-end gap-2">
@@ -83,6 +84,15 @@ export default function CategoriesPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmSaveDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirm={() => { setConfirmOpen(false); save.mutate(form); }}
+        title={editing ? "Confirmar edição" : "Confirmar cadastro"}
+        description={editing ? "Deseja salvar as alterações desta categoria?" : "Deseja cadastrar esta nova categoria?"}
+        isPending={save.isPending}
+      />
     </div>
   );
 }

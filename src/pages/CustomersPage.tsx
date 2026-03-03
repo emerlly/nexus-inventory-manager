@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { ConfirmSaveDialog } from "@/components/ConfirmSaveDialog";
 
 export default function CustomersPage() {
   const qc = useQueryClient();
@@ -16,6 +17,7 @@ export default function CustomersPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [form, setForm] = useState<CustomerFormData>({ name: "", email: "", phone: "", address: "", cpf: "" });
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const { data = [], isLoading } = useQuery({ queryKey: ["customers"], queryFn: customerService.getAll });
 
@@ -32,6 +34,11 @@ export default function CustomersPage() {
 
   const openNew = () => { setEditing(null); setForm({ name: "", email: "", phone: "", address: "" }); setOpen(true); };
   const openEdit = (c: Customer) => { setEditing(c); setForm({ name: c.name, email: c.email, phone: c.phone, address: c.address }); setOpen(true); };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setConfirmOpen(true);
+  };
 
   return (
     <div className="flex flex-col">
@@ -61,17 +68,11 @@ export default function CustomersPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>{editing ? "Editar Cliente" : "Novo Cliente"}</DialogTitle></DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); save.mutate(form); }} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2"><Label>Nome Completo</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></div>
             <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={form.email || ""} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-            <div className="space-y-2">
-              <Label>Telefone</Label>
-              <Input value={form.phone || ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-            </div>
-            <div className="space-y-2">
-              <Label>CPF</Label>
-              <Input value={form.cpf || ""} onChange={(e) => setForm({ ...form, cpf: e.target.value })} />
-            </div>
+            <div className="space-y-2"><Label>Telefone</Label><Input value={form.phone || ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+            <div className="space-y-2"><Label>CPF</Label><Input value={form.cpf || ""} onChange={(e) => setForm({ ...form, cpf: e.target.value })} /></div>
             <div className="space-y-2"><Label>Endereço</Label><Input value={form.address || ""} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" type="button" onClick={() => setOpen(false)}>Cancelar</Button>
@@ -80,6 +81,15 @@ export default function CustomersPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmSaveDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirm={() => { setConfirmOpen(false); save.mutate(form); }}
+        title={editing ? "Confirmar edição" : "Confirmar cadastro"}
+        description={editing ? "Deseja salvar as alterações deste cliente?" : "Deseja cadastrar este novo cliente?"}
+        isPending={save.isPending}
+      />
     </div>
   );
 }
