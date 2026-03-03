@@ -68,7 +68,7 @@ export default function ProductsPage() {
     supplierId: "",
   });
 
-  // 🔥 IMPORTANTE: envolver em função para passar o filtro
+  //  IMPORTANTE: envolver em função para passar o filtro
   const {
     data: products = [],
     isLoading,
@@ -148,6 +148,14 @@ export default function ProductsPage() {
     setOpen(true);
   };
 
+  const selectedCategory = categories.data?.find(
+    (c) => c._id === form.categoryId
+  );
+
+  const skuPreview = selectedCategory
+    ? `${selectedCategory.prefix}-XXXX`
+    : "Selecione uma categoria";
+
   return (
     <div className="flex flex-col">
       <AppHeader title="Produtos" />
@@ -164,13 +172,13 @@ export default function ProductsPage() {
 
         <DataTable
           columns={[
-            { key: "SKU", label: "SKU", render: (p) => p.SKU || "—",},
+            { key: "SKU", label: "SKU", render: (p) => p.SKU || "—", },
             { key: "name", label: "Nome" },
-            { key: "description", label: "Descrição", render: (p) => p.description || "—",},
-            { key: "price", label: "Preço", render: (p) => `R$ ${p.salePrice?.toFixed(2)}`,},
+            { key: "description", label: "Descrição", render: (p) => p.description || "—", },
+            { key: "price", label: "Preço", render: (p) => `R$ ${p.salePrice?.toFixed(2)}`, },
             { key: "category", label: "Categoria", render: (p) => typeof p.category === "object" ? p.category?.name : p.category, },
-            { key: "quantity", label: "Estoque", render: (p) => ( <StockBadge quantity={p.stockQuantity} minStock={p.minStock} /> )},
-            { key: "supplier", label: "Fornecedor", render: (p) => typeof p.supplier === "object" ? p.supplier?.name : p.supplier,},
+            { key: "quantity", label: "Estoque", render: (p) => (<StockBadge quantity={p.stockQuantity} minStock={p.minStock} />) },
+            { key: "supplier", label: "Fornecedor", render: (p) => typeof p.supplier === "object" ? p.supplier?.name : p.supplier, },
           ]}
           data={products}
           loading={isLoading}
@@ -193,66 +201,68 @@ export default function ProductsPage() {
           <form onSubmit={(e) => { e.preventDefault(); save.mutate(form); }} className="space-y-4" >
             <div className="grid grid-cols-2 gap-4">
               <div><Label>Nome</Label><Input value={form.name} onChange={(e) => setForm({
-                      ...form,
-                      name: e.target.value,
-                    })
-                  }
-                  required />
+                ...form,
+                name: e.target.value,
+              })
+              }
+                required />
               </div>
 
               <div>
-                <Label>SKU</Label> <Input value="Gerado automaticamente" disabled />
+                <Label>SKU</Label> <Input value={form.categoryId
+                  ? `${skuPreview}` : "Será gerado automaticamente"
+                } disabled />
               </div>
             </div>
 
             <div>
               <Label>Descrição</Label>
               <Input value={form.description || ""} onChange={(e) => setForm({
-                    ...form,
-                    description: e.target.value,
-                  })
-                } />
+                ...form,
+                description: e.target.value,
+              })
+              } />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Preço Venda</Label>
                 <Input type="number" step="0.01" value={form.salePrice || ""} onChange={(e) => setForm({
-                      ...form,
-                      salePrice: +e.target.value,
-                    })
-                  }
+                  ...form,
+                  salePrice: +e.target.value,
+                })
+                }
                   required />
               </div>
 
               <div>
                 <Label>Preço Custo</Label>
                 <Input type="number" step="0.01" value={form.costPrice || ""} onChange={(e) => setForm({
-                      ...form,
-                      costPrice: +e.target.value,
-                    })
-                  } />
+                  ...form,
+                  costPrice: +e.target.value,
+                })
+                } />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div> 
+              <div>
                 <Label>Quantidade</Label>
                 <Input type="number" value={form.stockQuantity || ""} onChange={(e) => setForm({
-                      ...form,
-                      stockQuantity: +e.target.value,
-                    })
-                  }
+                  ...form,
+                  stockQuantity: +e.target.value,
+                })
+                }
                 />
               </div>
 
               <div>
                 <Label>Estoque Mínimo</Label>
                 <Input type="number" value={form.minStock || ""} onChange={(e) => setForm({
-                      ...form,
-                      minStock: +e.target.value,
-                    })
-                  } />
+                  ...form,
+                  minStock: +e.target.value,
+                })
+                } />
               </div>
             </div>
 
