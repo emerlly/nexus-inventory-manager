@@ -25,6 +25,7 @@ interface DataTableProps<T> {
   onAdd?: () => void;
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
+  onApprove?: (item: T) => void;
   addLabel?: string;
   getId?: (item: T) => string;
   getDetailFields?: (row: T) => { label: string; value: any }[];
@@ -39,6 +40,7 @@ export function DataTable<T>({
   onAdd,
   onEdit,
   onDelete,
+  onApprove,
   addLabel = "Novo",
   getDetailFields,
   getDetailItems,
@@ -73,14 +75,14 @@ export function DataTable<T>({
         )}
       </div>
 
-      <div className="rounded-lg border bg-card">
+      <div className="rounded-lg border bg-card align-center">
         <Table>
           <TableHeader>
             <TableRow>
               {columns.map((col) => (
                 <TableHead key={col.key}>{col.label}</TableHead>
               ))}
-              {(onEdit || onDelete) && <TableHead className="w-24">Ações</TableHead>}
+              {(onEdit || onDelete || onApprove) && <TableHead className="w-24">Ações</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -90,12 +92,13 @@ export function DataTable<T>({
                   {columns.map((col) => (
                     <TableCell key={col.key}><Skeleton className="h-4 w-full" /></TableCell>
                   ))}
-                  {(onEdit || onDelete) && <TableCell><Skeleton className="h-4 w-16" /></TableCell>}
+                  {(onEdit || onDelete || onApprove) && <TableCell><Skeleton className="h-4 w-16" /></TableCell>}
                 </TableRow>
+
               ))
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length + (onEdit || onDelete ? 1 : 0)} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={columns.length + (onEdit || onDelete || onApprove ? 1 : 0)} className="text-center py-8 text-muted-foreground">
                   Nenhum registro encontrado.
                 </TableCell>
               </TableRow>
@@ -107,19 +110,38 @@ export function DataTable<T>({
                       {col.render ? col.render(item) : String((item as any)[col.key] ?? "")}
                     </TableCell>
                   ))}
-                  {(onEdit || onDelete) && (
+                  {(onEdit || onDelete || onApprove) && (
                     <TableCell>
                       <div className="flex items-center gap-1">
+
+                        {onApprove && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onApprove(item)}
+                            className="text-green-600 hover:text-green-700"
+                          >
+                            ✔
+                          </Button>
+                        )}
+
                         {onEdit && (
                           <Button variant="ghost" size="icon" onClick={() => onEdit(item)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
                         )}
+
                         {onDelete && (
-                          <Button variant="ghost" size="icon" onClick={() => setDeleteItem(item)} className="text-destructive hover:text-destructive">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDeleteItem(item)}
+                            className="text-destructive hover:text-destructive"
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         )}
+
                       </div>
                     </TableCell>
                   )}

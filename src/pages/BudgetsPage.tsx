@@ -35,9 +35,11 @@ interface Budget {
 }
 
 const statusColors: Record<string, string> = {
+  rascunho: "bg-muted text-muted-foreground",
   pendente: "bg-warning/15 text-warning",
   aprovado: "bg-success/15 text-success",
   rejeitado: "bg-destructive/15 text-destructive",
+  convertido: "bg-primary/15 text-primary",
 };
 
 export default function BudgetsPage() {
@@ -71,10 +73,18 @@ export default function BudgetsPage() {
     mutationFn: (id: string) => budgetService.delete(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["budgets"] }); toast({ title: "Orçamento excluído!" }); },
   });
-
+  const sendToApproval = useMutation({
+    mutationFn: (id: string) =>
+      budgetService.update(id, { status: "pendente" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgets"] });
+      toast({ title: "Orçamento enviado para aprovação!" });
+    },
+    onError: () =>
+      toast({ variant: "destructive", title: "Erro ao enviar para aprovação" }),
+  });
   const approveBudget = useMutation({
     mutationFn: async (b: Budget) => {
-      // Create sale from budget items
       await saleService.create({
         customer: typeof b.customer === "object" ? b.customer?._id : b.customer,
         items: (b.items || []).map((it) => ({
@@ -83,16 +93,19 @@ export default function BudgetsPage() {
           unitPrice: it.unitPrice,
         })),
       });
-      // Update budget status to approved
-      await budgetService.update(b._id, { status: "aprovado" });
+
+      await budgetService.update(b._id, {
+        status: "convertido",
+      });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["budgets"] });
       qc.invalidateQueries({ queryKey: ["sales"] });
-      toast({ title: "Orçamento aprovado e venda registrada!" });
+      toast({ title: "Orçamento convertido em venda!" });
       setApproveTarget(null);
     },
-    onError: () => toast({ variant: "destructive", title: "Erro ao aprovar orçamento" }),
+    onError: () =>
+      toast({ variant: "destructive", title: "Erro ao converter orçamento" }),
   });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -120,11 +133,17 @@ export default function BudgetsPage() {
 
   const confirmSave = () => {
     setConfirmOpen(false);
+
     save.mutate({
       customer: customer || undefined,
-      items: items.map((i) => ({ product: i.product, quantity: i.quantity, unitPrice: i.unitPrice })),
+      items: items.map((i) => ({
+        product: i.product,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice,
+      })),
       notes: notes || undefined,
       validUntil: validUntil || undefined,
+      status: "rascunho", // 
     });
   };
 
@@ -177,22 +196,72 @@ export default function BudgetsPage() {
             { key: "createdAt", label: "Data", render: (b) => b.createdAt ? new Date(b.createdAt).toLocaleDateString("pt-BR") : "—" },
             { key: "customer", label: "Cliente", render: (b) => typeof b.customer === "object" ? b.customer?.name : "—" },
             { key: "items", label: "Itens", render: (b) => b.items?.length ?? 0 },
-            { key: "Description", label: "Descrição", render: (b) => b.notes ? b.notes.slice(0, 55) + (b.notes.length > 50 ? "..." : "") : "—" }, 
+            { key: "Description", label: "Descrição", render: (b) => b.notes ? b.notes.slice(0, 55) + (b.notes.length > 50 ? "..." : "") : "—" },
             { key: "totalValue", label: "Total", render: (b) => `R$ ${b.totalValue?.toFixed(2)}` },
             { key: "status", label: "Status", render: (b) => <Badge className={statusColors[b.status] || ""}>{b.status}</Badge> },
             {
-              key: "_actions", label: "", render: (b) => (
+              key: "_actions",
+              label: "",
+              render: (b) => (
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => setViewBudget(b)} title="Visualizar"><Eye className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => openEdit(b)} title="Editar"><Pencil className="h-4 w-4" /></Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setViewBudget(b)}
+                    title="Visualizar"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+
+                  {b.status === "rascunho" && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEdit(b)}
+                        title="Editar"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => sendToApproval.mutate(b._id)}
+                        title="Enviar para aprovação"
+                        className="text-blue-600 hover:text-blue-700"
+                      >
+                        <CheckCircle2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+
                   {b.status === "pendente" && (
-                    <Button variant="ghost" size="icon" onClick={() => setApproveTarget(b)} title="Aprovar e converter em venda" className="text-success hover:text-success">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setApproveTarget(b)}
+                      title="Aprovar e converter em venda"
+                      className="text-green-600 hover:text-green-700"
+                    >
                       <CheckCircle2 className="h-4 w-4" />
+                    </Button>
+                  )}
+
+                  {b.status !== "convertido" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => remove.mutate(b._id)}
+                      title="Excluir"
+                      className="text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
               ),
-            },
+            }
           ]}
           data={data}
           loading={isLoading}
