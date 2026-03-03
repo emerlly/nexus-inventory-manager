@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { ConfirmSaveDialog } from "@/components/ConfirmSaveDialog";
 
 export default function SuppliersPage() {
   const qc = useQueryClient();
@@ -16,6 +17,7 @@ export default function SuppliersPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [form, setForm] = useState<SupplierFormData>({ name: "" });
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const { data = [], isLoading } = useQuery({ queryKey: ["suppliers"], queryFn: supplierService.getAll });
 
@@ -32,6 +34,11 @@ export default function SuppliersPage() {
 
   const openNew = () => { setEditing(null); setForm({ name: "", email: "", phone: "", address: "" }); setOpen(true); };
   const openEdit = (s: Supplier) => { setEditing(s); setForm({ name: s.name, email: s.email, phone: s.phone, address: s.address }); setOpen(true); };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setConfirmOpen(true);
+  };
 
   return (
     <div className="flex flex-col">
@@ -55,7 +62,7 @@ export default function SuppliersPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>{editing ? "Editar Fornecedor" : "Novo Fornecedor"}</DialogTitle></DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); save.mutate(form); }} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2"><Label>Nome</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></div>
             <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={form.email || ""} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
             <div className="space-y-2"><Label>Telefone</Label><Input value={form.phone || ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
@@ -67,6 +74,15 @@ export default function SuppliersPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmSaveDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirm={() => { setConfirmOpen(false); save.mutate(form); }}
+        title={editing ? "Confirmar edição" : "Confirmar cadastro"}
+        description={editing ? "Deseja salvar as alterações deste fornecedor?" : "Deseja cadastrar este novo fornecedor?"}
+        isPending={save.isPending}
+      />
     </div>
   );
 }
