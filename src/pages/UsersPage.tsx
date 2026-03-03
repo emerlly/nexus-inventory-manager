@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { ConfirmSaveDialog } from "@/components/ConfirmSaveDialog";
 
 export default function UsersPage() {
   const qc = useQueryClient();
@@ -17,9 +18,10 @@ export default function UsersPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
   const [form, setForm] = useState<UserFormData>({ name: "", email: "", password: "", role: "user" });
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const { data = [], isLoading } = useQuery({ queryKey: ["users"], queryFn: userService.getAll });
-  console.log("dads", data);
+
   const save = useMutation({
     mutationFn: (d: UserFormData) => editing ? userService.update(editing._id, d) : userService.create(d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["users"] }); setOpen(false); toast({ title: "Salvo com sucesso!" }); },
@@ -34,6 +36,11 @@ export default function UsersPage() {
 
   const openNew = () => { setEditing(null); setForm({ name: "", email: "", password: "", role: "user" }); setOpen(true); };
   const openEdit = (u: User) => { setEditing(u); setForm({ name: u.name, email: u.email, role: u.role }); setOpen(true); };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setConfirmOpen(true);
+  };
 
   return (
     <div className="flex flex-col">
@@ -62,7 +69,7 @@ export default function UsersPage() {
           <DialogHeader>
             <DialogTitle>{editing ? "Editar Usuário" : "Novo Usuário"}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); save.mutate(form); }} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label>Nome</Label>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
@@ -94,6 +101,15 @@ export default function UsersPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmSaveDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirm={() => { setConfirmOpen(false); save.mutate(form); }}
+        title={editing ? "Confirmar edição" : "Confirmar cadastro"}
+        description={editing ? "Deseja salvar as alterações deste usuário?" : "Deseja cadastrar este novo usuário?"}
+        isPending={save.isPending}
+      />
     </div>
   );
 }
