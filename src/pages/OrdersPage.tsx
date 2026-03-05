@@ -7,35 +7,54 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Package, CheckCircle2, Eye, ChevronDown, ChevronUp, Pencil, Trash2, Plus } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Search, Package, CheckCircle2, Eye, ChevronDown, ChevronUp } from "lucide-react";
 import { DetailDialog } from "@/components/DetailDialog";
 
 const STATUS_STEPS: { key: OrderStatus; label: string }[] = [
   { key: "pendente", label: "Pendente" },
+  { key: "aguardando_pagamento", label: "Aguardando Pagamento" },
   { key: "separando", label: "Separando" },
+  { key: "preparando", label: "Preparando" },
   { key: "produzindo", label: "Produzindo" },
   { key: "enviado", label: "Enviado" },
   { key: "entregue", label: "Entregue" },
+  { key: "cancelado", label: "Cancelado" },
 ];
 
 const statusColors: Record<OrderStatus, string> = {
   pendente: "bg-muted text-muted-foreground",
+  aguardando_pagamento: "bg-warning/15 text-warning border-warning/30",
   separando: "bg-warning/15 text-warning border-warning/30",
+  preparando: "bg-orange-100 text-orange-700 border-orange-300",
   produzindo: "bg-primary/15 text-primary border-primary/30",
   enviado: "bg-blue-100 text-blue-700 border-blue-300",
   entregue: "bg-success/15 text-success border-success/30",
+  cancelado: "bg-destructive/15 text-destructive border-destructive/30",
 };
 
+// Roles that can change order status
+const STATUS_CHANGE_ROLES = ["admin", "gerente", "estoquista", "operador"];
+
 function StatusStepper({ currentStatus }: { currentStatus: OrderStatus }) {
-  const currentIdx = STATUS_STEPS.findIndex((s) => s.key === currentStatus);
+  // Exclude "cancelado" from stepper flow
+  const flowSteps = STATUS_STEPS.filter((s) => s.key !== "cancelado");
+  const currentIdx = flowSteps.findIndex((s) => s.key === currentStatus);
+  const isCancelled = currentStatus === "cancelado";
+
+  if (isCancelled) {
+    return (
+      <Badge className={statusColors.cancelado}>Cancelado</Badge>
+    );
+  }
+
   return (
     <div className="flex items-center gap-1">
-      {STATUS_STEPS.map((step, idx) => {
+      {flowSteps.map((step, idx) => {
         const isDone = idx < currentIdx;
         const isCurrent = idx === currentIdx;
         return (
@@ -43,8 +62,8 @@ function StatusStepper({ currentStatus }: { currentStatus: OrderStatus }) {
             <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors ${isDone ? "bg-success text-success-foreground" : isCurrent ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
               {isDone ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
             </div>
-            <span className={`hidden text-xs sm:inline ${isCurrent ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{step.label}</span>
-            {idx < STATUS_STEPS.length - 1 && <div className={`mx-1 h-0.5 w-4 rounded ${isDone ? "bg-success" : "bg-border"}`} />}
+            <span className={`hidden text-xs xl:inline ${isCurrent ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{step.label}</span>
+            {idx < flowSteps.length - 1 && <div className={`mx-1 h-0.5 w-4 rounded ${isDone ? "bg-success" : "bg-border"}`} />}
           </div>
         );
       })}
@@ -52,42 +71,23 @@ function StatusStepper({ currentStatus }: { currentStatus: OrderStatus }) {
   );
 }
 
-interface EditItemForm {
-  product: string;
-  productName: string;
-  quantity: number;
-  unitPrice: number;
-}
-
 export default function OrdersPage() {
   const qc = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [detailOrder, setDetailOrder] = useState<Order | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [editingItems, setEditingItems] = useState<EditItemForm[] | null>(null);
-  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
 
   const { data = [], isLoading } = useQuery({ queryKey: ["orders"], queryFn: orderService.getAll });
-  const products = useQuery({ queryKey: ["products"], queryFn: productService.getAll });
+
+  const canChangeStatus = STATUS_CHANGE_ROLES.includes(user?.role || "");
 
   const updateStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) => orderService.update(id, { status }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["orders"] }); toast({ title: "Status atualizado!" }); },
     onError: () => toast({ variant: "destructive", title: "Erro ao atualizar status" }),
-  });
-
-  const updateItems = useMutation({
-    mutationFn: ({ id, items }: { id: string; items: { product: string; quantity: number; unitPrice: number }[] }) =>
-      orderService.update(id, { items }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["orders"] });
-      toast({ title: "Itens atualizados!" });
-      setEditingItems(null);
-      setEditingOrderId(null);
-    },
-    onError: () => toast({ variant: "destructive", title: "Erro ao atualizar itens" }),
   });
 
   const filtered = data.filter((o: Order) => {
@@ -98,35 +98,6 @@ export default function OrdersPage() {
   });
 
   const toggleExpand = (id: string) => setExpandedId(expandedId === id ? null : id);
-
-
-
-  const addEditItem = () => {
-    setEditingItems([...(editingItems || []), { product: "", productName: "", quantity: 1, unitPrice: 0 }]);
-  };
-
-  const removeEditItem = (idx: number) => {
-    setEditingItems((editingItems || []).filter((_, i) => i !== idx));
-  };
-
-  const updateEditItem = (idx: number, field: keyof EditItemForm, value: any) => {
-    const items = [...(editingItems || [])];
-    items[idx] = { ...items[idx], [field]: value };
-    if (field === "product") {
-      const prod = (products.data || []).find((p: any) => p._id === value);
-      if (prod) {
-        items[idx].productName = prod.name;
-        items[idx].unitPrice = prod.salePrice || 0;
-      }
-    }
-    setEditingItems(items);
-  };
-
-  const saveEditItems = () => {
-    if (!editingOrderId || !editingItems) return;
-    const items = editingItems.map((i) => ({ product: i.product, quantity: i.quantity, unitPrice: i.unitPrice }));
-    updateItems.mutate({ id: editingOrderId, items });
-  };
 
   const getDetailFields = (o: Order) => [
     { label: "ID", value: `#${o._id.slice(-15)}` },
@@ -162,7 +133,7 @@ export default function OrdersPage() {
             <Input placeholder="Buscar por cliente ou ID..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-48"><SelectValue placeholder="Filtrar status" /></SelectTrigger>
+            <SelectTrigger className="w-56"><SelectValue placeholder="Filtrar status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
               {STATUS_STEPS.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
@@ -189,7 +160,7 @@ export default function OrdersPage() {
                       <div className="space-y-1">
                         <div className="flex items-center gap-3">
                           <span className="font-mono text-sm text-muted-foreground">#{order._id.slice(-15)}</span>
-                          <Badge className={statusColors[order.status]}>{order.status}</Badge>
+                          <Badge className={statusColors[order.status]}>{STATUS_STEPS.find(s => s.key === order.status)?.label || order.status}</Badge>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDetailOrder(order)} title="Ver detalhes">
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -207,10 +178,14 @@ export default function OrdersPage() {
                             {isExpanded ? <ChevronUp className="mr-1 h-4 w-4" /> : <ChevronDown className="mr-1 h-4 w-4" />}
                             Itens
                           </Button>
-                          {order.status !== "entregue" && (
+                          {canChangeStatus && order.status !== "entregue" && order.status !== "cancelado" && (
                             <Select value={order.status} onValueChange={(v) => updateStatus.mutate({ id: order._id, status: v as OrderStatus })}>
-                              <SelectTrigger className="h-8 w-40 text-xs"><SelectValue /></SelectTrigger>
-                              <SelectContent>{STATUS_STEPS.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}</SelectContent>
+                              <SelectTrigger className="h-8 w-52 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {STATUS_STEPS.map((s) => (
+                                  <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
+                                ))}
+                              </SelectContent>
                             </Select>
                           )}
                         </div>
@@ -255,64 +230,6 @@ export default function OrdersPage() {
         )}
       </div>
 
-      {/* Edit Items Dialog 
-      <Dialog open={!!editingItems} onOpenChange={() => { setEditingItems(null); setEditingOrderId(null); }}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Editar Itens do Pedido</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Produto</TableHead>
-                  <TableHead>Qtd</TableHead>
-                  <TableHead>Preço Unit.</TableHead>
-                  <TableHead>Subtotal</TableHead>
-                  <TableHead className="w-12"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(editingItems || []).map((item, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell>
-                      <Select value={item.product} onValueChange={(v) => updateEditItem(idx, "product", v)}>
-                        <SelectTrigger className="w-full"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                        <SelectContent>
-                          {(products.data || []).map((p: any) => <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Input type="number" min={1} value={item.quantity} onChange={(e) => updateEditItem(idx, "quantity", +e.target.value)} className="w-20" />
-                    </TableCell>
-                    <TableCell>
-                      <Input type="number" step="0.01" value={item.unitPrice} onChange={(e) => updateEditItem(idx, "unitPrice", +e.target.value)} className="w-28" />
-                    </TableCell>
-                    <TableCell className="text-right font-medium">R$ {(item.quantity * item.unitPrice).toFixed(2)}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => removeEditItem(idx)} className="text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <div className="flex items-center justify-between">
-              <Button variant="outline" size="sm" onClick={addEditItem}><Plus className="mr-1 h-4 w-4" /> Adicionar Item</Button>
-              <p className="text-sm font-semibold">
-                Total: R$ {(editingItems || []).reduce((s, i) => s + i.quantity * i.unitPrice, 0).toFixed(2)}
-              </p>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => { setEditingItems(null); setEditingOrderId(null); }}>Cancelar</Button>
-              <Button onClick={saveEditItems} disabled={updateItems.isPending}>
-                {updateItems.isPending ? "Salvando..." : "Salvar Itens"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-*/}
       {detailOrder && (
         <DetailDialog
           open={!!detailOrder}

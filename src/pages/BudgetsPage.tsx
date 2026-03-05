@@ -69,12 +69,15 @@ export default function BudgetsPage() {
 
   const remove = useMutation({
     mutationFn: (id: string) => budgetService.delete(id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["budgets"] }); toast({ title: "Orçamento excluído!" }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgets"] });
+      toast({ title: "Orçamento excluído!" });
+      setViewBudget(null);
+    },
   });
 
   const approveBudget = useMutation({
     mutationFn: async (b: Budget) => {
-      // Create sale from budget items
       await saleService.create({
         customer: typeof b.customer === "object" ? b.customer?._id : b.customer,
         items: (b.items || []).map((it) => ({
@@ -83,7 +86,6 @@ export default function BudgetsPage() {
           unitPrice: it.unitPrice,
         })),
       });
-      // Update budget status to approved
       await budgetService.update(b._id, { status: "aprovado" });
     },
     onSuccess: () => {
@@ -91,12 +93,14 @@ export default function BudgetsPage() {
       qc.invalidateQueries({ queryKey: ["sales"] });
       toast({ title: "Orçamento aprovado e venda registrada!" });
       setApproveTarget(null);
+      setViewBudget(null);
     },
     onError: () => toast({ variant: "destructive", title: "Erro ao aprovar orçamento" }),
   });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [approveTarget, setApproveTarget] = useState<Budget | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Budget | null>(null);
 
   const addItem = () => setItems([...items, { product: "", productName: "", quantity: 1, unitPrice: 0 }]);
   const removeItem = (i: number) => setItems(items.filter((_, idx) => idx !== i));
@@ -143,6 +147,7 @@ export default function BudgetsPage() {
       quantity: it.quantity,
       unitPrice: it.unitPrice,
     })));
+    setViewBudget(null);
     setOpen(true);
   };
 
@@ -174,163 +179,175 @@ export default function BudgetsPage() {
       <div className="flex-1 p-6">
         <DataTable
           columns={[
-            { key: "createdAt", label: "Data", render: (b) => b.createdAt ? new Date(b.createdAt).toLocaleDateString("pt-BR") : "—" },
-            { key: "customer", label: "Cliente", render: (b) => typeof b.customer === "object" ? b.customer?.name : "—" },
-            { key: "items", label: "Itens", render: (b) => b.items?.length ?? 0 },
-            { key: "Description", label: "Descrição", render: (b) => b.notes ? b.notes.slice(0, 55) + (b.notes.length > 50 ? "..." : "") : "—" }, 
-            { key: "totalValue", label: "Total", render: (b) => `R$ ${b.totalValue?.toFixed(2)}` },
-            { key: "status", label: "Status", render: (b) => <Badge className={statusColors[b.status] || ""}>{b.status}</Badge> },
+            { key: "createdAt", label: "Data", render: (b: Budget) => b.createdAt ? new Date(b.createdAt).toLocaleDateString("pt-BR") : "—" },
+            { key: "customer", label: "Cliente", render: (b: Budget) => typeof b.customer === "object" ? b.customer?.name : "—" },
+            { key: "items", label: "Itens", render: (b: Budget) => b.items?.length ?? 0 },
+            { key: "Description", label: "Descrição", render: (b: Budget) => b.notes ? b.notes.slice(0, 55) + (b.notes.length > 50 ? "..." : "") : "—" },
+            { key: "totalValue", label: "Total", render: (b: Budget) => `R$ ${b.totalValue?.toFixed(2)}` },
+            { key: "status", label: "Status", render: (b: Budget) => <Badge className={statusColors[b.status] || ""}>{b.status}</Badge> },
             {
-              key: "_actions", label: "", render: (b) => (
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => setViewBudget(b)} title="Visualizar"><Eye className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => openEdit(b)} title="Editar"><Pencil className="h-4 w-4" /></Button>
-                  {b.status === "pendente" && (
-                    <Button variant="ghost" size="icon" onClick={() => setApproveTarget(b)} title="Aprovar e converter em venda" className="text-success hover:text-success">
-                      <CheckCircle2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
+              key: "_actions", label: "", render: (b: Budget) => (
+                <Button variant="ghost" size="icon" onClick={() => setViewBudget(b)} title="Visualizar">
+                  <Eye className="h-4 w-4" />
+                </Button>
               ),
             },
           ]}
           data={data}
           loading={isLoading}
           onAdd={openNew}
-          onDelete={(b: any) => remove.mutate(b._id)}
           addLabel="Novo Orçamento"
         />
       </div>
 
-      {/* View / Export Dialog */}
-      <Dialog open={!!viewBudget} onOpenChange={() => setViewBudget(null)} >
+      {/* View / Export Dialog with actions */}
+      <Dialog open={!!viewBudget} onOpenChange={() => setViewBudget(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <span>Orçamento</span>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={exportPNG}><FileImage className="mr-1 h-4 w-4" /> PNG</Button>
-                <Button variant="outline" size="sm" onClick={exportPDF}><FileText className="mr-1 h-4 w-4" /> PDF</Button>
-              </div>
-            </DialogTitle>
+            <DialogTitle>Orçamento</DialogTitle>
           </DialogHeader>
 
           {viewBudget && (
-            <div ref={printRef} className="max-w-2xl max-h-[90vh] overflow-y-auto p-6 bg-background text-foreground">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h2 className="text-xl font-bold text-foreground">{company.data?.name || "NexusSystems"}</h2>
-                  {company.data?.cnpj && <p className="text-xs text-muted-foreground">CNPJ: {company.data.cnpj}</p>}
-                  {company.data?.phone && <p className="text-xs text-muted-foreground">Tel: {company.data.phone}</p>}
-                  {company.data?.email && <p className="text-xs text-muted-foreground">Email: {company.data.email}</p>}
-                  {company.data?.address && <p className="text-xs text-muted-foreground">{company.data.address}</p>}
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-semibold text-foreground">ORÇAMENTO</p>
-                  <p className="text-xs text-muted-foreground">Nº #{viewBudget._id?.slice(-8).toUpperCase()}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Emissão: {viewBudget.createdAt ? new Date(viewBudget.createdAt).toLocaleDateString("pt-BR") : "—"}
-                  </p>
-                </div>
+            <>
+              {/* Action buttons bar */}
+              <div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
+                <Button variant="outline" size="sm" onClick={exportPNG}>
+                  <FileImage className="mr-1 h-4 w-4" /> PNG
+                </Button>
+                <Button variant="outline" size="sm" onClick={exportPDF}>
+                  <FileText className="mr-1 h-4 w-4" /> PDF
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => openEdit(viewBudget)}>
+                  <Pencil className="mr-1 h-4 w-4" /> Editar
+                </Button>
+                {viewBudget.status === "pendente" && (
+                  <Button size="sm" className="bg-success hover:bg-success/90 text-success-foreground" onClick={() => setApproveTarget(viewBudget)}>
+                    <CheckCircle2 className="mr-1 h-4 w-4" /> Aprovar
+                  </Button>
+                )}
+                <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(viewBudget)}>
+                  <Trash2 className="mr-1 h-4 w-4" /> Excluir
+                </Button>
               </div>
 
-              <Separator className="my-3" />
-
-              <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">Cliente</p>
-                  <p className="font-medium text-foreground">{typeof viewBudget.customer === "object" ? viewBudget.customer?.name : "—"}</p>
-                  {typeof viewBudget.customer === "object" && viewBudget.customer?.email && (
-                    <p className="text-xs text-muted-foreground">{viewBudget.customer.email}</p>
-                  )}
-                  {typeof viewBudget.customer === "object" && viewBudget.customer?.phone && (
-                    <p className="text-xs text-muted-foreground">Tel: {viewBudget.customer.phone}</p>
-                  )}
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Validade</p>
-                  <p className="font-medium text-foreground">
-                    {viewBudget.validUntil
-                      ? new Date(viewBudget.validUntil).toLocaleDateString("pt-BR")
-                      : "—"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Items table */}
-              <table className="w-full text-sm mb-4">
-                <thead>
-                  <tr className="border-b border-border text-left">
-                    <th className="py-2 font-semibold text-foreground">#</th>
-                    <th className="py-2 font-semibold text-foreground">Produto</th>
-                    <th className="py-2 font-semibold text-center text-foreground">Qtd</th>
-                    <th className="py-2 font-semibold text-right text-foreground">Preço Unit.</th>
-                    <th className="py-2 font-semibold text-right text-foreground">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(viewBudget.items || []).map((item, i) => (
-                    <tr key={i} className="border-b border-border/50">
-                      <td className="py-2 text-muted-foreground">{i + 1}</td>
-                      <td className="py-2 text-foreground">{typeof item.product === "object" ? item.product?.name : item.product}</td>
-                      <td className="py-2 text-center text-foreground">{item.quantity}</td>
-                      <td className="py-2 text-right text-foreground">R$ {item.unitPrice?.toFixed(2)}</td>
-                      <td className="py-2 text-right font-medium text-foreground">R$ {item.totalPrice?.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              <div className="flex justify-end mb-4">
-                <div className="text-right border-t-2 border-primary pt-2 px-4">
-                  <p className="text-xs text-muted-foreground">Total do Orçamento</p>
-                  <p className="text-xl font-bold text-foreground">R$ {viewBudget.totalValue?.toFixed(2)}</p>
-                </div>
-              </div>
-
-              {viewBudget.notes && (
-                <>
-                  <Separator className="my-3" />
-                  <div className="mb-4">
-                    <p className="text-xs font-semibold text-muted-foreground mb-1">Observações / Condições</p>
-                    <p className="text-sm text-foreground whitespace-pre-wrap">{viewBudget.notes}</p>
+              {/* Printable content */}
+              <div ref={printRef} className="p-6 bg-background text-foreground">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-foreground">{company.data?.name || "NexusSystems"}</h2>
+                    {company.data?.cnpj && <p className="text-xs text-muted-foreground">CNPJ: {company.data.cnpj}</p>}
+                    {company.data?.phone && <p className="text-xs text-muted-foreground">Tel: {company.data.phone}</p>}
+                    {company.data?.email && <p className="text-xs text-muted-foreground">Email: {company.data.email}</p>}
+                    {company.data?.address && <p className="text-xs text-muted-foreground">{company.data.address}</p>}
                   </div>
-                </>
-              )}
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-foreground">ORÇAMENTO</p>
+                    <p className="text-xs text-muted-foreground">Nº #{viewBudget._id?.slice(-8).toUpperCase()}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Emissão: {viewBudget.createdAt ? new Date(viewBudget.createdAt).toLocaleDateString("pt-BR") : "—"}
+                    </p>
+                    <Badge className={`mt-1 ${statusColors[viewBudget.status] || ""}`}>{viewBudget.status}</Badge>
+                  </div>
+                </div>
 
-              {/* Validity notice */}
-              <div className="rounded-md border border-border bg-muted/30 p-3 mb-6 text-center">
-                <p className="text-xs text-muted-foreground">
-                  {viewBudget.validUntil
-                    ? `Este orçamento é válido até ${new Date(viewBudget.validUntil).toLocaleDateString("pt-BR")}.`
-                    : "Validade não informada. Consulte o emitente."}
-                  {" "}Valores sujeitos a alteração sem aviso prévio após o vencimento.
+                <Separator className="my-3" />
+
+                <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Cliente</p>
+                    <p className="font-medium text-foreground">{typeof viewBudget.customer === "object" ? viewBudget.customer?.name : "—"}</p>
+                    {typeof viewBudget.customer === "object" && viewBudget.customer?.email && (
+                      <p className="text-xs text-muted-foreground">{viewBudget.customer.email}</p>
+                    )}
+                    {typeof viewBudget.customer === "object" && viewBudget.customer?.phone && (
+                      <p className="text-xs text-muted-foreground">Tel: {viewBudget.customer.phone}</p>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Validade</p>
+                    <p className="font-medium text-foreground">
+                      {viewBudget.validUntil
+                        ? new Date(viewBudget.validUntil).toLocaleDateString("pt-BR")
+                        : "—"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Items table */}
+                <table className="w-full text-sm mb-4">
+                  <thead>
+                    <tr className="border-b border-border text-left">
+                      <th className="py-2 font-semibold text-foreground">#</th>
+                      <th className="py-2 font-semibold text-foreground">Produto</th>
+                      <th className="py-2 font-semibold text-center text-foreground">Qtd</th>
+                      <th className="py-2 font-semibold text-right text-foreground">Preço Unit.</th>
+                      <th className="py-2 font-semibold text-right text-foreground">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(viewBudget.items || []).map((item, i) => (
+                      <tr key={i} className="border-b border-border/50">
+                        <td className="py-2 text-muted-foreground">{i + 1}</td>
+                        <td className="py-2 text-foreground">{typeof item.product === "object" ? item.product?.name : item.product}</td>
+                        <td className="py-2 text-center text-foreground">{item.quantity}</td>
+                        <td className="py-2 text-right text-foreground">R$ {item.unitPrice?.toFixed(2)}</td>
+                        <td className="py-2 text-right font-medium text-foreground">R$ {item.totalPrice?.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                <div className="flex justify-end mb-4">
+                  <div className="text-right border-t-2 border-primary pt-2 px-4">
+                    <p className="text-xs text-muted-foreground">Total do Orçamento</p>
+                    <p className="text-xl font-bold text-foreground">R$ {viewBudget.totalValue?.toFixed(2)}</p>
+                  </div>
+                </div>
+
+                {viewBudget.notes && (
+                  <>
+                    <Separator className="my-3" />
+                    <div className="mb-4">
+                      <p className="text-xs font-semibold text-muted-foreground mb-1">Observações / Condições</p>
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{viewBudget.notes}</p>
+                    </div>
+                  </>
+                )}
+
+                {/* Validity notice */}
+                <div className="rounded-md border border-border bg-muted/30 p-3 mb-6 text-center">
+                  <p className="text-xs text-muted-foreground">
+                    {viewBudget.validUntil
+                      ? `Este orçamento é válido até ${new Date(viewBudget.validUntil).toLocaleDateString("pt-BR")}.`
+                      : "Validade não informada. Consulte o emitente."}
+                    {" "}Valores sujeitos a alteração sem aviso prévio após o vencimento.
+                  </p>
+                </div>
+
+                {/* Signature area */}
+                <div className="grid grid-cols-2 gap-8 mt-8 mb-4">
+                  <div className="text-center">
+                    <div className="border-t border-foreground/30 pt-2 mx-4">
+                      <p className="text-xs text-muted-foreground">{company.data?.name || "NexusSystems"}</p>
+                      <p className="text-[10px] text-muted-foreground">Emitente</p>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="border-t border-foreground/30 pt-2 mx-4">
+                      <p className="text-xs text-muted-foreground">
+                        {typeof viewBudget.customer === "object" ? viewBudget.customer?.name : "Cliente"}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">Assinatura do Cliente</p>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-center text-[10px] text-muted-foreground mt-6">
+                  © {new Date().getFullYear()} {company.data?.name || "NexusSystems"} — Todos os direitos reservados.
                 </p>
               </div>
-
-              {/* Signature area */}
-              <div className="grid grid-cols-2 gap-8 mt-8 mb-4">
-                <div className="text-center">
-                  <div className="border-t border-foreground/30 pt-2 mx-4">
-                    <p className="text-xs text-muted-foreground">{company.data?.name || "NexusSystems"}</p>
-                    <p className="text-[10px] text-muted-foreground">Emitente</p>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="border-t border-foreground/30 pt-2 mx-4">
-                    <p className="text-xs text-muted-foreground">
-                      {typeof viewBudget.customer === "object" ? viewBudget.customer?.name : "Cliente"}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">Assinatura do Cliente</p>
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-center text-[10px] text-muted-foreground mt-6">
-                © {new Date().getFullYear()} {company.data?.name || "NexusSystems"} — Todos os direitos reservados.
-              </p>
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
@@ -425,6 +442,15 @@ export default function BudgetsPage() {
         description={`Deseja aprovar este orçamento de R$ ${approveTarget?.totalValue?.toFixed(2) || "0.00"} e convertê-lo em uma venda? O estoque será atualizado automaticamente.`}
         confirmLabel="Aprovar e Vender"
         isPending={approveBudget.isPending}
+      />
+
+      <ConfirmSaveDialog
+        open={!!deleteTarget}
+        onOpenChange={() => setDeleteTarget(null)}
+        onConfirm={() => { if (deleteTarget) { remove.mutate(deleteTarget._id); setDeleteTarget(null); } }}
+        title="Excluir orçamento"
+        description={`Tem certeza que deseja excluir o orçamento #${deleteTarget?._id?.slice(-8).toUpperCase() || ""}? Esta ação não pode ser desfeita.`}
+        confirmLabel="Excluir"
       />
     </div>
   );
