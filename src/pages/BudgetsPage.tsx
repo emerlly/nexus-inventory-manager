@@ -179,17 +179,23 @@ export default function BudgetsPage() {
       <div className="flex-1 p-6">
         <DataTable
           columns={[
-            { key: "createdAt", label: "Data", render: (b) => b.createdAt ? new Date(b.createdAt).toLocaleDateString("pt-BR") : "—" },
-            { key: "customer", label: "Cliente", render: (b) => typeof b.customer === "object" ? b.customer?.name : "—" },
-            { key: "items", label: "Itens", render: (b) => b.items?.length ?? 0 },
-            { key: "Description", label: "Descrição", render: (b) => b.notes ? b.notes.slice(0, 55) + (b.notes.length > 50 ? "..." : "") : "—" },
-            { key: "totalValue", label: "Total", render: (b) => `R$ ${b.totalValue?.toFixed(2)}` },
-            { key: "status", label: "Status", render: (b) => <Badge className={statusColors[b.status] || ""}>{b.status}</Badge> },
+            { key: "createdAt", label: "Data", render: (b: Budget) => b.createdAt ? new Date(b.createdAt).toLocaleDateString("pt-BR") : "—" },
+            { key: "customer", label: "Cliente", render: (b: Budget) => typeof b.customer === "object" ? b.customer?.name : "—" },
+            { key: "items", label: "Itens", render: (b: Budget) => b.items?.length ?? 0 },
+            { key: "Description", label: "Descrição", render: (b: Budget) => b.notes ? b.notes.slice(0, 55) + (b.notes.length > 50 ? "..." : "") : "—" },
+            { key: "totalValue", label: "Total", render: (b: Budget) => `R$ ${b.totalValue?.toFixed(2)}` },
+            { key: "status", label: "Status", render: (b: Budget) => <Badge className={statusColors[b.status] || ""}>{b.status}</Badge> },
+            {
+              key: "_actions", label: "", render: (b: Budget) => (
+                <Button variant="ghost" size="icon" onClick={() => setViewBudget(b)} title="Visualizar">
+                  <Eye className="h-4 w-4" />
+                </Button>
+              ),
+            },
           ]}
           data={data}
           loading={isLoading}
           onAdd={openNew}
-          onView={(b: any) => setViewBudget(b)}
           addLabel="Novo Orçamento"
         />
       </div>
