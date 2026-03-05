@@ -219,7 +219,15 @@ export interface StockLow {
 }
 
 // ===== Order =====
-export type OrderStatus = "pendente" | "separando" | "produzindo" | "enviado" | "entregue";
+export type OrderStatus = 
+  | "pendente" 
+  | "aguardando_pagamento" 
+  | "separando" 
+  | "produzindo" 
+  | "preparando" 
+  | "enviado" 
+  | "entregue" 
+  | "cancelado";
 
 export interface Order {
   _id: string;
