@@ -186,7 +186,7 @@ export default function SalesPage() {
         onOpenChange={setConfirmOpen}
         onConfirm={confirmSale}
         title="Confirmar venda"
-        description={`Deseja registrar esta venda no valor de R$ ${total.toFixed(2)}? O estoque dos produtos será atualizado automaticamente.`}
+        description={`Deseja registrar esta venda no valor de R$ ${total.toFixed(2)} para o cliente ${customers.data?.find((c: any) => c._id === customer)?.name}?`}
         confirmLabel="Registrar Venda"
         isPending={createSale.isPending}
       />
