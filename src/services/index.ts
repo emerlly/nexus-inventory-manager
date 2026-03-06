@@ -35,6 +35,7 @@ export const budgetService = {
   create: (data: any) => api.post("/quotes", data).then((r) => r.data),
   update: (id: string, data: any) => api.put(`/quotes/${id}`, data).then((r) => r.data),
   delete: (id: string) => api.delete(`/quotes/${id}`).then((r) => r.data),
+  approve: (id: string, data: any) => api.put(`/quotes/${id}/approve`, data).then((r) => r.data),
 };
 
 /* ================= COMPANY ================= */

@@ -24,6 +24,10 @@ export function createCrudService<T, F>(endpoint: string) {
       const res = await api.put(`${endpoint}/${id}`, data);
       return res.data;
     },
+     updateStatus: async (id: string, data: Partial<F>): Promise<T> => {
+      const res = await api.patch(`${endpoint}/${id}/status`, data);
+      return res.data;
+    },
     remove: async (id: string): Promise<void> => {
       await api.delete(`${endpoint}/${id}`);
     },

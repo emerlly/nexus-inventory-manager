@@ -128,6 +128,7 @@ export default function SalesPage() {
                 <SelectContent>
                   {(customers.data || []).map((c: any) => <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>)}
                 </SelectContent>
+
               </Select>
             </div>
 
@@ -155,7 +156,7 @@ export default function SalesPage() {
                   </div>
                   <div className="w-28 space-y-1">
                     <Label className="text-xs">Preço Unit.</Label>
-                    <Input type="number" step="0.01" value={item.unitPrice} onChange={(e) => updateItem(i, "unitPrice", +e.target.value)} />
+                    <Input type="number" step="0.01" value={item.unitPrice} disabled onChange={(e) => updateItem(i, "unitPrice", +e.target.value)} />
                   </div>
                   <div className="w-24 text-right font-medium text-sm pb-2">
                     R$ {(item.quantity * item.unitPrice).toFixed(2)}

@@ -73,9 +73,9 @@ export default function OrdersPage() {
   const products = useQuery({ queryKey: ["products"], queryFn: productService.getAll });
 
   const updateStatus = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: OrderStatus }) => orderService.update(id, { status }),
+    mutationFn: ({ id, status }: { id: string; status: OrderStatus }) => orderService.updateStatus(id, { status }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["orders"] }); toast({ title: "Status atualizado!" }); },
-    onError: () => toast({ variant: "destructive", title: "Erro ao atualizar status" }),
+    onError: (error: any) => toast({ variant: "destructive", title: `Erro ao atualizar status`, description: error.response?.data?.message || "Tente novamente mais tarde." }),
   });
 
   const updateItems = useMutation({
@@ -87,7 +87,7 @@ export default function OrdersPage() {
       setEditingItems(null);
       setEditingOrderId(null);
     },
-    onError: () => toast({ variant: "destructive", title: "Erro ao atualizar itens" }),
+    onError: (error: any) => toast({ variant: "destructive", title: "Erro ao atualizar itens", description: error.response?.data?.message || "Tente novamente mais tarde." }),
   });
 
   const filtered = data.filter((o: Order) => {

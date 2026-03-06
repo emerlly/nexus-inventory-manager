@@ -75,7 +75,7 @@ export default function BudgetsPage() {
   });
   const sendToApproval = useMutation({
     mutationFn: (id: string) =>
-      budgetService.update(id, { status: "pendente" }),
+      budgetService.approve(id, { status: "aprovado" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["budgets"] });
       toast({ title: "Orçamento enviado para aprovação!" });
@@ -204,58 +204,30 @@ export default function BudgetsPage() {
               label: "",
               render: (b) => (
                 <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setViewBudget(b)}
-                    title="Visualizar"
-                  >
+                  <Button variant="ghost"  size="icon" onClick={() => setViewBudget(b)} title="Visualizar" >
                     <Eye className="h-4 w-4" />
                   </Button>
 
                   {b.status === "rascunho" && (
                     <>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openEdit(b)}
-                        title="Editar"
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(b)} title="Editar" >
                         <Pencil className="h-4 w-4" />
                       </Button>
 
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => sendToApproval.mutate(b._id)}
-                        title="Enviar para aprovação"
-                        className="text-blue-600 hover:text-blue-700"
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => sendToApproval.mutate(b._id)} title="Aprovar Orçamento" className="text-blue-600 hover:text-blue-700" >
                         <CheckCircle2 className="h-4 w-4" />
                       </Button>
                     </>
                   )}
 
                   {b.status === "pendente" && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setApproveTarget(b)}
-                      title="Aprovar e converter em venda"
-                      className="text-green-600 hover:text-green-700"
-                    >
+                    <Button variant="ghost" size="icon" onClick={() => setApproveTarget(b)} title="Aprovar e converter em venda" className="text-green-600 hover:text-green-700">
                       <CheckCircle2 className="h-4 w-4" />
                     </Button>
                   )}
 
                   {b.status !== "convertido" && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => remove.mutate(b._id)}
-                      title="Excluir"
-                      className="text-destructive"
-                    >
+                    <Button variant="ghost" size="icon" onClick={() => remove.mutate(b._id)} title="Excluir" className="text-destructive" >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
