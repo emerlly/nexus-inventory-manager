@@ -90,6 +90,9 @@ export interface Customer {
   email?: string;
   phone?: string;
   address?: string;
+  cep?: string;
+  cidade?: string;
+  rua?: string;
   createdAt?: string;
   cpf?: string;
   active?: boolean;
@@ -104,6 +107,9 @@ export interface CustomerFormData {
   email?: string;
   phone?: string;
   address?: string;
+  cep?: string;
+  cidade?: string;
+  rua?: string;
   cpf?: string;
   password?: string;
   active?: boolean;
