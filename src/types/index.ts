@@ -85,31 +85,41 @@ export interface CategoryFormData {
 
 // ===== Customer =====
 export interface Customer {
-  _id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  createdAt?: string;
-  cpf?: string;
-  active?: boolean;
-  password?: string;
-  company?: string;
-  companyId?: string;
-  role?: string;
+  _id: string
+  name: string
+  document: string
+  documentType: "CPF" | "CNPJ"
+  phone?: string
+  email?: string
+  active: boolean
+
+  address?: {
+    cep?: string
+    street?: string
+    number?: string
+    neighborhood?: string
+    city?: string
+    state?: string
+    complement?: string
+  }
 }
 
 export interface CustomerFormData {
-  name: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  cpf?: string;
-  password?: string;
-  active?: boolean;
-  company?: string;
-  companyId?: string;
-  role?: string;
+  name: string
+  document: string
+  documentType: "CPF" | "CNPJ"
+  phone?: string
+  email?: string
+
+  address: {
+    cep?: string
+    street?: string
+    number?: string
+    neighborhood?: string
+    city?: string
+    state?: string
+    complement?: string
+  }
 }
 
 // ===== Supplier =====

@@ -140,6 +140,7 @@ export default function BudgetsPage() {
         product: i.product,
         quantity: i.quantity,
         unitPrice: i.unitPrice,
+        //totalPrice: i.quantity * i.unitPrice,
       })),
       notes: notes || undefined,
       validUntil: validUntil || undefined,
