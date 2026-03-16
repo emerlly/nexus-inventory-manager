@@ -20,7 +20,7 @@ export { authService } from "./authService";
 export const userService = createCrudService<User, UserFormData>("/users");
 export const productService = createCrudService<Product, ProductFormData>("/products");
 export const categoryService = createCrudService<Category, CategoryFormData>("/categories");
-export const customerService = createCrudService<Customer, CustomerFormData>("/customers");
+export const customerService = createCrudService<Customer, CustomerFormData>("/customers/");
 export const supplierService = createCrudService<Supplier, SupplierFormData>("/suppliers");
 export const stockMovementService = createCrudService<StockMovement, StockMovementFormData>("/stock/history");
 export const saleService = createCrudService<Sale, SaleFormData>("/sales");

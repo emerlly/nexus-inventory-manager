@@ -21,7 +21,7 @@ export function createCrudService<T, F>(endpoint: string) {
       return res.data;
     },
     update: async (id: string, data: Partial<F>): Promise<T> => {
-      const res = await api.put(`${endpoint}/${id}`, data);
+      const res = await api.patch(`${endpoint}/update/${id}`, data);
       return res.data;
     },
      updateStatus: async (id: string, data: Partial<F>): Promise<T> => {

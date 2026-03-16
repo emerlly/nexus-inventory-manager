@@ -35,7 +35,7 @@ export interface UserFormData {
   cpf?: string;
   active?: boolean;
   address?: string;
-  
+
 }
 
 // ===== Product =====
@@ -63,7 +63,7 @@ export interface ProductFormData {
   minStock?: number;
   categoryId?: string;
   supplierId?: string;
- 
+
 }
 
 // ===== Category =====
@@ -73,7 +73,7 @@ export interface Category {
   description?: string;
   createdAt?: string;
   active?: boolean;
-  prefix?: string; 
+  prefix?: string;
 }
 
 export interface CategoryFormData {
@@ -89,10 +89,6 @@ export interface Customer {
   name: string;
   email?: string;
   phone?: string;
-  address?: string;
-  cep?: string;
-  cidade?: string;
-  rua?: string;
   createdAt?: string;
   cpf?: string;
   active?: boolean;
@@ -101,23 +97,36 @@ export interface Customer {
   companyId?: string;
   role?: string;
   document?: string;
+  documentType: string;
+  address: {
+    cep?: string
+    street?: string
+    city?: string
+    state?: string
+    complement?: string,
+    number?: string,
+    neighborhood?: string
+
+  }
+
 }
 
-export interface CustomerFormData {
-  name: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  cep?: string;
-  cidade?: string;
-  rua?: string;
-  cpf?: string;
-  password?: string;
-  active?: boolean;
-  company?: string;
-  companyId?: string;
-  role?: string;
-  document?: string;
+export type CustomerFormData = {
+  active: boolean
+  name: string
+  email?: string
+  phone?: string
+  documentType: "CPF" | "CNPJ"
+  document: string
+  address: {
+    cep?: string
+    street?: string
+    number?: string
+    neighborhood?: string
+    city?: string
+    state?: string
+    complement?: string
+  }
 }
 
 // ===== Supplier =====
@@ -227,14 +236,14 @@ export interface StockLow {
 }
 
 // ===== Order =====
-export type OrderStatus = 
-  | "pendente" 
-  | "aguardando_pagamento" 
-  | "separando" 
-  | "produzindo" 
-  | "preparando" 
-  | "enviado" 
-  | "entregue" 
+export type OrderStatus =
+  | "pendente"
+  | "aguardando_pagamento"
+  | "separando"
+  | "produzindo"
+  | "preparando"
+  | "enviado"
+  | "entregue"
   | "cancelado";
 
 export interface Order {
