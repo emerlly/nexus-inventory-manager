@@ -32,6 +32,8 @@ export default function SalesPage() {
   const customers = useQuery({ queryKey: ["customers"], queryFn: customerService.getAll });
   const products = useQuery({ queryKey: ["products"], queryFn: productService.getAll });
 
+  const [paymentMethod, setPaymentMethod] = useState("");
+
   const createSale = useMutation({
     mutationFn: (d: SaleFormData) => saleService.create(d),
     onSuccess: () => {
@@ -66,11 +68,22 @@ export default function SalesPage() {
 
   const confirmSale = () => {
     setConfirmOpen(false);
+
     createSale.mutate({
       customer: customer || undefined,
-      items: items.map((i) => ({ product: i.product, quantity: i.quantity, unitPrice: i.unitPrice })),
+      paymentMethod,
+      items: items.map((i) => ({
+        product: i.product,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice
+      }))
     });
   };
+
+  const paymentMethods = useQuery({
+    queryKey: ["paymentMethods"],
+    queryFn: saleService.getPaymentMethods
+  });
 
   const columns = [
     { key: "customer", label: "Cliente", render: (sale: Sale) => typeof sale.customer === "object" ? sale.customer?.name : "—" },
@@ -166,6 +179,23 @@ export default function SalesPage() {
                   </Button>
                 </div>
               ))}
+            </div>
+            <div className="space-y-2 border-t pt-4">
+              <Label>Forma de Pagamento</Label>
+
+              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                <SelectTrigger className="w-[220px]">
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {(paymentMethods.data || []).map((method: any) => (
+                    <SelectItem key={method.value} value={method.value}>
+                      {method.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex items-center justify-between border-t pt-4">

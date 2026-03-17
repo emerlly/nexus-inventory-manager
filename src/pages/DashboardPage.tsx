@@ -194,7 +194,10 @@ export default function DashboardPage() {
       { key: "status", label: "Status" },
     ],
   });
-
+  // Dentro do componente, após as queries
+  console.log('salesByPeriod data:', salesByPeriod.data);
+  console.log('profitByPeriod data:', profitByPeriod.data);
+  console.log('allSales data (primeiras 5):', allSales.data?.slice(0, 5));
   return (
     <div className="flex flex-col">
       <AppHeader title="Dashboard" />

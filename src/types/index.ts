@@ -193,6 +193,7 @@ export interface Sale {
 
 export interface SaleFormData {
   customer?: string;
+  paymentMethod: string;
   items: {
     product: string;
     quantity: number;
