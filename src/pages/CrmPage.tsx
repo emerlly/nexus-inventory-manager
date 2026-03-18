@@ -192,7 +192,7 @@ export default function CrmPage() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div><span className="text-muted-foreground">Email:</span> {detail.email || "—"}</div>
                 <div><span className="text-muted-foreground">Telefone:</span> {detail.phone || "—"}</div>
-                <div><span className="text-muted-foreground">Endereço:</span> {detail.address || "—"}</div>
+                <div><span className="text-muted-foreground">Endereço:</span> {typeof detail.address === "object" ? [detail.address?.street, detail.address?.number, detail.address?.city, detail.address?.state].filter(Boolean).join(", ") : (detail.address || "—")}</div>
                 <div><span className="text-muted-foreground">Total Gasto:</span> <span className="font-bold">R$ {detail.stats.totalSales.toFixed(2)}</span></div>
               </div>
 

@@ -17,6 +17,8 @@ import {
   Calculator,
   Wallet,
   Heart,
+  DollarSign,
+  Plug,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -43,6 +45,7 @@ const mainNav = [
   { title: "Pedidos", url: "/orders", icon: ClipboardList },
   { title: "Orçamentos", url: "/budgets", icon: FileText },
   { title: "Pagamentos", url: "/payments", icon: CreditCard },
+  { title: "Financeiro", url: "/financeiro", icon: DollarSign },
   { title: "Movimentações", url: "/stock/movements", icon: ArrowLeftRight },
   { title: "Fluxo de Caixa", url: "/cashflow", icon: Wallet },
   { title: "CRM", url: "/crm", icon: Heart },
@@ -58,6 +61,7 @@ const registerNav = [
 const settingsNav = [
   { title: "Usuários", url: "/users", icon: Users },
   { title: "Empresa", url: "/settings/company", icon: Building2 },
+  { title: "Integrações", url: "/settings/integrations", icon: Plug },
 ];
 
 export function AppSidebar() {

@@ -38,7 +38,7 @@ export default function ProductsPage() {
     isLoading,
   } = useQuery({
     queryKey: ["products", showLowStock],
-    queryFn: () => productService.getLowStock(showLowStock),
+    queryFn: () => showLowStock ? productService.getLowStock() : productService.getAll(),
   });
 
   const categories = useQuery({ queryKey: ["categories"], queryFn: categoryService.getAll });

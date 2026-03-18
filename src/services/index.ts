@@ -2,29 +2,26 @@ import { createCrudService } from "./crudService";
 import api from "./api";
 import type {
   User, UserFormData,
-  Product, ProductFormData,
   Category, CategoryFormData,
   Customer, CustomerFormData,
   Supplier, SupplierFormData,
   StockMovement, StockMovementFormData,
-  Sale, SaleFormData,
-  Order, OrderFormData,
   Payment, PaymentFormData,
   Company,
 } from "@/types";
 
 export { authService } from "./authService";
+export { orderService } from "./orderService";
+export { saleService } from "./saleService";
+export { productService } from "./productService";
 
 /* ================= CRUD ================= */
 
 export const userService = createCrudService<User, UserFormData>("/users");
-export const productService = createCrudService<Product, ProductFormData>("/products");
 export const categoryService = createCrudService<Category, CategoryFormData>("/categories");
 export const customerService = createCrudService<Customer, CustomerFormData>("/customers/");
 export const supplierService = createCrudService<Supplier, SupplierFormData>("/suppliers");
 export const stockMovementService = createCrudService<StockMovement, StockMovementFormData>("/stock/history");
-export const saleService = createCrudService<Sale, SaleFormData>("/sales");
-export const orderService = createCrudService<Order, OrderFormData>("/orders");
 export const paymentService = createCrudService<Payment, PaymentFormData>("/payments");
 
 /* ================= BUDGET ================= */
@@ -56,34 +53,14 @@ const request = (url: string, params?: any) =>
   api.get(url, { params }).then((r) => r.data);
 
 export const analyticsService = {
-
   summary: (start?: string, end?: string) =>
-    request("/dashboard/summary", {
-      startDate: start,
-      endDate: end,
-    }),
+    request("/dashboard/summary", { startDate: start, endDate: end }),
 
-  salesByPeriod: (
-    start?: string,
-    end?: string,
-    source: AnalyticsSource = "dashboard"
-  ) =>
-    request(`${buildBase(source)}/sales-by-period`, {
-      startDate: start,
-      endDate: end,
-    }),
+  salesByPeriod: (start?: string, end?: string, source: AnalyticsSource = "dashboard") =>
+    request(`${buildBase(source)}/sales-by-period`, { startDate: start, endDate: end }),
 
-  salesByProduct: (
-    start?: string,
-    end?: string,
-    limit = 5,
-    source: AnalyticsSource = "dashboard"
-  ) =>
-    request(`${buildBase(source)}/top-products`, {
-      startDate: start,
-      endDate: end,
-      limit,
-    }),
+  salesByProduct: (start?: string, end?: string, limit = 5, source: AnalyticsSource = "dashboard") =>
+    request(`${buildBase(source)}/top-products`, { startDate: start, endDate: end, limit }),
 
   stockLow: (source: AnalyticsSource = "dashboard") =>
     request(`${buildBase(source)}/alerts`),
@@ -96,17 +73,8 @@ export const analyticsService = {
     return data;
   },
 
-
-  profitByPeriod: (
-    start?: string,
-    end?: string,
-    source: AnalyticsSource = "dashboard"
-  ) =>
-    request(`${buildBase(source)}/profit-by-period`, {
-      startDate: start,
-      endDate: end,
-    }),
-
+  profitByPeriod: (start?: string, end?: string, source: AnalyticsSource = "dashboard") =>
+    request(`${buildBase(source)}/profit-by-period`, { startDate: start, endDate: end }),
 };
 
 export const reportService = analyticsService;

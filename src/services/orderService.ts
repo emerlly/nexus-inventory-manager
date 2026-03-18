@@ -1,0 +1,13 @@
+import api from "./api";
+import { createCrudService } from "./crudService";
+import type { Order, OrderFormData } from "@/types";
+
+const base = createCrudService<Order, OrderFormData>("/orders");
+
+export const orderService = {
+  ...base,
+  updateStatus: async (id: string, data: { status: string }) => {
+    const res = await api.patch(`/orders/${id}/status`, data);
+    return res.data;
+  },
+};

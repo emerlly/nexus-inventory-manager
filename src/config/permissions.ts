@@ -21,20 +21,21 @@ export const routePermissions: RoutePermission[] = [
   { path: "/sales", roles: ["admin", "gerente", "vendedor"] },
   { path: "/sales/analytics", roles: ["admin", "gerente", "vendedor"] },
   { path: "/stock/movements", roles: ["admin", "gerente", "estoquista"] },
-  { path: "/orders", roles: ["admin", "gerente", "vendedor", "estoquista"] },
+  { path: "/orders", roles: ALL_ROLES },
   { path: "/payments", roles: ["admin", "gerente"] },
+  { path: "/financeiro", roles: ["admin", "gerente"] },
   { path: "/budgets", roles: ["admin", "gerente", "vendedor"] },
   { path: "/pricing", roles: ["admin", "gerente", "vendedor"] },
   { path: "/cashflow", roles: ["admin", "gerente"] },
   { path: "/crm", roles: ["admin", "gerente", "vendedor"] },
   { path: "/users", roles: ["admin", "gerente"] },
   { path: "/settings/company", roles: ["admin", "gerente"] },
+  { path: "/settings/integrations", roles: ["admin"] },
 ];
 
 export function hasRouteAccess(role: string | undefined, path: string): boolean {
   if (!role) return false;
   const permission = routePermissions.find((r) => r.path === path);
-  // If no permission defined, deny by default
   if (!permission) return false;
   return permission.roles.includes(role as AppRole);
 }

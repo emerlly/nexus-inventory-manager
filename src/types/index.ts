@@ -303,6 +303,10 @@ export interface Company {
   address?: string;
   logo?: string;
   updatedAt?: string;
+  paymentLink?: string;
+  paymentToken?: string;
+  webhookUrl?: string;
+  apiKey?: string;
 }
 
 export interface Reports {
