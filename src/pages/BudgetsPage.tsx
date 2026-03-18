@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2, Eye, FileImage, FileText, Pencil, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, Eye, FileImage, FileText, Pencil, CheckCircle2, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmSaveDialog } from "@/components/ConfirmSaveDialog";
 
@@ -22,8 +22,6 @@ interface BudgetItem {
   quantity: number;
   unitPrice: number;
   totalPrice?: number;
-  createAt?: string;
-
 }
 
 interface Budget {
@@ -80,30 +78,29 @@ export default function BudgetsPage() {
       setViewBudget(null);
     },
   });
+
   const sendToApproval = useMutation({
-    mutationFn: (id: string) =>
-      budgetService.approve(id, { status: "aprovado" }),
+    mutationFn: (id: string) => budgetService.approve(id, { status: "aprovado" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["budgets"] });
       toast({ title: "Orçamento enviado para aprovação!" });
+      setViewBudget(null);
     },
-    onError: () =>
-      toast({ variant: "destructive", title: "Erro ao enviar para aprovação" }),
+    onError: () => toast({ variant: "destructive", title: "Erro ao enviar para aprovação" }),
   });
+
   const approveBudget = useMutation({
     mutationFn: async (b: Budget) => {
       await saleService.create({
         customer: typeof b.customer === "object" ? b.customer?._id : b.customer,
+        paymentMethod: "pendente",
         items: (b.items || []).map((it) => ({
           product: typeof it.product === "object" ? it.product?._id : it.product,
           quantity: it.quantity,
           unitPrice: it.unitPrice,
         })),
       });
-
-      await budgetService.update(b._id, {
-        status: "convertido",
-      });
+      await budgetService.update(b._id, { status: "convertido" });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["budgets"] });
@@ -112,8 +109,7 @@ export default function BudgetsPage() {
       setApproveTarget(null);
       setViewBudget(null);
     },
-    onError: () =>
-      toast({ variant: "destructive", title: "Erro ao converter orçamento" }),
+    onError: () => toast({ variant: "destructive", title: "Erro ao converter orçamento" }),
   });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -142,18 +138,12 @@ export default function BudgetsPage() {
 
   const confirmSave = () => {
     setConfirmOpen(false);
-
     save.mutate({
       customer: customer || undefined,
-      items: items.map((i) => ({
-        product: i.product,
-        quantity: i.quantity,
-        unitPrice: i.unitPrice,
-        //totalPrice: i.quantity * i.unitPrice,
-      })),
+      items: items.map((i) => ({ product: i.product, quantity: i.quantity, unitPrice: i.unitPrice })),
       notes: notes || undefined,
       validUntil: validUntil || undefined,
-      status: "rascunho", // 
+      status: "rascunho",
     });
   };
 
@@ -214,35 +204,9 @@ export default function BudgetsPage() {
               key: "_actions",
               label: "",
               render: (b) => (
-                <div className="flex gap-1">
-                  <Button variant="ghost"  size="icon" onClick={() => setViewBudget(b)} title="Visualizar" >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-
-                  {b.status === "rascunho" && (
-                    <>
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(b)} title="Editar" >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-
-                      <Button variant="ghost" size="icon" onClick={() => sendToApproval.mutate(b._id)} title="Aprovar Orçamento" className="text-blue-600 hover:text-blue-700" >
-                        <CheckCircle2 className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-
-                  {b.status === "pendente" && (
-                    <Button variant="ghost" size="icon" onClick={() => setApproveTarget(b)} title="Aprovar e converter em venda" className="text-green-600 hover:text-green-700">
-                      <CheckCircle2 className="h-4 w-4" />
-                    </Button>
-                  )}
-
-                  {b.status !== "convertido" && (
-                    <Button variant="ghost" size="icon" onClick={() => remove.mutate(b._id)} title="Excluir" className="text-destructive" >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
+                <Button variant="ghost" size="icon" onClick={() => setViewBudget(b)} title="Visualizar">
+                  <Eye className="h-4 w-4" />
+                </Button>
               ),
             }
           ]}
@@ -253,7 +217,7 @@ export default function BudgetsPage() {
         />
       </div>
 
-      {/* View / Export Dialog with actions */}
+      {/* View / Export Dialog with ALL actions inside */}
       <Dialog open={!!viewBudget} onOpenChange={() => setViewBudget(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -270,22 +234,38 @@ export default function BudgetsPage() {
                 <Button variant="outline" size="sm" onClick={exportPDF}>
                   <FileText className="mr-1 h-4 w-4" /> PDF
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => openEdit(viewBudget)}>
-                  <Pencil className="mr-1 h-4 w-4" /> Editar
-                </Button>
+
+                {viewBudget.status === "rascunho" && (
+                  <>
+                    <Button variant="outline" size="sm" onClick={() => openEdit(viewBudget)}>
+                      <Pencil className="mr-1 h-4 w-4" /> Editar
+                    </Button>
+                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => sendToApproval.mutate(viewBudget._id)}>
+                      <Send className="mr-1 h-4 w-4" /> Enviar p/ Aprovação
+                    </Button>
+                  </>
+                )}
+
                 {viewBudget.status === "pendente" && (
-                  <Button size="sm" className="bg-success hover:bg-success/90 text-success-foreground" onClick={() => setApproveTarget(viewBudget)}>
-                    <CheckCircle2 className="mr-1 h-4 w-4" /> Aprovar
+                  <>
+                    <Button variant="outline" size="sm" onClick={() => openEdit(viewBudget)}>
+                      <Pencil className="mr-1 h-4 w-4" /> Editar
+                    </Button>
+                    <Button size="sm" className="bg-success hover:bg-success/90 text-success-foreground" onClick={() => setApproveTarget(viewBudget)}>
+                      <CheckCircle2 className="mr-1 h-4 w-4" /> Aprovar e Converter
+                    </Button>
+                  </>
+                )}
+
+                {viewBudget.status !== "convertido" && (
+                  <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(viewBudget)}>
+                    <Trash2 className="mr-1 h-4 w-4" /> Excluir
                   </Button>
                 )}
-                <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(viewBudget)}>
-                  <Trash2 className="mr-1 h-4 w-4" /> Excluir
-                </Button>
               </div>
 
               {/* Printable content */}
               <div ref={printRef} className="p-6 bg-background text-foreground">
-                {/* Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h2 className="text-xl font-bold text-foreground">{company.data?.name || "NexusSystems"}</h2>
@@ -320,14 +300,11 @@ export default function BudgetsPage() {
                   <div className="text-right">
                     <p className="text-xs text-muted-foreground">Validade</p>
                     <p className="font-medium text-foreground">
-                      {viewBudget.validUntil
-                        ? new Date(viewBudget.validUntil).toLocaleDateString("pt-BR")
-                        : "—"}
+                      {viewBudget.validUntil ? new Date(viewBudget.validUntil).toLocaleDateString("pt-BR") : "—"}
                     </p>
                   </div>
                 </div>
 
-                {/* Items table */}
                 <table className="w-full text-sm mb-4">
                   <thead>
                     <tr className="border-b border-border text-left">
@@ -368,7 +345,6 @@ export default function BudgetsPage() {
                   </>
                 )}
 
-                {/* Validity notice */}
                 <div className="rounded-md border border-border bg-muted/30 p-3 mb-6 text-center">
                   <p className="text-xs text-muted-foreground">
                     {viewBudget.validUntil
@@ -378,7 +354,6 @@ export default function BudgetsPage() {
                   </p>
                 </div>
 
-                {/* Signature area */}
                 <div className="grid grid-cols-2 gap-8 mt-8 mb-4">
                   <div className="text-center">
                     <div className="border-t border-foreground/30 pt-2 mx-4">

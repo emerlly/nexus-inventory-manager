@@ -20,7 +20,9 @@ import SalesAnalyticsPage from "@/pages/SalesAnalyticsPage";
 import StockMovementsPage from "@/pages/StockMovementsPage";
 import OrdersPage from "@/pages/OrdersPage";
 import PaymentsPage from "@/pages/PaymentsPage";
+import FinanceiroPage from "@/pages/FinanceiroPage";
 import CompanySettingsPage from "@/pages/CompanySettingsPage";
+import IntegrationSettingsPage from "@/pages/IntegrationSettingsPage";
 import BudgetsPage from "@/pages/BudgetsPage";
 import PricingCalculatorPage from "@/pages/PricingCalculatorPage";
 import CashFlowPage from "@/pages/CashFlowPage";
@@ -29,7 +31,6 @@ import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Wrap each route with RoleGuard (it auto-checks permissions by path)
 const guarded = (Component: React.ComponentType) => (
   <RoleGuard><Component /></RoleGuard>
 );
@@ -61,12 +62,14 @@ const App = () => (
               <Route path="/stock/movements" element={guarded(StockMovementsPage)} />
               <Route path="/orders" element={guarded(OrdersPage)} />
               <Route path="/payments" element={guarded(PaymentsPage)} />
+              <Route path="/financeiro" element={guarded(FinanceiroPage)} />
               <Route path="/budgets" element={guarded(BudgetsPage)} />
               <Route path="/pricing" element={guarded(PricingCalculatorPage)} />
               <Route path="/cashflow" element={guarded(CashFlowPage)} />
               <Route path="/crm" element={guarded(CrmPage)} />
               <Route path="/users" element={guarded(UsersPage)} />
               <Route path="/settings/company" element={guarded(CompanySettingsPage)} />
+              <Route path="/settings/integrations" element={guarded(IntegrationSettingsPage)} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

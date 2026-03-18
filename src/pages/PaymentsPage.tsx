@@ -14,63 +14,36 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { Search, Eye } from "lucide-react";
+import { Search, Eye, CheckCircle, Clock, AlertTriangle, XCircle } from "lucide-react";
 
-// =========================
-// STATUS PADRÃO BACKEND
-// =========================
-const STATUS = {
-  PENDENTE: "PENDENTE",
-  RESERVADO: "RESERVADO",
-  SEPARANDO: "SEPARANDO",
-  FATURADO: "FATURADO",
-  CANCELADO: "CANCELADO",
-} as const;
-
-// =========================
-// CORES
-// =========================
-const statusColors: any = {
-  PENDENTE: "bg-gray-200",
-  RESERVADO: "bg-yellow-200",
-  SEPARANDO: "bg-blue-200",
-  FATURADO: "bg-green-200",
-  CANCELADO: "bg-red-200",
+const paymentStatusColors: Record<string, string> = {
+  PENDENTE: "bg-warning/15 text-warning border-warning/30",
+  PAGO: "bg-success/15 text-success border-success/30",
+  ATRASADO: "bg-destructive/15 text-destructive border-destructive/30",
+  CANCELADO: "bg-muted text-muted-foreground",
 };
 
-export default function OrdersPage() {
+const paymentStatusIcons: Record<string, React.ReactNode> = {
+  PENDENTE: <Clock className="h-3.5 w-3.5" />,
+  PAGO: <CheckCircle className="h-3.5 w-3.5" />,
+  ATRASADO: <AlertTriangle className="h-3.5 w-3.5" />,
+  CANCELADO: <XCircle className="h-3.5 w-3.5" />,
+};
+
+export default function PaymentsPage() {
   const qc = useQueryClient();
   const { toast } = useToast();
-  const { user } = useAuth();
-
   const [search, setSearch] = useState("");
+  const [tab, setTab] = useState("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // =========================
-  // BUSCAR PEDIDOS
-  // =========================
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["orders"],
     queryFn: orderService.getAll,
   });
 
-  // =========================
-  // ALTERAR STATUS
-  // =========================
-  const updateStatus = useMutation({
-    mutationFn: ({ id, status }: any) =>
-      orderService.updateStatus(id, { status }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["orders"] });
-      toast({ title: "Status atualizado!" });
-    },
-  });
-
-  // =========================
-  // CONFIRMAR PAGAMENTO
-  // =========================
   const confirmPayment = useMutation({
     mutationFn: (id: string) => saleService.confirmPayment(id),
     onSuccess: () => {
@@ -79,172 +52,195 @@ export default function OrdersPage() {
       toast({ title: "Pagamento confirmado!" });
     },
     onError: () => {
-      toast({
-        variant: "destructive",
-        title: "Erro ao confirmar pagamento",
-      });
+      toast({ variant: "destructive", title: "Erro ao confirmar pagamento" });
     },
   });
 
   const filtered = orders.filter((o: any) => {
     const name = o.customer?.name || "";
-    return (
+    const matchesSearch =
       name.toLowerCase().includes(search.toLowerCase()) ||
-      o._id.includes(search)
-    );
+      o._id.includes(search);
+
+    if (tab === "all") return matchesSearch;
+    if (tab === "pendente") return matchesSearch && o.paymentStatus !== "PAGO" && o.status !== "CANCELADO";
+    if (tab === "pago") return matchesSearch && o.paymentStatus === "PAGO";
+    if (tab === "cancelado") return matchesSearch && o.status === "CANCELADO";
+    return matchesSearch;
   });
+
+  const pendingCount = orders.filter((o: any) => o.paymentStatus !== "PAGO" && o.status !== "CANCELADO").length;
+  const paidCount = orders.filter((o: any) => o.paymentStatus === "PAGO").length;
+  const totalPending = orders
+    .filter((o: any) => o.paymentStatus !== "PAGO" && o.status !== "CANCELADO")
+    .reduce((sum: number, o: any) => sum + (o.totalValue || o.totalOrder || 0), 0);
 
   return (
     <div className="flex flex-col">
-      <AppHeader title="Pedidos" />
+      <AppHeader title="Pagamentos Pendentes" />
 
       <div className="p-6 space-y-4">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/15">
+                <Clock className="h-5 w-5 text-warning" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Pendentes</p>
+                <p className="text-xl font-bold">{pendingCount}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/15">
+                <CheckCircle className="h-5 w-5 text-success" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Pagos</p>
+                <p className="text-xl font-bold">{paidCount}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/15">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Pendente</p>
+                <p className="text-xl font-bold">R$ {totalPending.toFixed(2)}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* BUSCA */}
-        <Input
-          placeholder="Buscar pedido..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por cliente ou nº do pedido..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Tabs value={tab} onValueChange={setTab}>
+            <TabsList>
+              <TabsTrigger value="all">Todos</TabsTrigger>
+              <TabsTrigger value="pendente">Pendentes</TabsTrigger>
+              <TabsTrigger value="pago">Pagos</TabsTrigger>
+              <TabsTrigger value="cancelado">Cancelados</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
 
-        {/* LISTA */}
+        {/* Table */}
         {isLoading ? (
-          <p>Carregando...</p>
+          <p className="text-muted-foreground">Carregando...</p>
+        ) : filtered.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center text-muted-foreground">
+              Nenhum pagamento encontrado.
+            </CardContent>
+          </Card>
         ) : (
-          filtered.map((order: any) => {
-            const expanded = expandedId === order._id;
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Pedido</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Status Pedido</TableHead>
+                  <TableHead>Pagamento</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((order: any) => {
+                  const payStatus = order.paymentStatus || "PENDENTE";
+                  const expanded = expandedId === order._id;
 
-            return (
-              <Card key={order._id}>
-                <CardContent className="p-4 space-y-3">
-
-                  {/* HEADER */}
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-sm text-gray-500">
-                        #{order._id.slice(-6)}
-                      </p>
-                      <p className="font-semibold">
-                        {order.customer?.name}
-                      </p>
-                      <p className="text-sm">
-                        R$ {order.totalValue?.toFixed(2)}
-                      </p>
-                    </div>
-
-                    <Badge className={statusColors[order.status]}>
-                      {order.status}
-                    </Badge>
-                  </div>
-
-                  {/* AÇÕES */}
-                  <div className="flex gap-2 flex-wrap">
-
-                    {/* PAGAMENTO */}
-                    {order.paymentStatus !== "PAGO" &&
-                      order.status !== "CANCELADO" && (
-                        <Button
-                          size="sm"
-                          onClick={() =>
-                            confirmPayment.mutate(order._id)
-                          }
-                        >
-                          Confirmar Pagamento
-                        </Button>
-                      )}
-
-                    {/* STATUS */}
-                    <Select
-                      value={order.status}
-                      onValueChange={(v) =>
-                        updateStatus.mutate({
-                          id: order._id,
-                          status: v,
-                        })
-                      }
-                    >
-                      <SelectTrigger className="w-40 h-8">
-                        <SelectValue />
-                      </SelectTrigger>
-
-                      <SelectContent>
-                        {order.status === "PENDENTE" && (
-                          <>
-                            <SelectItem value="RESERVADO">
-                              Reservar
-                            </SelectItem>
-                            <SelectItem value="SEPARANDO">
-                              Separar
-                            </SelectItem>
-                          </>
-                        )}
-
-                        {order.status === "RESERVADO" && (
-                          <SelectItem value="SEPARANDO">
-                            Separar
-                          </SelectItem>
-                        )}
-
-                        {order.status === "SEPARANDO" && (
-                          <SelectItem value="FATURADO">
-                            Faturar
-                          </SelectItem>
-                        )}
-
-                        <SelectItem value="CANCELADO">
-                          Cancelar
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    {/* EXPANDIR */}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setExpandedId(
-                          expanded ? null : order._id
-                        )
-                      }
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </div>
-
-                  {/* ITENS */}
-                  {expanded && (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Produto</TableHead>
-                          <TableHead>Qtd</TableHead>
-                          <TableHead>Preço</TableHead>
-                          <TableHead>Total</TableHead>
+                  return (
+                    <>
+                      <TableRow key={order._id} className="group">
+                        <TableCell className="font-mono text-xs">
+                          #{order._id.slice(-6)}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {order.customer?.name || "—"}
+                        </TableCell>
+                        <TableCell>
+                          R$ {(order.totalValue || order.totalOrder || 0).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{order.status}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={`gap-1 ${paymentStatusColors[payStatus] || paymentStatusColors.PENDENTE}`}>
+                            {paymentStatusIcons[payStatus] || paymentStatusIcons.PENDENTE}
+                            {payStatus}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            {payStatus !== "PAGO" && order.status !== "CANCELADO" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => confirmPayment.mutate(order._id)}
+                                disabled={confirmPayment.isPending}
+                              >
+                                <CheckCircle className="mr-1 h-3.5 w-3.5" />
+                                Confirmar
+                              </Button>
+                            )}
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => setExpandedId(expanded ? null : order._id)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {expanded && (
+                        <TableRow key={`${order._id}-detail`}>
+                          <TableCell colSpan={6} className="bg-muted/30 p-4">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Produto</TableHead>
+                                  <TableHead>Qtd</TableHead>
+                                  <TableHead>Preço Unit.</TableHead>
+                                  <TableHead>Total</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {(order.items || []).map((item: any, i: number) => (
+                                  <TableRow key={i}>
+                                    <TableCell>{item.product?.name || "—"}</TableCell>
+                                    <TableCell>{item.quantity}</TableCell>
+                                    <TableCell>R$ {item.unitPrice?.toFixed(2)}</TableCell>
+                                    <TableCell>R$ {(item.totalPrice || item.quantity * item.unitPrice)?.toFixed(2)}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-
-                      <TableBody>
-                        {order.items.map((item: any, i: number) => (
-                          <TableRow key={i}>
-                            <TableCell>
-                              {item.product?.name}
-                            </TableCell>
-                            <TableCell>{item.quantity}</TableCell>
-                            <TableCell>
-                              R$ {item.unitPrice.toFixed(2)}
-                            </TableCell>
-                            <TableCell>
-                              R$ {item.totalPrice.toFixed(2)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })
+                      )}
+                    </>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </Card>
         )}
       </div>
     </div>

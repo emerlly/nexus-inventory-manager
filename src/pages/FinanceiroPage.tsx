@@ -34,7 +34,7 @@ const defaultForm: PaymentFormData = {
   dueDate: new Date().toISOString().split("T")[0],
 };
 
-export default function PaymentsPage() {
+export default function FinanceiroPage() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -80,7 +80,7 @@ export default function PaymentsPage() {
 
   return (
     <div className="flex flex-col">
-      <AppHeader title="Pagamentos" />
+      <AppHeader title="Financeiro" />
       <div className="flex-1 p-6 space-y-4">
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
@@ -103,14 +103,14 @@ export default function PaymentsPage() {
           onAdd={openNew}
           onEdit={openEdit}
           onDelete={(p) => del.mutate(p)}
-          addLabel="Novo Pagamento"
-          searchPlaceholder="Buscar pagamentos..."
+          addLabel="Novo Lançamento"
+          searchPlaceholder="Buscar lançamentos..."
         />
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editing ? "Editar Pagamento" : "Novo Pagamento"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing ? "Editar Lançamento" : "Novo Lançamento"}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2"><Label>Descrição</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required /></div>
             <div className="grid grid-cols-2 gap-4">
@@ -172,7 +172,7 @@ export default function PaymentsPage() {
         onOpenChange={setConfirmOpen}
         onConfirm={() => { setConfirmOpen(false); save.mutate(form); }}
         title={editing ? "Confirmar edição" : "Confirmar cadastro"}
-        description={editing ? "Deseja salvar as alterações deste pagamento?" : "Deseja cadastrar este novo pagamento?"}
+        description={editing ? "Deseja salvar as alterações deste lançamento?" : "Deseja cadastrar este novo lançamento?"}
         isPending={save.isPending}
       />
     </div>

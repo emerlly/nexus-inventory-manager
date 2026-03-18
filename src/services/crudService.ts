@@ -6,12 +6,6 @@ export function createCrudService<T, F>(endpoint: string) {
       const res = await api.get(endpoint);
       return res.data;
     },
-    getLowStock: async (lowStock?: boolean) => {
-      const { data } = await api.get("/products", {
-        params: lowStock ? { lowStock: true } : {}
-      });
-      return data;
-    },
     getById: async (id: string): Promise<T> => {
       const res = await api.get(`${endpoint}/${id}`);
       return res.data;
@@ -24,18 +18,8 @@ export function createCrudService<T, F>(endpoint: string) {
       const res = await api.patch(`${endpoint}/update/${id}`, data);
       return res.data;
     },
-    updateStatus: async (id: string, data: Partial<F>): Promise<T> => {
-      const res = await api.patch(`${endpoint}/${id}/status`, data);
-      return res.data;
-    },
     remove: async (id: string): Promise<void> => {
       await api.delete(`${endpoint}/${id}`);
     },
-    getPaymentMethods: async () => {
-      const { data } = await api.get("/sales/payment-methods");
-      return data;
-    },
-    confirmPayment: (orderId: string) =>
-      api.post(`/sales/${orderId}/confirm-payment`)
   };
 }
