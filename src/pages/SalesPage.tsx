@@ -37,7 +37,7 @@ export default function SalesPage() {
   const createSale = useMutation({
     mutationFn: (d: SaleFormData) => saleService.create(d),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["sales"] });
+      qc.invalidateQueries({ queryKey: ["orderS"] });
       setOpen(false);
       toast({ title: "Venda registrada com sucesso!" });
     },

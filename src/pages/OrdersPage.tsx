@@ -15,26 +15,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Search, Package, CheckCircle2, Eye, ChevronDown, ChevronUp } from "lucide-react";
 import { DetailDialog } from "@/components/DetailDialog";
 
-const STATUS_STEPS: { key: OrderStatus; label: string }[] = [
-  { key: "pendente", label: "Pendente" },
-  { key: "aguardando_pagamento", label: "Aguardando Pagamento" },
-  { key: "separando", label: "Separando" },
-  { key: "preparando", label: "Preparando" },
-  { key: "produzindo", label: "Produzindo" },
-  { key: "enviado", label: "Enviado" },
-  { key: "entregue", label: "Entregue" },
-  { key: "cancelado", label: "Cancelado" },
+const STATUS_STEPS = [
+  { key: "PENDENTE", label: "Pendente" },
+  { key: "RESERVADO", label: "Reservado" },
+  { key: "SEPARANDO", label: "Separando" },
+  { key: "FATURADO", label: "Faturado" },
+  { key: "CANCELADO", label: "Cancelado" },
 ];
 
-const statusColors: Record<OrderStatus, string> = {
+const statusColors = {
   pendente: "bg-muted text-muted-foreground",
-  aguardando_pagamento: "bg-warning/15 text-warning border-warning/30",
-  separando: "bg-warning/15 text-warning border-warning/30",
-  preparando: "bg-orange-100 text-orange-700 border-orange-300",
-  produzindo: "bg-primary/15 text-primary border-primary/30",
-  enviado: "bg-blue-100 text-blue-700 border-blue-300",
-  entregue: "bg-success/15 text-success border-success/30",
-  cancelado: "bg-destructive/15 text-destructive border-destructive/30",
+  reservado: "bg-yellow-100 text-yellow-700",
+  separando: "bg-blue-100 text-blue-700",
+  faturado: "bg-green-100 text-green-700",
+  cancelado: "bg-red-100 text-red-700",
 };
 
 // Roles that can change order status
@@ -70,6 +64,7 @@ function StatusStepper({ currentStatus }: { currentStatus: OrderStatus }) {
     </div>
   );
 }
+
 
 export default function OrdersPage() {
   const qc = useQueryClient();

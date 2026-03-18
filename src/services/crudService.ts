@@ -34,6 +34,8 @@ export function createCrudService<T, F>(endpoint: string) {
     getPaymentMethods: async () => {
       const { data } = await api.get("/sales/payment-methods");
       return data;
-    }
+    },
+    confirmPayment: (orderId: string) =>
+      api.post(`/sales/${orderId}/confirm-payment`)
   };
 }
