@@ -48,7 +48,7 @@ export default function PaymentsPage() {
     mutationFn: (id: string) => saleService.confirmPayment(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
-      qc.invalidateQueries({ queryKey: ["sales"] });
+      qc.invalidateQueries({ queryKey: ["payment"] });
       toast({ title: "Pagamento confirmado!" });
     },
     onError: () => {

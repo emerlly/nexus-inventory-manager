@@ -29,8 +29,8 @@ export default function CompanySettingsPage() {
   useEffect(() => {
     if (data) {
       setForm({
-        name: data.name || "",
-        cnpj: data.cnpj || "",
+        name: data.companyName || "",
+        cnpj: data.document || "",
         email: data.email || "",
         phone: data.phone || "",
         address: data.address || "",

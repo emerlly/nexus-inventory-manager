@@ -11,5 +11,5 @@ export const saleService = {
     return data;
   },
   confirmPayment: (orderId: string) =>
-    api.post(`/sales/${orderId}/confirm-payment`),
+    api.post(`/payment/${orderId}/confirm-payment`),
 };

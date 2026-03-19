@@ -296,8 +296,8 @@ export interface PaymentFormData {
 // ===== Company =====
 export interface Company {
   _id: string;
-  name: string;
-  cnpj?: string;
+  companyName: string;
+  document?: string;
   email?: string;
   phone?: string;
   address?: string;
@@ -307,6 +307,8 @@ export interface Company {
   paymentToken?: string;
   webhookUrl?: string;
   apiKey?: string;
+  plan: string;
+  status: string
 }
 
 export interface Reports {
