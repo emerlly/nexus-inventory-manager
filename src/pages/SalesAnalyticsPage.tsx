@@ -90,7 +90,7 @@ export default function SalesAnalyticsPage() {
   const last10 = useMemo(() => [...salesData].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")).slice(0, 10), [salesData]);
 
   // Pending payments
-  const pendingPayments = useMemo(() => paymentsData.filter(p => p.status === "pendente" || p.status === "atrasado"), [paymentsData]);
+  const pendingPayments = useMemo(() => paymentsData.filter(p => p.status === "Pendente" || p.status === "Atrasado"), [paymentsData]);
 
   // Growth chart data
   const growthData = useMemo(() => {
