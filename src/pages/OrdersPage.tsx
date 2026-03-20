@@ -36,9 +36,9 @@ const STATUS_CHANGE_ROLES = ["admin", "gerente", "estoquista", "operador"];
 
 function StatusStepper({ currentStatus }: { currentStatus: OrderStatus }) {
   // Exclude "cancelado" from stepper flow
-  const flowSteps = STATUS_STEPS.filter((s) => s.key !== "cancelado");
+  const flowSteps = STATUS_STEPS.filter((s) => s.key !== "Cancelado");
   const currentIdx = flowSteps.findIndex((s) => s.key === currentStatus);
-  const isCancelled = currentStatus === "cancelado";
+  const isCancelled = currentStatus === "Cancelado";
 
   if (isCancelled) {
     return (
