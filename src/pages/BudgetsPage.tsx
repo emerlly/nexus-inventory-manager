@@ -36,11 +36,11 @@ interface Budget {
 }
 
 const statusColors: Record<string, string> = {
-  rascunho: "bg-muted text-muted-foreground",
-  pendente: "bg-warning/15 text-warning",
-  aprovado: "bg-success/15 text-success",
-  rejeitado: "bg-destructive/15 text-destructive",
-  convertido: "bg-primary/15 text-primary",
+  Rascunho: "bg-muted text-muted-foreground",
+  Pendente: "bg-warning/15 text-warning",
+  Aprovado: "bg-success/15 text-success",
+  Rejeitado: "bg-destructive/15 text-destructive",
+  Convertido: "bg-primary/15 text-primary",
 };
 
 export default function BudgetsPage() {
@@ -50,6 +50,7 @@ export default function BudgetsPage() {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [customer, setCustomer] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
   const [notes, setNotes] = useState("");
   const [validUntil, setValidUntil] = useState("");
   const [items, setItems] = useState<BudgetItem[]>([]);
@@ -59,6 +60,13 @@ export default function BudgetsPage() {
   const customers = useQuery({ queryKey: ["customers"], queryFn: customerService.getAll });
   const products = useQuery({ queryKey: ["products"], queryFn: productService.getAll });
   const company = useQuery({ queryKey: ["company"], queryFn: companyService.get });
+  const PAYMENT_METHODS = [
+    { value: "Dinheiro", label: "Dinheiro" },
+    { value: "Pix", label: "Pix" },
+    { value: "Crédito", label: "Cartão de Crédito" },
+    { value: "Debito", label: "Cartão de Débito" },
+    { value: "Boleto", label: "Boleto" },
+  ];
 
   const save = useMutation({
     mutationFn: (d: any) => editId ? budgetService.update(editId, d) : budgetService.create(d),
@@ -107,25 +115,40 @@ export default function BudgetsPage() {
 
   const approveBudget = useMutation({
     mutationFn: async (b: Budget) => {
+      if (!paymentMethod) {
+        throw new Error("Selecione a forma de pagamento");
+      }
+
       await saleService.create({
         customer: typeof b.customer === "object" ? b.customer?._id : b.customer,
-        paymentMethod: "Pendente",
+        paymentMethod: paymentMethod,
         items: (b.items || []).map((it) => ({
           product: typeof it.product === "object" ? it.product?._id : it.product,
           quantity: it.quantity,
           unitPrice: it.unitPrice,
         })),
       });
+
       await budgetService.update(b._id, { status: "Convertido" });
     },
+
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["budgets"] });
       qc.invalidateQueries({ queryKey: ["sales"] });
+
       toast({ title: "Orçamento convertido em venda!" });
+
       setApproveTarget(null);
       setViewBudget(null);
+      setPaymentMethod(""); // limpa após uso
     },
-    onError: () => toast({ variant: "destructive", title: "Erro ao converter orçamento" }),
+
+    onError: (error: any) =>
+      toast({
+        variant: "destructive",
+        title: "Erro ao converter orçamento",
+        description: error.message,
+      }),
   });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -266,33 +289,47 @@ export default function BudgetsPage() {
                     </Button>
                   </>
                 )}
-
-                {viewBudget.status === "Pendente" && (
+                
+                {(viewBudget.status === "Pendente" || viewBudget.status === "Aprovado")&& (
                   <>
                     <Button variant="outline" size="sm" onClick={() => openEdit(viewBudget)}>
                       <Pencil className="mr-1 h-4 w-4" /> Editar
                     </Button>
 
-                    <Button
-                      size="sm"
-                      className="bg-success hover:bg-success/90 text-success-foreground"
-                      onClick={() => setApproveTarget(viewBudget)}
-                    >
-                      <CheckCircle2 className="mr-1 h-4 w-4" /> Aprovar e Converter
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                        <SelectTrigger className="w-48">
+                          <SelectValue placeholder="Forma de pagamento" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PAYMENT_METHODS.map((p) => (
+                            <SelectItem key={p.value} value={p.value}>
+                              {p.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Button
+                        size="sm"
+                        className="bg-success hover:bg-success/90 text-success-foreground"
+                        onClick={() => {
+                          if (!paymentMethod) {
+                            toast({
+                              variant: "destructive",
+                              title: "Selecione a forma de pagamento",
+                            });
+                            return;
+                          }
+                          setApproveTarget(viewBudget);
+                        }}
+                      >
+                        <CheckCircle2 className="mr-1 h-4 w-4" /> Aprovar
+                      </Button>
+                    </div>
                   </>
                 )}
 
-                {viewBudget.status === "Pendente" && (
-                  <>
-                    <Button variant="outline" size="sm" onClick={() => openEdit(viewBudget)}>
-                      <Pencil className="mr-1 h-4 w-4" /> Editar
-                    </Button>
-                    <Button size="sm" className="bg-success hover:bg-success/90 text-success-foreground" onClick={() => setApproveTarget(viewBudget)}>
-                      <CheckCircle2 className="mr-1 h-4 w-4" /> Aprovar e Converter
-                    </Button>
-                  </>
-                )}
 
                 {viewBudget.status !== "Convertido" && (
                   <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(viewBudget)}>
