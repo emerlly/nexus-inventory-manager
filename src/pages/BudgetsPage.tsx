@@ -493,12 +493,46 @@ export default function BudgetsPage() {
       <ConfirmSaveDialog
         open={!!approveTarget}
         onOpenChange={() => setApproveTarget(null)}
-        onConfirm={() => approveTarget && approveBudget.mutate(approveTarget)}
+        onConfirm={() => approveTarget && approveBudget.mutate(approveTarget._id)}
         title="Aprovar orçamento"
-        description={`Deseja aprovar este orçamento de R$ ${approveTarget?.totalValue?.toFixed(2) || "0.00"} e convertê-lo em uma venda? O estoque será atualizado automaticamente.`}
-        confirmLabel="Aprovar e Vender"
+        description={`Deseja aprovar este orçamento de R$ ${approveTarget?.totalValue?.toFixed(2) || "0.00"}?`}
+        confirmLabel="Aprovar"
         isPending={approveBudget.isPending}
       />
+
+      {/* Convert to Sale Dialog with payment method selection */}
+      <Dialog open={!!convertTarget} onOpenChange={() => { setConvertTarget(null); setSelectedPayment(""); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Converter em Venda</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Converter orçamento de <span className="font-semibold text-foreground">R$ {convertTarget?.totalValue?.toFixed(2) || "0.00"}</span> em venda. Selecione a forma de pagamento:
+            </p>
+            <div className="space-y-2">
+              <Label>Forma de Pagamento</Label>
+              <Select value={selectedPayment} onValueChange={setSelectedPayment}>
+                <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_METHODS.map((m) => (
+                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { setConvertTarget(null); setSelectedPayment(""); }}>Cancelar</Button>
+              <Button
+                disabled={!selectedPayment || convertToSale.isPending}
+                onClick={() => convertTarget && convertToSale.mutate({ budget: convertTarget, paymentMethod: selectedPayment })}
+              >
+                {convertToSale.isPending ? "Convertendo..." : "Confirmar Venda"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmSaveDialog
         open={!!deleteTarget}
