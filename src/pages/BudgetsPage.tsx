@@ -285,8 +285,6 @@ export default function BudgetsPage() {
                     <ShoppingCart className="mr-1 h-4 w-4" /> Converter em Venda
                   </Button>
                 )}
-                )}
-
                 {viewBudget.status !== "convertido" && (
                   <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(viewBudget)}>
                     <Trash2 className="mr-1 h-4 w-4" /> Excluir
