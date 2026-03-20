@@ -99,23 +99,35 @@ export default function BudgetsPage() {
   });
 
   const approveBudget = useMutation({
-    mutationFn: async (b: Budget) => {
+    mutationFn: (id: string) => budgetService.approve(id, { status: "aprovado" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgets"] });
+      toast({ title: "Orçamento aprovado!" });
+      setApproveTarget(null);
+      setViewBudget(null);
+    },
+    onError: () => toast({ variant: "destructive", title: "Erro ao aprovar orçamento" }),
+  });
+
+  const convertToSale = useMutation({
+    mutationFn: async ({ budget, paymentMethod }: { budget: Budget; paymentMethod: string }) => {
       await saleService.create({
-        customer: typeof b.customer === "object" ? b.customer?._id : b.customer,
-        paymentMethod: "pendente",
-        items: (b.items || []).map((it) => ({
+        customer: typeof budget.customer === "object" ? budget.customer?._id : budget.customer,
+        paymentMethod,
+        items: (budget.items || []).map((it) => ({
           product: typeof it.product === "object" ? it.product?._id : it.product,
           quantity: it.quantity,
           unitPrice: it.unitPrice,
         })),
       });
-      await budgetService.update(b._id, { status: "convertido" });
+      await budgetService.update(budget._id, { status: "convertido" });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["budgets"] });
       qc.invalidateQueries({ queryKey: ["sales"] });
       toast({ title: "Orçamento convertido em venda!" });
-      setApproveTarget(null);
+      setConvertTarget(null);
+      setSelectedPayment("");
       setViewBudget(null);
     },
     onError: () => toast({ variant: "destructive", title: "Erro ao converter orçamento" }),
@@ -123,6 +135,8 @@ export default function BudgetsPage() {
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [approveTarget, setApproveTarget] = useState<Budget | null>(null);
+  const [convertTarget, setConvertTarget] = useState<Budget | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Budget | null>(null);
 
   const addItem = () => setItems([...items, { product: "", productName: "", quantity: 1, unitPrice: 0 }]);
