@@ -48,6 +48,7 @@ const mainNav = [
   { title: "Pagamentos", url: "/payments", icon: CreditCard },
   { title: "Financeiro", url: "/financeiro", icon: DollarSign },
   { title: "Movimentações", url: "/stock/movements", icon: ArrowLeftRight },
+  { title: "Inventário", url: "/inventory", icon: ClipboardCheck },
   { title: "Fluxo de Caixa", url: "/cashflow", icon: Wallet },
   { title: "CRM", url: "/crm", icon: Heart },
   { title: "Precificação", url: "/pricing", icon: Calculator },

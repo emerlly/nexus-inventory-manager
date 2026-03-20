@@ -28,6 +28,7 @@ export const routePermissions: RoutePermission[] = [
   { path: "/pricing", roles: ["admin", "gerente", "vendedor"] },
   { path: "/cashflow", roles: ["admin", "gerente"] },
   { path: "/crm", roles: ["admin", "gerente", "vendedor"] },
+  { path: "/inventory", roles: ["admin", "gerente", "estoquista"] },
   { path: "/users", roles: ["admin", "gerente"] },
   { path: "/settings/company", roles: ["admin", "gerente"] },
   { path: "/settings/integrations", roles: ["admin"] },

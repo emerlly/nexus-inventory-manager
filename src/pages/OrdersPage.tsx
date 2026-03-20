@@ -173,7 +173,7 @@ export default function OrdersPage() {
                             {isExpanded ? <ChevronUp className="mr-1 h-4 w-4" /> : <ChevronDown className="mr-1 h-4 w-4" />}
                             Itens
                           </Button>
-                          {canChangeStatus && order.status !== "entregue" && order.status !== "cancelado" && (
+                          {canChangeStatus && order.status !== "Entregue" && order.status !== "Cancelado" && (
                             <Select value={order.status} onValueChange={(v) => updateStatus.mutate({ id: order._id, status: v as OrderStatus })}>
                               <SelectTrigger className="h-8 w-52 text-xs"><SelectValue /></SelectTrigger>
                               <SelectContent>

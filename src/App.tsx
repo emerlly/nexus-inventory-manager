@@ -68,6 +68,7 @@ const App = () => (
               <Route path="/pricing" element={guarded(PricingCalculatorPage)} />
               <Route path="/cashflow" element={guarded(CashFlowPage)} />
               <Route path="/crm" element={guarded(CrmPage)} />
+              <Route path="/inventory" element={guarded(InventoryPage)} />
               <Route path="/users" element={guarded(UsersPage)} />
               <Route path="/settings/company" element={guarded(CompanySettingsPage)} />
               <Route path="/settings/integrations" element={guarded(IntegrationSettingsPage)} />
