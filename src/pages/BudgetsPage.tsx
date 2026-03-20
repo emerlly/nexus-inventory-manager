@@ -12,9 +12,18 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2, Eye, FileImage, FileText, Pencil, CheckCircle2, Send } from "lucide-react";
+import { Plus, Trash2, Eye, FileImage, FileText, Pencil, CheckCircle2, Send, ShoppingCart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmSaveDialog } from "@/components/ConfirmSaveDialog";
+
+const PAYMENT_METHODS = [
+  { value: "pix", label: "Pix" },
+  { value: "dinheiro", label: "Dinheiro" },
+  { value: "boleto", label: "Boleto" },
+  { value: "cartao_credito", label: "Cartão de Crédito" },
+  { value: "cartao_debito", label: "Cartão de Débito" },
+  { value: "transferencia", label: "Transferência" },
+];
 
 interface BudgetItem {
   product: string;
