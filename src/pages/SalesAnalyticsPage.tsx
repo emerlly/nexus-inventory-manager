@@ -90,7 +90,7 @@ export default function SalesAnalyticsPage() {
   const last10 = useMemo(() => [...salesData].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")).slice(0, 10), [salesData]);
 
   // Pending payments
-  const pendingPayments = useMemo(() => paymentsData.filter(p => p.status === "pendente" || p.status === "atrasado"), [paymentsData]);
+  const pendingPayments = useMemo(() => paymentsData.filter(p => p.status === "Pendente" || p.status === "Atrasado"), [paymentsData]);
 
   // Growth chart data
   const growthData = useMemo(() => {
@@ -258,9 +258,9 @@ export default function SalesAnalyticsPage() {
                     <TableRow key={i}>
                       <TableCell className="text-sm">{p.dueDate ? new Date(p.dueDate).toLocaleDateString("pt-BR") : "—"}</TableCell>
                       <TableCell className="text-sm">{p.description}</TableCell>
-                      <TableCell><Badge variant={p.type === "receita" ? "default" : "secondary"} className="text-[10px]">{p.type === "receita" ? "Receita" : "Despesa"}</Badge></TableCell>
+                      <TableCell><Badge variant={p.type === "Receita" ? "default" : "secondary"} className="text-[10px]">{p.type === "Receita" ? "Receita" : "Despesa"}</Badge></TableCell>
                       <TableCell className="text-right font-medium text-sm">R$ {p.amount?.toFixed(2)}</TableCell>
-                      <TableCell><Badge variant={p.status === "atrasado" ? "destructive" : "secondary"} className="text-[10px]">{p.status}</Badge></TableCell>
+                      <TableCell><Badge variant={p.status === "Atrasado" ? "destructive" : "secondary"} className="text-[10px]">{p.status}</Badge></TableCell>
                     </TableRow>
                   ))}
                   {pendingPayments.length === 0 && <TableRow><TableCell colSpan={5} className="text-center py-6 text-muted-foreground">Nenhuma pendência.</TableCell></TableRow>}

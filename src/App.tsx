@@ -27,6 +27,7 @@ import BudgetsPage from "@/pages/BudgetsPage";
 import PricingCalculatorPage from "@/pages/PricingCalculatorPage";
 import CashFlowPage from "@/pages/CashFlowPage";
 import CrmPage from "@/pages/CrmPage";
+import InventoryPage from "@/pages/InventoryPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -67,6 +68,7 @@ const App = () => (
               <Route path="/pricing" element={guarded(PricingCalculatorPage)} />
               <Route path="/cashflow" element={guarded(CashFlowPage)} />
               <Route path="/crm" element={guarded(CrmPage)} />
+              <Route path="/inventory" element={guarded(InventoryPage)} />
               <Route path="/users" element={guarded(UsersPage)} />
               <Route path="/settings/company" element={guarded(CompanySettingsPage)} />
               <Route path="/settings/integrations" element={guarded(IntegrationSettingsPage)} />

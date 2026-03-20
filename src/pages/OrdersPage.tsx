@@ -36,9 +36,9 @@ const STATUS_CHANGE_ROLES = ["admin", "gerente", "estoquista", "operador"];
 
 function StatusStepper({ currentStatus }: { currentStatus: OrderStatus }) {
   // Exclude "cancelado" from stepper flow
-  const flowSteps = STATUS_STEPS.filter((s) => s.key !== "cancelado");
+  const flowSteps = STATUS_STEPS.filter((s) => s.key !== "Cancelado");
   const currentIdx = flowSteps.findIndex((s) => s.key === currentStatus);
-  const isCancelled = currentStatus === "cancelado";
+  const isCancelled = currentStatus === "Cancelado";
 
   if (isCancelled) {
     return (
@@ -173,7 +173,7 @@ export default function OrdersPage() {
                             {isExpanded ? <ChevronUp className="mr-1 h-4 w-4" /> : <ChevronDown className="mr-1 h-4 w-4" />}
                             Itens
                           </Button>
-                          {canChangeStatus && order.status !== "entregue" && order.status !== "cancelado" && (
+                          {canChangeStatus && order.status !== "Entregue" && order.status !== "Cancelado" && (
                             <Select value={order.status} onValueChange={(v) => updateStatus.mutate({ id: order._id, status: v as OrderStatus })}>
                               <SelectTrigger className="h-8 w-52 text-xs"><SelectValue /></SelectTrigger>
                               <SelectContent>
