@@ -238,14 +238,14 @@ export interface StockLow {
 
 // ===== Order =====
 export type OrderStatus =
-  | "pendente"
-  | "aguardando_pagamento"
-  | "separando"
-  | "produzindo"
-  | "preparando"
-  | "enviado"
-  | "entregue"
-  | "cancelado";
+  | "Pendente"
+  | "Aguardando_pagamento"
+  | "Separando"
+  | "Produzindo"
+  | "Preparando"
+  | "Enviado"
+  | "Entregue"
+  | "Cancelado";
 
 export interface Order {
   _id: string;
@@ -265,8 +265,8 @@ export interface OrderFormData {
 }
 
 // ===== Payment =====
-export type PaymentStatus = "pendente" | "pago" | "atrasado" | "cancelado";
-export type PaymentType = "receita" | "despesa";
+export type PaymentStatus = "Pendente" | "Pago" | "Atrasado" | "Cancelado";
+export type PaymentType = "Receita" | "Despesa";
 
 export interface Payment {
   _id: string;

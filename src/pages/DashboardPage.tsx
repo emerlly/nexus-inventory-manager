@@ -130,19 +130,19 @@ export default function DashboardPage() {
   const lowStockCount = stockAlerts.data?.count ?? 0;
 
   // Cash flow from payments
-  const totalReceitas = useMemo(() => paymentsData.filter(p => p.type === "receita" && p.status === "pago").reduce((s, p) => s + (p.amount || 0), 0), [paymentsData]);
-  const totalDespesas = useMemo(() => paymentsData.filter(p => p.type === "despesa" && p.status === "pago").reduce((s, p) => s + (p.amount || 0), 0), [paymentsData]);
+  const totalReceitas = useMemo(() => paymentsData.filter(p => p.type === "Receita" && p.status === "Pago").reduce((s, p) => s + (p.amount || 0), 0), [paymentsData]);
+  const totalDespesas = useMemo(() => paymentsData.filter(p => p.type === "Despesa" && p.status === "Pago").reduce((s, p) => s + (p.amount || 0), 0), [paymentsData]);
   const saldoCaixa = totalReceitas - totalDespesas;
-  const pendingPayments = useMemo(() => paymentsData.filter(p => p.status === "pendente" || p.status === "atrasado"), [paymentsData]);
+  const pendingPayments = useMemo(() => paymentsData.filter(p => p.status === "Pendente" || p.status === "Atrasado"), [paymentsData]);
 
   // Biggest inflow/outflow
   const biggestInflow = useMemo(() => {
-    const receitas = paymentsData.filter(p => p.type === "receita" && p.status === "pago");
+    const receitas = paymentsData.filter(p => p.type === "Receita" && p.status === "Pago");
     return receitas.length ? receitas.reduce((max, p) => p.amount > max.amount ? p : max, receitas[0]) : null;
   }, [paymentsData]);
 
   const biggestOutflow = useMemo(() => {
-    const despesas = paymentsData.filter(p => p.type === "despesa" && p.status === "pago");
+    const despesas = paymentsData.filter(p => p.type === "Despesa" && p.status === "Pago");
     return despesas.length ? despesas.reduce((max, p) => p.amount > max.amount ? p : max, despesas[0]) : null;
   }, [paymentsData]);
 
@@ -165,7 +165,7 @@ export default function DashboardPage() {
 
   const showDespesas = () => setListDialog({
     title: "Saídas de Caixa (Despesas Pagas)",
-    items: paymentsData.filter(p => p.type === "despesa" && p.status === "pago"),
+    items: paymentsData.filter(p => p.type === "Despesa" && p.status === "Pago"),
     columns: [
       { key: "dueDate", label: "Data", render: (p: Payment) => p.dueDate ? new Date(p.dueDate).toLocaleDateString("pt-BR") : "—" },
       { key: "description", label: "Descrição" },
@@ -175,7 +175,7 @@ export default function DashboardPage() {
 
   const showReceitas = () => setListDialog({
     title: "Entradas de Caixa (Receitas Pagas)",
-    items: paymentsData.filter(p => p.type === "receita" && p.status === "pago"),
+    items: paymentsData.filter(p => p.type === "Receita" && p.status === "Pago"),
     columns: [
       { key: "dueDate", label: "Data", render: (p: Payment) => p.dueDate ? new Date(p.dueDate).toLocaleDateString("pt-BR") : "—" },
       { key: "description", label: "Descrição" },
@@ -189,7 +189,7 @@ export default function DashboardPage() {
     columns: [
       { key: "dueDate", label: "Vencimento", render: (p: Payment) => p.dueDate ? new Date(p.dueDate).toLocaleDateString("pt-BR") : "—" },
       { key: "description", label: "Descrição" },
-      { key: "type", label: "Tipo", render: (p: Payment) => p.type === "receita" ? "Receita" : "Despesa" },
+      { key: "type", label: "Tipo", render: (p: Payment) => p.type === "Receita" ? "Receita" : "Despesa" },
       { key: "amount", label: "Valor", render: (p: Payment) => `R$ ${p.amount?.toFixed(2)}` },
       { key: "status", label: "Status" },
     ],

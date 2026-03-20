@@ -41,20 +41,20 @@ export default function CashFlowPage() {
 
   const byTab = tab === "all" ? filtered : filtered.filter(p => p.type === tab);
 
-  const totalReceitas = useMemo(() => filtered.filter(p => p.type === "receita" && p.status === "pago").reduce((s, p) => s + (p.amount || 0), 0), [filtered]);
-  const totalDespesas = useMemo(() => filtered.filter(p => p.type === "despesa" && p.status === "pago").reduce((s, p) => s + (p.amount || 0), 0), [filtered]);
+  const totalReceitas = useMemo(() => filtered.filter(p => p.type === "Receita" && p.status === "Pago").reduce((s, p) => s + (p.amount || 0), 0), [filtered]);
+  const totalDespesas = useMemo(() => filtered.filter(p => p.type === "Despesa" && p.status === "Pago").reduce((s, p) => s + (p.amount || 0), 0), [filtered]);
   const saldo = totalReceitas - totalDespesas;
-  const pending = useMemo(() => filtered.filter(p => p.status === "pendente" || p.status === "atrasado"), [filtered]);
-  const overdue = useMemo(() => filtered.filter(p => p.status === "atrasado"), [filtered]);
+  const pending = useMemo(() => filtered.filter(p => p.status === "Pendente" || p.status === "Atrasado"), [filtered]);
+  const overdue = useMemo(() => filtered.filter(p => p.status === "Atrasado"), [filtered]);
 
   // Chart: group by month
   const chartData = useMemo(() => {
     const map: Record<string, { period: string; receitas: number; despesas: number; saldo: number }> = {};
     filtered.forEach(p => {
-      if (p.status !== "pago") return;
+      if (p.status !== "Pago") return;
       const month = (p.dueDate || p.createdAt || "").substring(0, 7);
       if (!map[month]) map[month] = { period: month, receitas: 0, despesas: 0, saldo: 0 };
-      if (p.type === "receita") map[month].receitas += p.amount || 0;
+      if (p.type === "Receita") map[month].receitas += p.amount || 0;
       else map[month].despesas += p.amount || 0;
     });
     return Object.values(map).sort((a, b) => a.period.localeCompare(b.period)).map(d => ({ ...d, saldo: d.receitas - d.despesas }));
@@ -191,12 +191,12 @@ export default function CashFlowPage() {
                   <TableRow key={i}>
                     <TableCell className="text-sm">{p.dueDate ? new Date(p.dueDate).toLocaleDateString("pt-BR") : "—"}</TableCell>
                     <TableCell className="text-sm">{p.description}</TableCell>
-                    <TableCell><Badge variant={p.type === "receita" ? "default" : "secondary"} className="text-[10px]">{p.type === "receita" ? "Entrada" : "Saída"}</Badge></TableCell>
-                    <TableCell className={`text-right font-medium text-sm ${p.type === "receita" ? "text-success" : "text-destructive"}`}>
-                      {p.type === "receita" ? "+" : "-"} R$ {p.amount?.toFixed(2)}
+                    <TableCell><Badge variant={p.type === "Receita" ? "default" : "secondary"} className="text-[10px]">{p.type === "Receita" ? "Entrada" : "Saída"}</Badge></TableCell>
+                    <TableCell className={`text-right font-medium text-sm ${p.type === "Receita" ? "text-success" : "text-destructive"}`}>
+                      {p.type === "Receita" ? "+" : "-"} R$ {p.amount?.toFixed(2)}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={p.status === "pago" ? "default" : p.status === "atrasado" ? "destructive" : "secondary"} className="text-[10px]">
+                      <Badge variant={p.status === "Pago" ? "default" : p.status === "Atrasado" ? "destructive" : "secondary"} className="text-[10px]">
                         {p.status}
                       </Badge>
                     </TableCell>

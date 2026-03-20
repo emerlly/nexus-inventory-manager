@@ -4,7 +4,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { AppHeader } from "@/components/AppHeader";
 import { DataTable } from "@/components/DataTable";
-import { budgetService, customerService, productService, companyService, saleService } from "@/services";
+import { budgetService, customerService, productService, companyService, saleService, orderService } from "@/services";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +29,7 @@ interface Budget {
   customer?: any;
   items: { product: any; quantity: number; unitPrice: number; totalPrice: number }[];
   totalValue: number;
-  status: "pendente" | "aprovado" | "rejeitado" | "convertido" | "rascunho";
+  status: "Pendente" | "Aprovado" | "Rejeitado" | "Convertido" | "Rascunho";
   notes?: string;
   validUntil?: string;
   createdAt?: string;
@@ -79,28 +79,44 @@ export default function BudgetsPage() {
     },
   });
 
-  const sendToApproval = useMutation({
-    mutationFn: (id: string) => budgetService.approve(id, { status: "aprovado" }),
+  const sendBudget = useMutation({
+    mutationFn: (id: string) =>
+      budgetService.update(id, { status: "Pendente" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["budgets"] });
-      toast({ title: "Orçamento enviado para aprovação!" });
+      toast({ title: "Orçamento enviado!" });
       setViewBudget(null);
     },
-    onError: () => toast({ variant: "destructive", title: "Erro ao enviar para aprovação" }),
+    onError: () =>
+      toast({ variant: "destructive", title: "Erro ao enviar orçamento" }),
+  });
+
+  const sendOrder = useMutation({
+    mutationFn: (id: string) => orderService.send(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      toast({ title: "Orçamento enviado!" });
+    },
+    onError: (error: any) =>
+      toast({
+        variant: "destructive",
+        title: "Erro ao enviar",
+        description: error.response?.data?.message,
+      }),
   });
 
   const approveBudget = useMutation({
     mutationFn: async (b: Budget) => {
       await saleService.create({
         customer: typeof b.customer === "object" ? b.customer?._id : b.customer,
-        paymentMethod: "pendente",
+        paymentMethod: "Pendente",
         items: (b.items || []).map((it) => ({
           product: typeof it.product === "object" ? it.product?._id : it.product,
           quantity: it.quantity,
           unitPrice: it.unitPrice,
         })),
       });
-      await budgetService.update(b._id, { status: "convertido" });
+      await budgetService.update(b._id, { status: "Convertido" });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["budgets"] });
@@ -143,7 +159,7 @@ export default function BudgetsPage() {
       items: items.map((i) => ({ product: i.product, quantity: i.quantity, unitPrice: i.unitPrice })),
       notes: notes || undefined,
       validUntil: validUntil || undefined,
-      status: "rascunho",
+      status: "Rascunho",
     });
   };
 
@@ -235,18 +251,39 @@ export default function BudgetsPage() {
                   <FileText className="mr-1 h-4 w-4" /> PDF
                 </Button>
 
-                {viewBudget.status === "rascunho" && (
+                {viewBudget.status === "Rascunho" && (
                   <>
                     <Button variant="outline" size="sm" onClick={() => openEdit(viewBudget)}>
                       <Pencil className="mr-1 h-4 w-4" /> Editar
                     </Button>
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => sendToApproval.mutate(viewBudget._id)}>
-                      <Send className="mr-1 h-4 w-4" /> Enviar p/ Aprovação
+
+                    <Button
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => sendBudget.mutate(viewBudget._id)}
+                    >
+                      <Send className="mr-1 h-4 w-4" /> Enviar Orçamento
                     </Button>
                   </>
                 )}
 
-                {viewBudget.status === "pendente" && (
+                {viewBudget.status === "Pendente" && (
+                  <>
+                    <Button variant="outline" size="sm" onClick={() => openEdit(viewBudget)}>
+                      <Pencil className="mr-1 h-4 w-4" /> Editar
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      className="bg-success hover:bg-success/90 text-success-foreground"
+                      onClick={() => setApproveTarget(viewBudget)}
+                    >
+                      <CheckCircle2 className="mr-1 h-4 w-4" /> Aprovar e Converter
+                    </Button>
+                  </>
+                )}
+
+                {viewBudget.status === "Pendente" && (
                   <>
                     <Button variant="outline" size="sm" onClick={() => openEdit(viewBudget)}>
                       <Pencil className="mr-1 h-4 w-4" /> Editar
@@ -257,7 +294,7 @@ export default function BudgetsPage() {
                   </>
                 )}
 
-                {viewBudget.status !== "convertido" && (
+                {viewBudget.status !== "Convertido" && (
                   <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(viewBudget)}>
                     <Trash2 className="mr-1 h-4 w-4" /> Excluir
                   </Button>

@@ -15,22 +15,22 @@ import { useToast } from "@/hooks/use-toast";
 import { ConfirmSaveDialog } from "@/components/ConfirmSaveDialog";
 
 const statusColors: Record<PaymentStatus, string> = {
-  pendente: "bg-warning/15 text-warning border-warning/30",
-  pago: "bg-success/15 text-success border-success/30",
-  atrasado: "bg-destructive/15 text-destructive border-destructive/30",
-  cancelado: "bg-muted text-muted-foreground",
+  Pendente: "bg-warning/15 text-warning border-warning/30",
+  Pago: "bg-success/15 text-success border-success/30",
+  Atrasado: "bg-destructive/15 text-destructive border-destructive/30",
+  Cancelado: "bg-muted text-muted-foreground",
 };
 
 const typeLabels: Record<PaymentType, string> = {
-  receita: "Receita",
-  despesa: "Despesa",
+  Receita: "Receita",
+  Despesa: "Despesa",
 };
 
 const defaultForm: PaymentFormData = {
   description: "",
-  type: "receita",
+  type: "Receita",
   amount: 0,
-  status: "pendente",
+  status: "Pendente",
   dueDate: new Date().toISOString().split("T")[0],
 };
 
@@ -93,7 +93,7 @@ export default function FinanceiroPage() {
         <DataTable
           columns={[
             { key: "description", label: "Descrição" },
-            { key: "type", label: "Tipo", render: (p: Payment) => <Badge variant={p.type === "receita" ? "default" : "secondary"}>{typeLabels[p.type]}</Badge> },
+            { key: "type", label: "Tipo", render: (p: Payment) => <Badge variant={p.type === "Receita" ? "default" : "secondary"}>{typeLabels[p.type]}</Badge> },
             { key: "amount", label: "Valor", render: (p: Payment) => `R$ ${p.amount?.toFixed(2)}` },
             { key: "dueDate", label: "Vencimento", render: (p: Payment) => p.dueDate ? new Date(p.dueDate).toLocaleDateString("pt-BR") : "—" },
             { key: "status", label: "Status", render: (p: Payment) => <Badge className={statusColors[p.status]}>{p.status}</Badge> },
@@ -141,7 +141,7 @@ export default function FinanceiroPage() {
                 </Select>
               </div>
             </div>
-            {form.type === "receita" && (
+            {form.type === "Receita" && (
               <div className="space-y-2">
                 <Label>Cliente</Label>
                 <Select value={form.customer || ""} onValueChange={(v) => setForm({ ...form, customer: v })}>
@@ -150,7 +150,7 @@ export default function FinanceiroPage() {
                 </Select>
               </div>
             )}
-            {form.type === "despesa" && (
+            {form.type === "Despesa" && (
               <div className="space-y-2">
                 <Label>Fornecedor</Label>
                 <Select value={form.supplier || ""} onValueChange={(v) => setForm({ ...form, supplier: v })}>

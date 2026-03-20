@@ -10,4 +10,8 @@ export const orderService = {
     const res = await api.patch(`/orders/${id}/status`, data);
     return res.data;
   },
+  send: async (id: string ) => {
+    const { data } = await api.patch(`/orders/${id}/send`);
+    return data;
+  }
 };

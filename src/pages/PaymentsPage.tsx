@@ -63,16 +63,16 @@ export default function PaymentsPage() {
       o._id.includes(search);
 
     if (tab === "all") return matchesSearch;
-    if (tab === "pendente") return matchesSearch && o.paymentStatus !== "PAGO" && o.status !== "CANCELADO";
-    if (tab === "pago") return matchesSearch && o.paymentStatus === "PAGO";
-    if (tab === "cancelado") return matchesSearch && o.status === "CANCELADO";
+    if (tab === "Pendente") return matchesSearch && o.paymentStatus !== "Pago" && o.status !== "Cancelado";
+    if (tab === "Pago") return matchesSearch && o.paymentStatus === "Pago";
+    if (tab === "Cancelado") return matchesSearch && o.status === "Cancelado";
     return matchesSearch;
   });
 
-  const pendingCount = orders.filter((o: any) => o.paymentStatus !== "PAGO" && o.status !== "CANCELADO").length;
-  const paidCount = orders.filter((o: any) => o.paymentStatus === "PAGO").length;
+  const pendingCount = orders.filter((o: any) => o.paymentStatus !== "Pago" && o.status !== "Cancelado").length;
+  const paidCount = orders.filter((o: any) => o.paymentStatus === "Pago").length;
   const totalPending = orders
-    .filter((o: any) => o.paymentStatus !== "PAGO" && o.status !== "CANCELADO")
+    .filter((o: any) => o.paymentStatus !== "Pago" && o.status !== "Cancelado")
     .reduce((sum: number, o: any) => sum + (o.totalValue || o.totalOrder || 0), 0);
 
   return (
@@ -162,7 +162,7 @@ export default function PaymentsPage() {
               </TableHeader>
               <TableBody>
                 {filtered.map((order: any) => {
-                  const payStatus = order.paymentStatus || "PENDENTE";
+                  const payStatus = order.paymentStatus || "Pendente";
                   const expanded = expandedId === order._id;
 
                   return (
@@ -188,7 +188,7 @@ export default function PaymentsPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
-                            {payStatus !== "PAGO" && order.status !== "CANCELADO" && (
+                            {payStatus !== "pago" && order.status !== "Cancelado" && (
                               <Button
                                 size="sm"
                                 variant="outline"

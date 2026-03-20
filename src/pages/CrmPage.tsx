@@ -42,11 +42,11 @@ export default function CrmPage() {
       if (dt > map[cid].lastSale) map[cid].lastSale = dt;
     });
     paymentsData.forEach(p => {
-      if (p.type !== "receita") return;
+      if (p.type !== "Receita") return;
       const cid = typeof p.customer === "object" ? (p.customer as any)?._id : p.customer;
       if (!cid) return;
       if (!map[cid]) map[cid] = { totalSales: 0, salesCount: 0, lastSale: "", pendingAmount: 0, pendingCount: 0 };
-      if (p.status === "pendente" || p.status === "atrasado") {
+      if (p.status === "Pendente" || p.status === "Atrasado") {
         map[cid].pendingAmount += p.amount || 0;
         map[cid].pendingCount += 1;
       }
@@ -85,7 +85,7 @@ export default function CrmPage() {
     if (!selectedCustomer) return [];
     return paymentsData.filter(p => {
       const cid = typeof p.customer === "object" ? (p.customer as any)?._id : p.customer;
-      return cid === selectedCustomer && (p.status === "pendente" || p.status === "atrasado");
+      return cid === selectedCustomer && (p.status === "Pendente" || p.status === "Atrasado");
     });
   }, [selectedCustomer, paymentsData]);
 
@@ -235,7 +235,7 @@ export default function CrmPage() {
                           <TableCell className="text-sm">{p.dueDate ? new Date(p.dueDate).toLocaleDateString("pt-BR") : "—"}</TableCell>
                           <TableCell className="text-sm">{p.description}</TableCell>
                           <TableCell className="text-right text-sm font-medium">R$ {p.amount?.toFixed(2)}</TableCell>
-                          <TableCell><Badge variant={p.status === "atrasado" ? "destructive" : "secondary"} className="text-[10px]">{p.status}</Badge></TableCell>
+                          <TableCell><Badge variant={p.status === "Atrasado" ? "destructive" : "secondary"} className="text-[10px]">{p.status}</Badge></TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
