@@ -27,6 +27,7 @@ import BudgetsPage from "@/pages/BudgetsPage";
 import PricingCalculatorPage from "@/pages/PricingCalculatorPage";
 import CashFlowPage from "@/pages/CashFlowPage";
 import CrmPage from "@/pages/CrmPage";
+import InventoryPage from "@/pages/InventoryPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
