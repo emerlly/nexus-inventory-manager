@@ -12,9 +12,18 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2, Eye, FileImage, FileText, Pencil, CheckCircle2, Send } from "lucide-react";
+import { Plus, Trash2, Eye, FileImage, FileText, Pencil, CheckCircle2, Send, ShoppingCart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmSaveDialog } from "@/components/ConfirmSaveDialog";
+
+const PAYMENT_METHODS = [
+  { value: "pix", label: "Pix" },
+  { value: "dinheiro", label: "Dinheiro" },
+  { value: "boleto", label: "Boleto" },
+  { value: "cartao_credito", label: "Cartão de Crédito" },
+  { value: "cartao_debito", label: "Cartão de Débito" },
+  { value: "transferencia", label: "Transferência" },
+];
 
 interface BudgetItem {
   product: string;
@@ -90,23 +99,35 @@ export default function BudgetsPage() {
   });
 
   const approveBudget = useMutation({
-    mutationFn: async (b: Budget) => {
+    mutationFn: (id: string) => budgetService.approve(id, { status: "aprovado" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgets"] });
+      toast({ title: "Orçamento aprovado!" });
+      setApproveTarget(null);
+      setViewBudget(null);
+    },
+    onError: () => toast({ variant: "destructive", title: "Erro ao aprovar orçamento" }),
+  });
+
+  const convertToSale = useMutation({
+    mutationFn: async ({ budget, paymentMethod }: { budget: Budget; paymentMethod: string }) => {
       await saleService.create({
-        customer: typeof b.customer === "object" ? b.customer?._id : b.customer,
-        paymentMethod: "pendente",
-        items: (b.items || []).map((it) => ({
+        customer: typeof budget.customer === "object" ? budget.customer?._id : budget.customer,
+        paymentMethod,
+        items: (budget.items || []).map((it) => ({
           product: typeof it.product === "object" ? it.product?._id : it.product,
           quantity: it.quantity,
           unitPrice: it.unitPrice,
         })),
       });
-      await budgetService.update(b._id, { status: "convertido" });
+      await budgetService.update(budget._id, { status: "convertido" });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["budgets"] });
       qc.invalidateQueries({ queryKey: ["sales"] });
       toast({ title: "Orçamento convertido em venda!" });
-      setApproveTarget(null);
+      setConvertTarget(null);
+      setSelectedPayment("");
       setViewBudget(null);
     },
     onError: () => toast({ variant: "destructive", title: "Erro ao converter orçamento" }),
@@ -114,6 +135,8 @@ export default function BudgetsPage() {
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [approveTarget, setApproveTarget] = useState<Budget | null>(null);
+  const [convertTarget, setConvertTarget] = useState<Budget | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Budget | null>(null);
 
   const addItem = () => setItems([...items, { product: "", productName: "", quantity: 1, unitPrice: 0 }]);
@@ -240,7 +263,7 @@ export default function BudgetsPage() {
                     <Button variant="outline" size="sm" onClick={() => openEdit(viewBudget)}>
                       <Pencil className="mr-1 h-4 w-4" /> Editar
                     </Button>
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => sendToApproval.mutate(viewBudget._id)}>
+                    <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => sendToApproval.mutate(viewBudget._id)}>
                       <Send className="mr-1 h-4 w-4" /> Enviar p/ Aprovação
                     </Button>
                   </>
@@ -252,11 +275,16 @@ export default function BudgetsPage() {
                       <Pencil className="mr-1 h-4 w-4" /> Editar
                     </Button>
                     <Button size="sm" className="bg-success hover:bg-success/90 text-success-foreground" onClick={() => setApproveTarget(viewBudget)}>
-                      <CheckCircle2 className="mr-1 h-4 w-4" /> Aprovar e Converter
+                      <CheckCircle2 className="mr-1 h-4 w-4" /> Aprovar
                     </Button>
                   </>
                 )}
 
+                {viewBudget.status === "aprovado" && (
+                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => setConvertTarget(viewBudget)}>
+                    <ShoppingCart className="mr-1 h-4 w-4" /> Converter em Venda
+                  </Button>
+                )}
                 {viewBudget.status !== "convertido" && (
                   <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(viewBudget)}>
                     <Trash2 className="mr-1 h-4 w-4" /> Excluir
@@ -465,12 +493,46 @@ export default function BudgetsPage() {
       <ConfirmSaveDialog
         open={!!approveTarget}
         onOpenChange={() => setApproveTarget(null)}
-        onConfirm={() => approveTarget && approveBudget.mutate(approveTarget)}
+        onConfirm={() => approveTarget && approveBudget.mutate(approveTarget._id)}
         title="Aprovar orçamento"
-        description={`Deseja aprovar este orçamento de R$ ${approveTarget?.totalValue?.toFixed(2) || "0.00"} e convertê-lo em uma venda? O estoque será atualizado automaticamente.`}
-        confirmLabel="Aprovar e Vender"
+        description={`Deseja aprovar este orçamento de R$ ${approveTarget?.totalValue?.toFixed(2) || "0.00"}?`}
+        confirmLabel="Aprovar"
         isPending={approveBudget.isPending}
       />
+
+      {/* Convert to Sale Dialog with payment method selection */}
+      <Dialog open={!!convertTarget} onOpenChange={() => { setConvertTarget(null); setSelectedPayment(""); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Converter em Venda</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Converter orçamento de <span className="font-semibold text-foreground">R$ {convertTarget?.totalValue?.toFixed(2) || "0.00"}</span> em venda. Selecione a forma de pagamento:
+            </p>
+            <div className="space-y-2">
+              <Label>Forma de Pagamento</Label>
+              <Select value={selectedPayment} onValueChange={setSelectedPayment}>
+                <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_METHODS.map((m) => (
+                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { setConvertTarget(null); setSelectedPayment(""); }}>Cancelar</Button>
+              <Button
+                disabled={!selectedPayment || convertToSale.isPending}
+                onClick={() => convertTarget && convertToSale.mutate({ budget: convertTarget, paymentMethod: selectedPayment })}
+              >
+                {convertToSale.isPending ? "Convertendo..." : "Confirmar Venda"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmSaveDialog
         open={!!deleteTarget}
