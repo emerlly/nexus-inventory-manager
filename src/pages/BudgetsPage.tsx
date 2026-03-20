@@ -263,7 +263,7 @@ export default function BudgetsPage() {
                     <Button variant="outline" size="sm" onClick={() => openEdit(viewBudget)}>
                       <Pencil className="mr-1 h-4 w-4" /> Editar
                     </Button>
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => sendToApproval.mutate(viewBudget._id)}>
+                    <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => sendToApproval.mutate(viewBudget._id)}>
                       <Send className="mr-1 h-4 w-4" /> Enviar p/ Aprovação
                     </Button>
                   </>
@@ -275,9 +275,16 @@ export default function BudgetsPage() {
                       <Pencil className="mr-1 h-4 w-4" /> Editar
                     </Button>
                     <Button size="sm" className="bg-success hover:bg-success/90 text-success-foreground" onClick={() => setApproveTarget(viewBudget)}>
-                      <CheckCircle2 className="mr-1 h-4 w-4" /> Aprovar e Converter
+                      <CheckCircle2 className="mr-1 h-4 w-4" /> Aprovar
                     </Button>
                   </>
+                )}
+
+                {viewBudget.status === "aprovado" && (
+                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => setConvertTarget(viewBudget)}>
+                    <ShoppingCart className="mr-1 h-4 w-4" /> Converter em Venda
+                  </Button>
+                )}
                 )}
 
                 {viewBudget.status !== "convertido" && (
