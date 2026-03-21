@@ -1,11 +1,11 @@
 import api from "./api";
 
-export type InventoryStatus = "OPEN" | "COUNTING" | "PENDING" | "APPROVED";
+export type InventoryStatus = "Aberto" | "Contagem" | "Pendente" | "Aprovado" | "Cancelado";
 
 export interface InventoryItem {
   product: string;
-  productName: string;
-  sku: string;
+  name: string;
+  SKU: string;
   systemQuantity: number;
   countedQuantity: number | null;
   difference: number;
@@ -35,7 +35,7 @@ export const inventoryService = {
   getById: (id: string) => api.get(`/inventories/${id}`).then((r) => r.data),
   create: (data: InventoryFormData) => api.post("/inventories", data).then((r) => r.data),
   updateItems: (id: string, items: InventoryItem[]) =>
-    api.patch(`/inventories/update/${id}`, { items }).then((r) => r.data),
+    api.patch(`/inventories/${id}/update`, { items }).then((r) => r.data),
   finalize: (id: string) =>
     api.put(`/inventories/${id}/finalize`).then((r) => r.data),
   approve: (id: string) =>
@@ -43,4 +43,6 @@ export const inventoryService = {
   recount: (id: string, justification: string) =>
     api.put(`/inventories/${id}/recount`, { justification }).then((r) => r.data),
   delete: (id: string) => api.delete(`/inventories/${id}`).then((r) => r.data),
-};
+  submit: (id: string, items: InventoryItem[]) =>
+    api.patch(`/inventories/${id}/submit`, { items }).then((r) => r.data)
+}

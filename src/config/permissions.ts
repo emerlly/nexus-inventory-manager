@@ -22,7 +22,7 @@ export const routePermissions: RoutePermission[] = [
   { path: "/sales/analytics", roles: ["admin", "gerente", "vendedor"] },
   { path: "/stock/movements", roles: ["admin", "gerente", "estoquista"] },
   { path: "/orders", roles: ALL_ROLES },
-  { path: "/payments", roles: ["admin", "gerente"] },
+  { path: "/payments", roles: ["admin", "gerente", "vendedor"] },
   { path: "/financeiro", roles: ["admin", "gerente"] },
   { path: "/budgets", roles: ["admin", "gerente", "vendedor"] },
   { path: "/pricing", roles: ["admin", "gerente", "vendedor"] },

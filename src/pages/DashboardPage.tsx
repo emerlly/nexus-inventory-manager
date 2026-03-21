@@ -30,6 +30,7 @@ const PERIOD_SHORTCUTS = [
   { label: "15d", days: 15 },
   { label: "30d", days: 30 },
   { label: "90d", days: 90 },
+  { label: "120d", days: 120 }
 ];
 
 /* ─── KPI Card ─── */

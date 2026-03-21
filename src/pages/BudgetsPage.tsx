@@ -16,15 +16,6 @@ import { Plus, Trash2, Eye, FileImage, FileText, Pencil, CheckCircle2, Send, Sho
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmSaveDialog } from "@/components/ConfirmSaveDialog";
 
-const PAYMENT_METHODS = [
-  { value: "pix", label: "Pix" },
-  { value: "dinheiro", label: "Dinheiro" },
-  { value: "boleto", label: "Boleto" },
-  { value: "cartao_credito", label: "Cartão de Crédito" },
-  { value: "cartao_debito", label: "Cartão de Débito" },
-  { value: "transferencia", label: "Transferência" },
-];
-
 interface BudgetItem {
   product: string;
   productName: string;
@@ -77,6 +68,9 @@ export default function BudgetsPage() {
     { value: "Boleto", label: "Boleto" },
   ];
 
+  const [paymentCondition, setPaymentCondition] = useState<"avista" | "prazo">("avista");
+  const [dueDate, setDueDate] = useState("");
+
   const save = useMutation({
     mutationFn: (d: any) => editId ? budgetService.update(editId, d) : budgetService.create(d),
     onSuccess: () => {
@@ -96,32 +90,6 @@ export default function BudgetsPage() {
     },
   });
 
-  const sendBudget = useMutation({
-    mutationFn: (id: string) =>
-      budgetService.update(id, { status: "Pendente" }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["budgets"] });
-      toast({ title: "Orçamento enviado!" });
-      setViewBudget(null);
-    },
-    onError: () =>
-      toast({ variant: "destructive", title: "Erro ao enviar orçamento" }),
-  });
-
-  const sendOrder = useMutation({
-    mutationFn: (id: string) => orderService.send(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["orders"] });
-      toast({ title: "Orçamento enviado!" });
-    },
-    onError: (error: any) =>
-      toast({
-        variant: "destructive",
-        title: "Erro ao enviar",
-        description: error.response?.data?.message,
-      }),
-  });
-
   const approveBudget = useMutation({
     mutationFn: (id: string) => budgetService.approve(id, { status: "Aprovado" }),
     onSuccess: () => {
@@ -136,8 +104,14 @@ export default function BudgetsPage() {
   const convertToSale = useMutation({
     mutationFn: async ({ budget, paymentMethod }: { budget: Budget; paymentMethod: string }) => {
       await saleService.create({
-        customer: typeof budget.customer === "object" ? budget.customer?._id : budget.customer,
+        customer: typeof budget.customer === "object"
+          ? budget.customer?._id
+          : budget.customer,
+
         paymentMethod,
+        paymentCondition,
+        dueDate: paymentCondition === "prazo" ? dueDate : null,
+
         items: (budget.items || []).map((it) => ({
           product: typeof it.product === "object" ? it.product?._id : it.product,
           quantity: it.quantity,
@@ -305,7 +279,7 @@ export default function BudgetsPage() {
                   </>
                 )}
 
-                {viewBudget.status === "Pendente"  && (
+                {viewBudget.status === "Pendente" && (
 
                   <>
                     <Button variant="outline" size="sm" onClick={() => openEdit(viewBudget)}>
@@ -558,6 +532,28 @@ export default function BudgetsPage() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label>Condição de Pagamento</Label>
+              <Select value={paymentCondition} onValueChange={(v) => setPaymentCondition(v as any)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="avista">À vista</SelectItem>
+                  <SelectItem value="prazo">A prazo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {paymentCondition === "prazo" && (
+              <div className="space-y-2">
+                <Label>Data de Pagamento</Label>
+                <Input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                />
+              </div>
+            )}
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => { setConvertTarget(null); setSelectedPayment(""); }}>Cancelar</Button>
               <Button

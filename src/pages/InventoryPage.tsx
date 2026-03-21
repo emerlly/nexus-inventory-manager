@@ -81,6 +81,16 @@ export default function InventoryPage() {
     queryFn: productService.getAll,
   });
 
+  const productMap = useMemo(() => {
+    const map: Record<string, Product> = {};
+
+    products.forEach((p) => {
+      map[String(p._id)] = p;
+    });
+
+    return map;
+  }, [products]);
+
   /* ─── Mutations ─── */
   const createMut = useMutation({
     mutationFn: inventoryService.create,
@@ -138,27 +148,46 @@ export default function InventoryPage() {
   /* ─── Helpers ─── */
   const openCount = useCallback((inv: Inventory) => {
     const items: InventoryItem[] = inv.items?.length
-      ? inv.items
+      ? inv.items.map((item) => {
+        const product = productMap[String(item.product)];
+
+        return {
+          ...item,
+          name: product?.name || "Produto não encontrado",
+          SKU: product?.SKU || "",
+        };
+      })
       : products.map((p) => ({
-          product: p._id,
-          productName: p.name,
-          sku: p.SKU || "",
-          systemQuantity: p.stockQuantity,
-          countedQuantity: null,
-          difference: 0,
-        }));
+        product: p._id,
+        name: p.name,
+        SKU: p.SKU || "",
+        systemQuantity: p.stockQuantity,
+        countedQuantity: null,
+        difference: 0,
+      }));
+
     setCountItems(items);
     setActiveInventory(inv);
     setViewMode("count");
     setSearchTerm("");
-  }, [products]);
+  }, [products, productMap]);
 
   const openReview = useCallback((inv: Inventory) => {
+    const items = (inv.items || []).map((item) => {
+      const product = productMap[String(item.product)];
+
+      return {
+        ...item,
+        name: product?.name || "Produto não encontrado",
+        SKU: product?.SKU || "",
+      };
+    });
+
     setActiveInventory(inv);
-    setCountItems(inv.items || []);
+    setCountItems(items);
     setViewMode("review");
     setSearchTerm("");
-  }, []);
+  }, [productMap]);
 
   const updateCount = useCallback((index: number, value: string) => {
     setCountItems((prev) => {
@@ -185,7 +214,7 @@ export default function InventoryPage() {
     if (!searchTerm) return countItems;
     const s = searchTerm.toLowerCase();
     return countItems.filter(
-      (i) => i.productName.toLowerCase().includes(s) || i.sku.toLowerCase().includes(s)
+      (i) => i.name.toLowerCase().includes(s) || i.SKU.toLowerCase().includes(s)
     );
   }, [countItems, searchTerm]);
 
@@ -197,9 +226,10 @@ export default function InventoryPage() {
     return { divergent: divergent.length, losses, gains };
   }, [countItems]);
 
-  const readOnly = viewMode === "review" || activeInventory?.status === "PENDING" || activeInventory?.status === "APPROVED";
+  const readOnly = viewMode === "review" || activeInventory?.status === "Pendente" || activeInventory?.status === "Aprovado";
 
-  /* ================================================================ */
+  //console.log("ITEM:", item.product);
+
   /* ─── LIST VIEW ─── */
   if (!viewMode) {
     return (
@@ -239,15 +269,15 @@ export default function InventoryPage() {
                       <TableCell><StatusBadge status={inv.status} /></TableCell>
                       <TableCell>{typeof inv.responsibleUser === "object" ? inv.responsibleUser?.name : "—"}</TableCell>
                       <TableCell className="text-right space-x-1">
-                        {(inv.status === "OPEN" || inv.status === "COUNTING") && (
+                        {(inv.status === "Aberto" || inv.status === "Contagem") && (
                           <Button size="sm" variant="outline" onClick={() => openCount(inv)}>
                             <ClipboardEdit className="mr-1 h-3.5 w-3.5" /> Contar
                           </Button>
                         )}
-                        {(inv.status === "PENDING" || inv.status === "APPROVED") && (
+                        {(inv.status === "Pendente" || inv.status === "Aprovado") && (
                           <Button size="sm" variant="outline" onClick={() => openReview(inv)}>
                             {isManager ? <FileCheck className="mr-1 h-3.5 w-3.5" /> : <Eye className="mr-1 h-3.5 w-3.5" />}
-                            {isManager && inv.status === "PENDING" ? "Revisar" : "Visualizar"}
+                            {isManager && inv.status === "Pendente" ? "Revisar" : "Visualizar"}
                           </Button>
                         )}
                       </TableCell>
@@ -288,7 +318,6 @@ export default function InventoryPage() {
     );
   }
 
-  /* ================================================================ */
   /* ─── COUNTING / REVIEW VIEW ─── */
   return (
     <div className="space-y-4">
@@ -316,7 +345,7 @@ export default function InventoryPage() {
               </Button>
             </>
           )}
-          {viewMode === "review" && isManager && activeInventory?.status === "PENDING" && (
+          {viewMode === "review" && isManager && activeInventory?.status === "Pendente" && (
             <>
               <Button size="sm" variant="outline" onClick={() => setRecountOpen(true)}>
                 <RotateCcw className="mr-1 h-3.5 w-3.5" /> Solicitar Recontagem
@@ -330,7 +359,7 @@ export default function InventoryPage() {
       </div>
 
       {/* Recount justification banner */}
-      {activeInventory?.recountJustification && activeInventory.status === "COUNTING" && (
+      {activeInventory?.recountJustification && activeInventory.status === "Contagem" && (
         <Card className="border-amber-500/30 bg-amber-500/5">
           <CardContent className="flex items-start gap-3 p-4">
             <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
@@ -408,8 +437,8 @@ export default function InventoryPage() {
                         : "bg-emerald-500/5"
                       : ""
                   }>
-                    <TableCell className="font-medium">{item.productName}</TableCell>
-                    <TableCell className="text-muted-foreground text-xs">{item.sku || "—"}</TableCell>
+                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs">{item.SKU || "—"}</TableCell>
                     <TableCell className="text-center tabular-nums">{item.systemQuantity}</TableCell>
                     <TableCell className="text-center">
                       {readOnly ? (
@@ -450,9 +479,23 @@ export default function InventoryPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={() => {
-              saveMut.mutate({ id: activeInventory!._id, items: countItems }, {
-                onSuccess: () => finalizeMut.mutate(activeInventory!._id),
-              });
+              const hasCounted = countItems.some(i => i.countedQuantity !== null);
+
+              console.log("sla", hasCounted)
+              if (!hasCounted) {
+                toast({
+                  title: "Atenção",
+                  description: "Você precisa contar pelo menos 1 item antes de finalizar.",
+                  variant: "destructive"
+                });
+                return;
+              } 
+              saveMut.mutate(
+                { id: activeInventory!._id, items: countItems },
+                {
+                  onSuccess: () => finalizeMut.mutate(activeInventory!._id),
+                }
+              );
             }}>
               Finalizar e Enviar
             </AlertDialogAction>
