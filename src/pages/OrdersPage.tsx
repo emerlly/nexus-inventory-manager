@@ -16,11 +16,13 @@ import { Search, Package, CheckCircle2, Eye, ChevronDown, ChevronUp } from "luci
 import { DetailDialog } from "@/components/DetailDialog";
 
 const STATUS_STEPS = [
-  { key: "PENDENTE", label: "Pendente" },
-  { key: "RESERVADO", label: "Reservado" },
-  { key: "SEPARANDO", label: "Separando" },
-  { key: "FATURADO", label: "Faturado" },
-  { key: "CANCELADO", label: "Cancelado" },
+  { key: "Pendente", label: "Pendente" },
+  { key: "Reservado", label: "Reservado" },
+  { key: "Separando", label: "Separando" },
+  { key: "Produzindo", label: "Produzindo" },
+  { key: "Faturado", label: "Faturado" },
+  { key: "Entregue", label: "Entregue" },
+  { key: "Cancelado", label: "Cancelado" },
 ];
 
 const statusColors = {

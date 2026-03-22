@@ -21,5 +21,9 @@ export function createCrudService<T, F>(endpoint: string) {
     remove: async (id: string): Promise<void> => {
       await api.delete(`${endpoint}/${id}`);
     },
+    converToSale: async (id: string, data: F): Promise<T> => {
+      const res = await api.patch(`${endpoint}/${id}/confirm-payment`, data);
+      return res.data;
+    },
   };
 }

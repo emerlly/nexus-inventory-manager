@@ -1,3 +1,4 @@
+import { promises } from "dns";
 import api from "./api";
 import { createCrudService } from "./crudService";
 import type { Order, OrderFormData } from "@/types";
@@ -13,5 +14,9 @@ export const orderService = {
   send: async (id: string ) => {
     const { data } = await api.patch(`/orders/${id}/send`);
     return data;
+  },
+  confirmPayment: async (id: string) => {
+    const res = await api.patch(`/sales/${id}/confirm-payment`);
+    return res.data;
   }
 };

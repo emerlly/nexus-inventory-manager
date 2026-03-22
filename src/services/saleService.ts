@@ -12,4 +12,9 @@ export const saleService = {
   },
   confirmPayment: (orderId: string) =>
     api.post(`/payment/${orderId}/confirm-payment`),
+  getAll: async ()=> {
+    const { data } = await api.get("/sales/")
+    return data;
+  }
 };
+

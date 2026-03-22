@@ -119,7 +119,7 @@ export default function DashboardPage() {
   const prevData = prevPeriod.data as any[] | undefined;
   const profitData = profitByPeriod.data as any[] | undefined;
   const salesData = (allSales.data || []) as Sale[];
-  const paymentsData = (allPayments.data || []) as Payment[];
+  const paymentDate = (allPayments.data || []) as Payment[];
 
   // KPIs
   const revenue = useMemo(() => periodData?.reduce((s: number, p: any) => s + (p.revenue || 0), 0) ?? 0, [periodData]);
@@ -129,23 +129,24 @@ export default function DashboardPage() {
   const salesCount = periodData?.length ?? 0;
   const ticket = salesCount ? revenue / salesCount : 0;
   const lowStockCount = stockAlerts.data?.count ?? 0;
+  console.log('valor dash', revenue)
 
   // Cash flow from payments
-  const totalReceitas = useMemo(() => paymentsData.filter(p => p.type === "Receita" && p.status === "Pago").reduce((s, p) => s + (p.amount || 0), 0), [paymentsData]);
-  const totalDespesas = useMemo(() => paymentsData.filter(p => p.type === "Despesa" && p.status === "Pago").reduce((s, p) => s + (p.amount || 0), 0), [paymentsData]);
+  const totalReceitas = useMemo(() => paymentDate.filter(p => p.type === "Receita" && p.status === "Pago").reduce((s, p) => s + (p.amount || 0), 0), [paymentDate]);
+  const totalDespesas = useMemo(() => paymentDate.filter(p => p.type === "Despesa" && p.status === "Pago").reduce((s, p) => s + (p.amount || 0), 0), [paymentDate]);
   const saldoCaixa = totalReceitas - totalDespesas;
-  const pendingPayments = useMemo(() => paymentsData.filter(p => p.status === "Pendente" || p.status === "Atrasado"), [paymentsData]);
+  const pendingPayments = useMemo(() => paymentDate.filter(p => p.status === "Pendente" || p.status === "Atrasado"), [paymentDate]);
 
   // Biggest inflow/outflow
   const biggestInflow = useMemo(() => {
-    const receitas = paymentsData.filter(p => p.type === "Receita" && p.status === "Pago");
+    const receitas = paymentDate.filter(p => p.type === "Receita" && p.status === "Pago");
     return receitas.length ? receitas.reduce((max, p) => p.amount > max.amount ? p : max, receitas[0]) : null;
-  }, [paymentsData]);
+  }, [paymentDate]);
 
   const biggestOutflow = useMemo(() => {
-    const despesas = paymentsData.filter(p => p.type === "Despesa" && p.status === "Pago");
+    const despesas = paymentDate.filter(p => p.type === "Despesa" && p.status === "Pago");
     return despesas.length ? despesas.reduce((max, p) => p.amount > max.amount ? p : max, despesas[0]) : null;
-  }, [paymentsData]);
+  }, [paymentDate]);
 
   const setShortcut = (d: number) => { setStartDate(subDays(new Date(), d)); setEndDate(new Date()); };
 
@@ -166,7 +167,7 @@ export default function DashboardPage() {
 
   const showDespesas = () => setListDialog({
     title: "Saídas de Caixa (Despesas Pagas)",
-    items: paymentsData.filter(p => p.type === "Despesa" && p.status === "Pago"),
+    items: paymentDate.filter(p => p.type === "Despesa" && p.status === "Pago"),
     columns: [
       { key: "dueDate", label: "Data", render: (p: Payment) => p.dueDate ? new Date(p.dueDate).toLocaleDateString("pt-BR") : "—" },
       { key: "description", label: "Descrição" },
@@ -176,7 +177,7 @@ export default function DashboardPage() {
 
   const showReceitas = () => setListDialog({
     title: "Entradas de Caixa (Receitas Pagas)",
-    items: paymentsData.filter(p => p.type === "Receita" && p.status === "Pago"),
+    items: paymentDate.filter(p => p.type === "Receita" && p.status === "Pago"),
     columns: [
       { key: "dueDate", label: "Data", render: (p: Payment) => p.dueDate ? new Date(p.dueDate).toLocaleDateString("pt-BR") : "—" },
       { key: "description", label: "Descrição" },

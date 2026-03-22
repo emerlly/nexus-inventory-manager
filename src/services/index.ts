@@ -56,8 +56,12 @@ export const analyticsService = {
   summary: (start?: string, end?: string) =>
     request("/dashboard/summary", { startDate: start, endDate: end }),
 
-  salesByPeriod: (start?: string, end?: string, source: AnalyticsSource = "dashboard") =>
-    request(`${buildBase(source)}/sales-by-period`, { startDate: start, endDate: end }),
+  salesByPeriod: async (start: string, end: string) => {
+    const res = await api.get(`/dashboard/sales-by-period`, {
+      params: { startDate: start, endDate: end }
+    });
+    return res.data;
+  },
 
   salesByProduct: (start?: string, end?: string, limit = 5, source: AnalyticsSource = "dashboard") =>
     request(`${buildBase(source)}/top-products`, { startDate: start, endDate: end, limit }),
