@@ -44,7 +44,8 @@ export default function StockMovementsPage() {
     { label: "Tipo", value: m.type === "entry" ? "Entrada" : "Saída" },
     { label: "Quantidade", value: String(m.quantity) },
     { label: "Motivo", value: m.reason || "—" },
-    { label: "Usuário", value: typeof m.user === "object" ? (m.user as any)?.name : "—" },
+    { label: "nº Pedido", value: `#${m.order}` || "-"},
+    { label: "Vendedor", value: typeof m.user === "object" ? (m.user as any)?.name : "—" },
   ];
 
   return (

@@ -129,7 +129,7 @@ export default function DashboardPage() {
   const salesCount = periodData?.length ?? 0;
   const ticket = salesCount ? revenue / salesCount : 0;
   const lowStockCount = stockAlerts.data?.count ?? 0;
-  console.log('valor dash', revenue)
+ 
 
   // Cash flow from payments
   const totalReceitas = useMemo(() => paymentDate.filter(p => p.type === "Receita" && p.status === "Pago").reduce((s, p) => s + (p.amount || 0), 0), [paymentDate]);

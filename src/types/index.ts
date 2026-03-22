@@ -183,6 +183,7 @@ export interface StockMovement {
   reason?: string;
   user?: User | string;
   createdAt?: string;
+  order?: string;
 }
 
 export interface StockMovementFormData {

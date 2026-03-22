@@ -19,17 +19,17 @@ import { useToast } from "@/hooks/use-toast";
 import { Search, Eye, CheckCircle, Clock, AlertTriangle, XCircle } from "lucide-react";
 
 const paymentStatusColors: Record<string, string> = {
-  PENDENTE: "bg-warning/15 text-warning border-warning/30",
-  PAGO: "bg-success/15 text-success border-success/30",
-  ATRASADO: "bg-destructive/15 text-destructive border-destructive/30",
-  CANCELADO: "bg-muted text-muted-foreground",
+  Pendente: "bg-warning/15 text-warning border-warning/30",
+  Pago: "bg-success/15 text-success border-success/30",
+  Atrasado: "bg-destructive/15 text-destructive border-destructive/30",
+  Cancelado: "bg-muted text-muted-foreground",
 };
 
 const paymentStatusIcons: Record<string, React.ReactNode> = {
-  PENDENTE: <Clock className="h-3.5 w-3.5" />,
-  PAGO: <CheckCircle className="h-3.5 w-3.5" />,
-  ATRASADO: <AlertTriangle className="h-3.5 w-3.5" />,
-  CANCELADO: <XCircle className="h-3.5 w-3.5" />,
+  Pendente: <Clock className="h-3.5 w-3.5" />,
+  Pago: <CheckCircle className="h-3.5 w-3.5" />,
+  Atrasado: <AlertTriangle className="h-3.5 w-3.5" />,
+  Cancelado: <XCircle className="h-3.5 w-3.5" />,
 };
 
 export default function PaymentsPage() {
@@ -87,7 +87,7 @@ export default function PaymentsPage() {
 
   return (
     <div className="flex flex-col">
-      <AppHeader title="Pagamentos Pendentes" />
+      <AppHeader title="Acompanhamento de Pagamentos" />
 
       <div className="p-6 space-y-4">
         {/* Summary Cards */}

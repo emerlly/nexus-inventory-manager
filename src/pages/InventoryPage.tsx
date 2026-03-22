@@ -228,8 +228,6 @@ export default function InventoryPage() {
 
   const readOnly = viewMode === "review" || activeInventory?.status === "Pendente" || activeInventory?.status === "Aprovado";
 
-  //console.log("ITEM:", item.product);
-
   /* ─── LIST VIEW ─── */
   if (!viewMode) {
     return (
