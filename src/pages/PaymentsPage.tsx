@@ -51,9 +51,19 @@ export default function PaymentsPage() {
       qc.invalidateQueries({ queryKey: ["payment"] });
       toast({ title: "Pagamento confirmado!" });
     },
-    onError: () => {
-      toast({ variant: "destructive", title: "Erro ao confirmar pagamento" });
-    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "Erro inesperado";
+
+      toast({
+        variant: "destructive",
+        title: "Erro ao confirmar pagamento",
+    
+      });
+    }
   });
 
   const filtered = orders.filter((o: any) => {

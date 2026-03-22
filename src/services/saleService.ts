@@ -6,15 +6,19 @@ const base = createCrudService<Sale, SaleFormData>("/sales");
 
 export const saleService = {
   ...base,
+
   getPaymentMethods: async () => {
     const { data } = await api.get("/sales/payment-methods");
     return data;
   },
-  confirmPayment: (orderId: string) =>
-    api.post(`/payment/${orderId}/confirm-payment`),
-  getAll: async ()=> {
-    const { data } = await api.get("/sales/")
-    return data;
-  }
-};
 
+  // CORRIGIDO: Era api.post('/payment/...') — rota incorreta (singular e sem 's')
+  // A rota correta no backend é POST /payments/:id/confirm-payment
+  confirmPayment: (orderId: string) =>
+    api.post(`/payments/${orderId}/confirm-payment`),
+
+  getAll: async () => {
+    const { data } = await api.get("/sales/");
+    return data;
+  },
+};

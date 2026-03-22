@@ -8,12 +8,12 @@ interface DetailField {
   value: React.ReactNode;
 }
 
-interface DetailItem {
+export interface DetailItem {
   columns: { key: string; label: string }[];
   data: Record<string, any>[];
 }
 
-interface DetailDialogProps {
+export interface DetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;

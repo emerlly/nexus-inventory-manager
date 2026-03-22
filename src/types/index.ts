@@ -35,7 +35,6 @@ export interface UserFormData {
   cpf?: string;
   active?: boolean;
   address?: string;
-
 }
 
 // ===== Product =====
@@ -63,7 +62,6 @@ export interface ProductFormData {
   minStock?: number;
   categoryId?: string;
   supplierId?: string;
-
 }
 
 // ===== Category =====
@@ -99,45 +97,55 @@ export interface Customer {
   document?: string;
   documentType: string;
   address: {
-    cep?: string
-    street?: string
-    city?: string
-    state?: string
-    complement?: string,
-    number?: string,
-    neighborhood?: string
-
-  }
-
+    cep?: string;
+    street?: string;
+    city?: string;
+    state?: string;
+    complement?: string;
+    number?: string;
+    neighborhood?: string;
+  };
 }
 
 export type CustomerFormData = {
-  active: boolean
-  name: string
-  email?: string
-  phone?: string
-  documentType: "CPF" | "CNPJ"
-  document: string
+  active: boolean;
+  name: string;
+  email?: string;
+  phone?: string;
+  documentType: "CPF" | "CNPJ";
+  document: string;
   address: {
-    cep?: string
-    street?: string
-    number?: string
-    neighborhood?: string
-    city?: string
-    state?: string
-    complement?: string
-  }
-}
+    cep?: string;
+    street?: string;
+    number?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+    complement?: string;
+  };
+};
 
 // ===== Supplier =====
 export interface Supplier {
   _id: string;
   name: string;
   email?: string;
+  documentType: string;
+  document: string,
+  address: {
+    cep?: string;
+    street?: string;
+    city?: string;
+    state?: string;
+    complement?: string;
+    number?: string;
+    neighborhood?: string;
+  },
   phone?: string;
-  address?: string;
+  active: boolean,
   createdAt?: string;
 }
+
 export interface seller {
   _id: string;
   name: string;
@@ -152,7 +160,18 @@ export interface SupplierFormData {
   name: string;
   email?: string;
   phone?: string;
-  address?: string;
+  address: {
+    cep?: string;
+    street?: string;
+    city?: string;
+    state?: string;
+    complement?: string;
+    number?: string;
+    neighborhood?: string;
+  },
+  active: boolean,
+  documentType: string,
+  document: string,
 }
 
 // ===== Stock Movement =====
@@ -178,7 +197,7 @@ export interface SaleItem {
   product: Product | string;
   quantity: number;
   unitPrice: number;
-  total: number;
+  totalPrice: number; // CORRIGIDO: era 'total', o backend retorna 'totalPrice'
 }
 
 export interface Sale {
@@ -189,13 +208,13 @@ export interface Sale {
   user?: User | string;
   createdAt?: string;
   seller?: seller | string;
+  paymentMethod?: string;
+  status?: string;
 }
 
 export interface SaleFormData {
   customer?: string;
   paymentMethod: string;
-  paymentCondition: string;
-  dueDate: string;
   items: {
     product: string;
     quantity: number;
@@ -239,12 +258,12 @@ export interface StockLow {
 }
 
 // ===== Order =====
+// CORRIGIDO: Status alinhados com o enum do OrderModel do backend
 export type OrderStatus =
   | "Pendente"
-  | "Aguardando_pagamento"
+  | "Reservado"
   | "Separando"
-  | "Produzindo"
-  | "Preparando"
+  | "Faturado"
   | "Enviado"
   | "Entregue"
   | "Cancelado";
@@ -253,9 +272,12 @@ export interface Order {
   _id: string;
   customer?: Customer | string;
   items: SaleItem[];
-  totalOrder: number;
+  totalValue: number;   // CORRIGIDO: era 'totalOrder', o backend retorna 'totalValue'
   status: OrderStatus;
+  paymentStatus?: string;
+  paymentMethod?: string;
   user?: User | string;
+  seller?: seller | string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -263,6 +285,7 @@ export interface Order {
 export interface OrderFormData {
   customer?: string;
   items: { product: string; quantity: number; unitPrice: number }[];
+  paymentMethod: string;
   status?: OrderStatus;
 }
 
@@ -310,7 +333,7 @@ export interface Company {
   webhookUrl?: string;
   apiKey?: string;
   plan: string;
-  status: string
+  status: string;
 }
 
 export interface Reports {

@@ -37,6 +37,9 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
+import { companyService } from "@/services";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Company } from "@/types";
 
 const mainNav = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -76,6 +79,7 @@ export function AppSidebar() {
   const visibleMain = filterByAccess(mainNav);
   const visibleRegister = filterByAccess(registerNav);
   const visibleSettings = filterByAccess(settingsNav);
+   const { data, isLoading } = useQuery<Company>({ queryKey: ["company"], queryFn: companyService.get });
 
   return (
     <Sidebar className="h-full border-r border-white/10">
@@ -86,10 +90,10 @@ export function AppSidebar() {
           </div>
           <div className="flex flex-col leading-tight min-w-0">
             <span className="text-base font-bold text-sidebar-foreground truncate">
-              NexusSystems
+              {(typeof user?.company === "object" && user?.company !== null) ? (data.companyName as any).name : (data?.companyName || "Minha Empresa")}
             </span>
             <span className="text-xs text-sidebar-muted truncate">
-              {(typeof user?.company === "object" && user?.company !== null) ? (user.company as any).name : (user?.company || "Minha Empresa")}
+              NexusSystems
             </span>
           </div>
         </div>

@@ -13,39 +13,41 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Search, Package, CheckCircle2, Eye, ChevronDown, ChevronUp } from "lucide-react";
-import { DetailDialog } from "@/components/DetailDialog";
+import { DetailDialog, DetailItem } from "@/components/DetailDialog";
 
+// CORRIGIDO: Status alinhados com o enum do OrderModel do backend
+// Removido "Produzindo" (não existe no backend), adicionado "Enviado"
 const STATUS_STEPS = [
   { key: "Pendente", label: "Pendente" },
   { key: "Reservado", label: "Reservado" },
   { key: "Separando", label: "Separando" },
-  { key: "Produzindo", label: "Produzindo" },
   { key: "Faturado", label: "Faturado" },
+  { key: "Enviado", label: "Enviado" },
   { key: "Entregue", label: "Entregue" },
-  { key: "Cancelado", label: "Cancelado" },
+
 ];
 
-const statusColors = {
-  pendente: "bg-muted text-muted-foreground",
-  reservado: "bg-yellow-100 text-yellow-700",
-  separando: "bg-blue-100 text-blue-700",
-  faturado: "bg-green-100 text-green-700",
-  cancelado: "bg-red-100 text-red-700",
+// CORRIGIDO: Chaves agora em maiúsculo para corresponder aos valores do backend
+const statusColors: Record<string, string> = {
+  Pendente: "bg-muted text-muted-foreground",
+  Reservado: "bg-yellow-100 text-yellow-700",
+  Separando: "bg-blue-100 text-blue-700",
+  Faturado: "bg-green-100 text-green-700",
+  Enviado: "bg-indigo-100 text-indigo-700",
+  Entregue: "bg-emerald-100 text-emerald-700",
+  Cancelado: "bg-red-100 text-red-700",
 };
 
-// Roles that can change order status
-const STATUS_CHANGE_ROLES = ["admin", "gerente", "estoquista", "operador"];
+
+const STATUS_CHANGE_ROLES = ["admin", "manager", "stockist", "operator"];
 
 function StatusStepper({ currentStatus }: { currentStatus: OrderStatus }) {
-  // Exclude "cancelado" from stepper flow
   const flowSteps = STATUS_STEPS.filter((s) => s.key !== "Cancelado");
   const currentIdx = flowSteps.findIndex((s) => s.key === currentStatus);
   const isCancelled = currentStatus === "Cancelado";
 
   if (isCancelled) {
-    return (
-      <Badge className={statusColors.cancelado}>Cancelado</Badge>
-    );
+    return <Badge className={statusColors.Cancelado}>Cancelado</Badge>;
   }
 
   return (
@@ -55,18 +57,31 @@ function StatusStepper({ currentStatus }: { currentStatus: OrderStatus }) {
         const isCurrent = idx === currentIdx;
         return (
           <div key={step.key} className="flex items-center gap-1">
-            <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors ${isDone ? "bg-success text-success-foreground" : isCurrent ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+            <div
+              className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors ${isDone
+                  ? "bg-success text-success-foreground"
+                  : isCurrent
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                }`}
+            >
               {isDone ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
             </div>
-            <span className={`hidden text-xs xl:inline ${isCurrent ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{step.label}</span>
-            {idx < flowSteps.length - 1 && <div className={`mx-1 h-0.5 w-4 rounded ${isDone ? "bg-success" : "bg-border"}`} />}
+            <span
+              className={`hidden text-xs xl:inline ${isCurrent ? "font-semibold text-foreground" : "text-muted-foreground"
+                }`}
+            >
+              {step.label}
+            </span>
+            {idx < flowSteps.length - 1 && (
+              <div className={`mx-1 h-0.5 w-4 rounded ${isDone ? "bg-success" : "bg-border"}`} />
+            )}
           </div>
         );
       })}
     </div>
   );
 }
-
 
 export default function OrdersPage() {
   const qc = useQueryClient();
@@ -77,19 +92,34 @@ export default function OrdersPage() {
   const [detailOrder, setDetailOrder] = useState<Order | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const { data = [], isLoading } = useQuery({ queryKey: ["orders"], queryFn: orderService.getAll });
+  const { data = [], isLoading } = useQuery({
+    queryKey: ["orders"],
+    queryFn: orderService.getAll,
+  });
 
   const canChangeStatus = STATUS_CHANGE_ROLES.includes(user?.role || "");
 
   const updateStatus = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: OrderStatus }) => orderService.updateStatus(id, { status }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["orders"] }); toast({ title: "Status atualizado!" }); },
-    onError: (error: any) => toast({ variant: "destructive", title: `Erro ao atualizar status`, description: error.response?.data?.message || "Tente novamente mais tarde." }),
+    mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>
+      orderService.updateStatus(id, { status }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      toast({ title: "Status atualizado!" });
+    },
+    onError: (error: any) =>
+      toast({
+        variant: "destructive",
+        title: "Erro ao atualizar status",
+        description: error.response?.data?.message || "Tente novamente mais tarde.",
+      }),
   });
 
   const filtered = data.filter((o: Order) => {
     const customerName = typeof o.customer === "object" ? o.customer?.name : "";
-    const matchSearch = !search || customerName?.toLowerCase().includes(search.toLowerCase()) || o._id.includes(search);
+    const matchSearch =
+      !search ||
+      customerName?.toLowerCase().includes(search.toLowerCase()) ||
+      o._id.includes(search);
     const matchStatus = filterStatus === "all" || o.status === filterStatus;
     return matchSearch && matchStatus;
   });
@@ -98,27 +128,40 @@ export default function OrdersPage() {
 
   const getDetailFields = (o: Order) => [
     { label: "ID", value: `#${o._id.slice(-15)}` },
-    { label: "Cliente", value: typeof o.customer === "object" ? o.customer?.name : "—" },
     { label: "Status", value: o.status },
-    { label: "Total", value: `R$ ${o.totalOrder?.toFixed(2)}` },
-    { label: "Data", value: o.createdAt ? new Date(o.createdAt).toLocaleDateString("pt-BR") : "—" },
-    { label: "Atualizado", value: o.updatedAt ? new Date(o.updatedAt).toLocaleDateString("pt-BR") : "—" },
+    { label: "Status Pagamento", value: o.paymentStatus || "—" },
+    { label: "Forma de Pagamento", value: o.paymentMethod || "—" },
+    // CORRIGIDO: totalValue em vez de totalOrder
+    { label: "Total", value: `R$ ${o.totalValue?.toFixed(2)}` },
+    {
+      label: "Cliente",
+      value: typeof o.customer === "object" ? o.customer?.name || "—" : "—",
+    },
+    {
+      label: "Data",
+      value: o.createdAt ? new Date(o.createdAt).toLocaleDateString("pt-BR") : "—",
+    },
   ];
+ 
 
-  const getDetailItems = (o: Order) => ({
-    columns: [
-      { key: "product", label: "Produto" },
-      { key: "quantity", label: "Qtd" },
-      { key: "unitPrice", label: "Preço Unit." },
-      { key: "total", label: "Subtotal" },
-    ],
-    data: (o.items || []).map((item) => ({
-      product: typeof item.product === "object" ? item.product?.name : item.product,
-      quantity: item.quantity,
-      unitPrice: `R$ ${item.unitPrice?.toFixed(2)}`,
-      total: `R$ ${item.total?.toFixed(2)}`,
-    })),
-  });
+  const getDetailItems = (order: any): DetailItem => {
+    return {
+      columns: [
+        { key: "product", label: "Produto" },
+        { key: "quantity", label: "Qtd" },
+        { key: "unitPrice", label: "Preço Unit." },
+        { key: "total", label: "Total" },
+      ],
+      data: order.items.map((item: any) => ({
+        product: typeof item.product === "object"
+          ? item.product.name
+          : item.product,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice.toFixed(2),
+        total: (item.quantity * item.unitPrice).toFixed(2),
+      })),
+    };
+  };
 
   return (
     <div className="flex flex-col">
@@ -127,19 +170,34 @@ export default function OrdersPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Buscar por cliente ou ID..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            <Input
+              placeholder="Buscar por cliente ou ID..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
           </div>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-56"><SelectValue placeholder="Filtrar status" /></SelectTrigger>
+            <SelectTrigger className="w-56">
+              <SelectValue placeholder="Filtrar status" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
-              {STATUS_STEPS.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
+              {STATUS_STEPS.map((s) => (
+                <SelectItem key={s.key} value={s.key}>
+                  {s.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
 
         {isLoading ? (
-          <div className="space-y-4">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-32 w-full rounded-lg" />)}</div>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-32 w-full rounded-lg" />
+            ))}
+          </div>
         ) : !filtered.length ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <Package className="mb-3 h-12 w-12" />
@@ -148,51 +206,95 @@ export default function OrdersPage() {
         ) : (
           <div className="space-y-4">
             {filtered.map((order: Order) => {
-              const customerName = typeof order.customer === "object" ? order.customer?.name : "—";
+              const customerName =
+                typeof order.customer === "object" ? order.customer?.name : "—";
               const isExpanded = expandedId === order._id;
+
               return (
                 <Card key={order._id} className="overflow-hidden">
                   <CardContent className="p-5">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                       <div className="space-y-1">
                         <div className="flex items-center gap-3">
-                          <span className="font-mono text-sm text-muted-foreground">#{order._id.slice(-15)}</span>
-                          <Badge className={statusColors[order.status]}>{STATUS_STEPS.find(s => s.key === order.status)?.label || order.status}</Badge>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDetailOrder(order)} title="Ver detalhes">
+                          <span className="font-mono text-sm text-muted-foreground">
+                            #{order._id.slice(-15)}
+                          </span>
+                          {/* CORRIGIDO: statusColors com chaves em maiúsculo */}
+                          <Badge className={statusColors[order.status] || "bg-muted"}>
+                            {STATUS_STEPS.find((s) => s.key === order.status)?.label ||
+                              order.status}
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => setDetailOrder(order)}
+                            title="Ver detalhes"
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
                         </div>
                         <p className="font-medium">{customerName}</p>
                         <p className="text-sm text-muted-foreground">
-                          {order.items?.length ?? 0} {order.items?.length === 1 ? "item" : "itens"} · R$ {order.totalOrder?.toFixed(2)}
+                          {order.items?.length ?? 0}{" "}
+                          {order.items?.length === 1 ? "item" : "itens"} · R${" "}
+                          {/* CORRIGIDO: totalValue em vez de totalOrder */}
+                          {order.totalValue?.toFixed(2)}
                         </p>
-                        {order.createdAt && <p className="text-xs text-muted-foreground">{new Date(order.createdAt).toLocaleDateString("pt-BR")}</p>}
+                        {order.createdAt && (
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(order.createdAt).toLocaleDateString("pt-BR")}
+                          </p>
+                        )}
                       </div>
                       <div className="flex flex-col items-start gap-3 lg:items-end">
                         <StatusStepper currentStatus={order.status} />
                         <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" onClick={() => toggleExpand(order._id)}>
-                            {isExpanded ? <ChevronUp className="mr-1 h-4 w-4" /> : <ChevronDown className="mr-1 h-4 w-4" />}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleExpand(order._id)}
+                          >
+                            {isExpanded ? (
+                              <ChevronUp className="mr-1 h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="mr-1 h-4 w-4" />
+                            )}
                             Itens
                           </Button>
-                          {canChangeStatus && order.status !== "Entregue" && order.status !== "Cancelado" && (
-                            <Select value={order.status} onValueChange={(v) => updateStatus.mutate({ id: order._id, status: v as OrderStatus })}>
-                              <SelectTrigger className="h-8 w-52 text-xs"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                {STATUS_STEPS.map((s) => (
-                                  <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
+                          {canChangeStatus &&
+                            order.status !== "Entregue" &&
+                            (
+                              <Select
+                                value={order.status}
+                                onValueChange={(v) =>
+                                  updateStatus.mutate({
+                                    id: order._id,
+                                    status: v as OrderStatus,
+                                  })
+                                }
+                              >
+                                <SelectTrigger className="h-8 w-52 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {STATUS_STEPS.map((s) => (
+                                    <SelectItem key={s.key} value={s.key}>
+                                      {s.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Expanded items view */}
                     {isExpanded && (
                       <div className="mt-4 rounded-lg border bg-muted/30 p-4">
-                        <h4 className="mb-3 text-sm font-semibold text-foreground">Itens do Pedido</h4>
+                        <h4 className="mb-3 text-sm font-semibold text-foreground">
+                          Itens do Pedido
+                        </h4>
                         <Table>
                           <TableHeader>
                             <TableRow>
@@ -205,15 +307,31 @@ export default function OrdersPage() {
                           <TableBody>
                             {(order.items || []).map((item, idx) => (
                               <TableRow key={idx}>
-                                <TableCell>{typeof item.product === "object" ? item.product?.name : item.product}</TableCell>
-                                <TableCell className="text-right">{item.quantity}</TableCell>
-                                <TableCell className="text-right">R$ {item.unitPrice?.toFixed(2)}</TableCell>
-                                <TableCell className="text-right">R$ {item.total?.toFixed(2)}</TableCell>
+                                <TableCell>
+                                  {typeof item.product === "object"
+                                    ? item.product?.name
+                                    : item.product}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {item.quantity}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  R$ {item.unitPrice?.toFixed(2)}
+                                </TableCell>
+                                {/* CORRIGIDO: totalPrice em vez de total */}
+                                <TableCell className="text-right">
+                                  R$ {item.totalPrice?.toFixed(2)}
+                                </TableCell>
                               </TableRow>
                             ))}
                             <TableRow className="font-semibold">
-                              <TableCell colSpan={3} className="text-right">Total</TableCell>
-                              <TableCell className="text-right">R$ {order.totalOrder?.toFixed(2)}</TableCell>
+                              <TableCell colSpan={3} className="text-right">
+                                Total
+                              </TableCell>
+                              {/* CORRIGIDO: totalValue em vez de totalOrder */}
+                              <TableCell className="text-right">
+                                R$ {order.totalValue?.toFixed(2)}
+                              </TableCell>
                             </TableRow>
                           </TableBody>
                         </Table>
