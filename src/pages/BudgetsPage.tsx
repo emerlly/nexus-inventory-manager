@@ -139,8 +139,7 @@ export default function BudgetsPage() {
             title: "Erro ao converter orçamento",
             description: error.message,
           }),
-      });
-
+      })
       const [confirmOpen, setConfirmOpen] = useState(false);
       const [approveTarget, setApproveTarget] = useState<Budget | null>(null);
       const [convertTarget, setConvertTarget] = useState<Budget | null>(null);

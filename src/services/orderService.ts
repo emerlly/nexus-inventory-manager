@@ -19,7 +19,7 @@ export const orderService = {
     return data;
   },
 
-  // CORRIGIDO: Era PATCH /sales/:id/confirm-payment
+ 
   // O backend espera PUT /orders/:id/confirm-payment
   confirmPayment: async (id: string) => {
     const res = await api.put(`/orders/${id}/confirm-payment`);
