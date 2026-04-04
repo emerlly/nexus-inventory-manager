@@ -29,7 +29,14 @@ export default function ProductsPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const [form, setForm] = useState<ProductFormData>({
-    name: "", description: "", salePrice: 0, costPrice: 0, stockQuantity: 0, minStock: 10, categoryId: "", supplierId: "",
+    name: "",
+    description: "",
+    salePrice: 0,
+    costPrice: 0,
+    stock: { physical: 0 },
+    minStock: 10,
+    categoryId: "",
+    supplierId: "",
   });
 
   //  IMPORTANTE: envolver em função para passar o filtro
@@ -57,7 +64,16 @@ export default function ProductsPage() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ name: "", description: "", salePrice: 0, costPrice: 0, stockQuantity: 0, minStock: 10, categoryId: "", supplierId: "" });
+    setForm({
+      name: "",
+      description: "",
+      salePrice: 0,
+      costPrice: 0,
+      stock: { physical: 0 },
+      minStock: 10,
+      categoryId: "",
+      supplierId: "",
+    });
     setOpen(true);
   };
 
@@ -65,7 +81,9 @@ export default function ProductsPage() {
     setEditing(p);
     setForm({
       name: p.name, description: p.description || "", salePrice: p.salePrice, costPrice: p.costPrice,
-      stockQuantity: p.stockQuantity, minStock: p.minStock || 10,
+      stock: {
+        physical: p.stock?.physical ?? 0,
+      }, minStock: p.minStock || 10,
       categoryId: typeof p.category === "object" ? p.category?._id : p.category,
       supplierId: typeof p.supplier === "object" ? p.supplier?._id : p.supplier,
     });
@@ -112,7 +130,7 @@ export default function ProductsPage() {
             { key: "description", label: "Descrição", render: (p) => p.description || "—", },
             { key: "price", label: "Preço", render: (p) => `R$ ${p.salePrice?.toFixed(2)}`, },
             { key: "category", label: "Categoria", render: (p) => typeof p.category === "object" ? p.category?.name : p.category, },
-            { key: "quantity", label: "Estoque", render: (p) => (<StockBadge quantity={p.stockQuantity} minStock={p.minStock} />) },
+            { key: "quantity", label: "Estoque", render: (p) => (<StockBadge quantity={p.stock?.physical ?? 0} minStock={p.minStock} />) },
             { key: "supplier", label: "Fornecedor", render: (p) => typeof p.supplier === "object" ? p.supplier?.name : p.supplier, },
           ]}
           data={products}
@@ -176,11 +194,18 @@ export default function ProductsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Quantidade</Label>
-                <Input type="number" value={form.stockQuantity || ""} onChange={(e) => setForm({
-                  ...form,
-                  stockQuantity: +e.target.value,
-                })
-                }
+                <Input
+                  type="number"
+                  value={form.stock.physical || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      stock: {
+                        ...form.stock,
+                        physical: +e.target.value,
+                      },
+                    })
+                  }
                 />
               </div>
 

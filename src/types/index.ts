@@ -45,7 +45,9 @@ export interface Product {
   SKU?: string;
   salePrice: number;
   costPrice?: number;
-  stockQuantity: number;
+    stock: {
+    physical: number;
+  };
   minStock?: number;
   category?: Category;
   supplier?: Supplier;
@@ -58,11 +60,13 @@ export interface ProductFormData {
   description?: string;
   salePrice: number;
   costPrice?: number;
-  stockQuantity: number;
+  stock: {
+    physical: number;
+  };
   minStock?: number;
-  categoryId?: string;
-  supplierId?: string;
-}
+  categoryId: string;
+  supplierId: string;
+};
 
 // ===== Category =====
 export interface Category {
@@ -217,7 +221,7 @@ export interface SaleFormData {
   customer?: string;
   paymentMethod: string;
   paymentCondition: string;
-  dueDate: string;
+  dueDate: Date;
   items: {
     product: string;
     quantity: number;
