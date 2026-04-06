@@ -3,13 +3,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppHeader } from "@/components/AppHeader";
 import { DataTable } from "@/components/DataTable";
 import { productService, categoryService, supplierService } from "@/services";
-import type { Product, ProductFormData } from "@/types";
+import type { Product, ProductFormData, ProductAttribute } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmSaveDialog } from "@/components/ConfirmSaveDialog";
 
@@ -37,7 +38,9 @@ export default function ProductsPage() {
     minStock: 10,
     categoryId: "",
     supplierId: "",
+    attributes: [],
   });
+  const [attributes, setAttributes] = useState<ProductAttribute[]>([]);
 
   //  IMPORTANTE: envolver em função para passar o filtro
   const {
@@ -73,20 +76,24 @@ export default function ProductsPage() {
       minStock: 10,
       categoryId: "",
       supplierId: "",
+      attributes: [],
     });
+    setAttributes([]);
     setOpen(true);
   };
 
   const openEdit = (p: Product) => {
     setEditing(p);
+    const attrs = p.attributes || [];
     setForm({
       name: p.name, description: p.description || "", salePrice: p.salePrice, costPrice: p.costPrice,
-      stock: {
-        physical: p.stock?.physical ?? 0,
-      }, minStock: p.minStock || 10,
+      stock: { physical: p.stock?.physical ?? 0 },
+      minStock: p.minStock || 10,
       categoryId: typeof p.category === "object" ? p.category?._id : p.category,
       supplierId: typeof p.supplier === "object" ? p.supplier?._id : p.supplier,
+      attributes: attrs,
     });
+    setAttributes(attrs);
     setOpen(true);
   };
 
