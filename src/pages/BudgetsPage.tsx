@@ -110,7 +110,7 @@ export default function BudgetsPage() {
 
         paymentMethod,
         paymentCondition,
-        dueDate: paymentCondition === "prazo" ? dueDate : null,
+        dueDate: paymentCondition === "prazo" ? dueDate : undefined,
 
         items: (budget.items || []).map((it) => ({
           product: typeof it.product === "object" ? it.product?._id : it.product,
