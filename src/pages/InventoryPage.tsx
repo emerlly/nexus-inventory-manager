@@ -161,7 +161,7 @@ export default function InventoryPage() {
         product: p._id,
         name: p.name,
         SKU: p.SKU || "",
-        systemQuantity: p.stockQuantity,
+        systemQuantity: p.stock?.physical ?? 0,
         countedQuantity: null,
         difference: 0,
       }));

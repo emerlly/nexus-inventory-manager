@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmSaveDialog } from "@/components/ConfirmSaveDialog";
+import { PAYMENT_METHODS, PAYMENT_CONDITIONS, getConditionForMethod } from "@/config/paymentOptions";
 
 const statusColors: Record<PaymentStatus, string> = {
   Pendente: "bg-warning/15 text-warning border-warning/30",
@@ -41,7 +42,10 @@ export default function FinanceiroPage() {
   const [editing, setEditing] = useState<Payment | null>(null);
   const [form, setForm] = useState<PaymentFormData>(defaultForm);
   const [tab, setTab] = useState("all");
+  const [conditionFilter, setConditionFilter] = useState("all");
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [paymentCondition, setPaymentCondition] = useState<"avista" | "prazo">("avista");
 
   const { data = [], isLoading } = useQuery({ queryKey: ["payments"], queryFn: paymentService.getAll });
   const customers = useQuery({ queryKey: ["customers"], queryFn: customerService.getAll });
@@ -76,7 +80,13 @@ export default function FinanceiroPage() {
     setConfirmOpen(true);
   };
 
-  const filtered = tab === "all" ? data : data.filter((p: Payment) => p.type === tab);
+  const filtered = data
+    .filter((p: Payment) => tab === "all" || p.type === tab)
+    .filter((p: any) => {
+      if (conditionFilter === "all") return true;
+      if (conditionFilter === "avista") return !p.paymentCondition || p.paymentCondition === "avista";
+      return p.paymentCondition === "prazo";
+    });
 
   return (
     <div className="flex flex-col">
@@ -89,6 +99,24 @@ export default function FinanceiroPage() {
             <TabsTrigger value="despesa">Despesas</TabsTrigger>
           </TabsList>
         </Tabs>
+
+        <div className="flex gap-2">
+          <Badge
+            variant={conditionFilter === "all" ? "default" : "outline"}
+            className="cursor-pointer"
+            onClick={() => setConditionFilter("all")}
+          >Todos</Badge>
+          <Badge
+            variant={conditionFilter === "avista" ? "default" : "outline"}
+            className="cursor-pointer"
+            onClick={() => setConditionFilter("avista")}
+          >À Vista</Badge>
+          <Badge
+            variant={conditionFilter === "prazo" ? "default" : "outline"}
+            className="cursor-pointer"
+            onClick={() => setConditionFilter("prazo")}
+          >A Prazo</Badge>
+        </div>
 
         <DataTable
           columns={[
@@ -127,16 +155,43 @@ export default function FinanceiroPage() {
               <div className="space-y-2"><Label>Valor (R$)</Label><Input type="number" step="0.01" min="0" value={form.amount} onChange={(e) => setForm({ ...form, amount: +e.target.value })} required /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Vencimento</Label><Input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} required /></div>
+              <div className="space-y-2"><Label>Vencimento</Label><Input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} required={paymentCondition === "prazo"} disabled={paymentCondition === "avista"} /></div>
               <div className="space-y-2">
                 <Label>Status</Label>
                 <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as PaymentStatus })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pendente">Pendente</SelectItem>
-                    <SelectItem value="pago">Pago</SelectItem>
-                    <SelectItem value="atrasado">Atrasado</SelectItem>
-                    <SelectItem value="cancelado">Cancelado</SelectItem>
+                    <SelectItem value="Pendente">Pendente</SelectItem>
+                    <SelectItem value="Pago">Pago</SelectItem>
+                    <SelectItem value="Atrasado">Atrasado</SelectItem>
+                    <SelectItem value="Cancelado">Cancelado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Forma de Pagamento</Label>
+                <Select value={paymentMethod} onValueChange={(v) => {
+                  setPaymentMethod(v);
+                  setPaymentCondition(getConditionForMethod(v));
+                }}>
+                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_METHODS.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Condição</Label>
+                <Select value={paymentCondition} onValueChange={(v) => setPaymentCondition(v as "avista" | "prazo")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_CONDITIONS.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

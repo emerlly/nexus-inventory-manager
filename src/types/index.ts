@@ -45,14 +45,20 @@ export interface Product {
   SKU?: string;
   salePrice: number;
   costPrice?: number;
-    stock: {
+  stock: {
     physical: number;
   };
   minStock?: number;
   category?: Category;
   supplier?: Supplier;
+  attributes?: { k: string; v: string }[];
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface ProductAttribute {
+  k: string;
+  v: string;
 }
 
 export interface ProductFormData {
@@ -66,7 +72,8 @@ export interface ProductFormData {
   minStock?: number;
   categoryId: string;
   supplierId: string;
-};
+  attributes?: ProductAttribute[];
+}
 
 // ===== Category =====
 export interface Category {
@@ -221,7 +228,7 @@ export interface SaleFormData {
   customer?: string;
   paymentMethod: string;
   paymentCondition: string;
-  dueDate: Date;
+  dueDate?: string | Date | null;
   items: {
     product: string;
     quantity: number;

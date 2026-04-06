@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmSaveDialog } from "@/components/ConfirmSaveDialog";
+import { PAYMENT_METHODS, PAYMENT_CONDITIONS, getConditionForMethod } from "@/config/paymentOptions";
 
 interface SaleItemForm {
   product: string;
@@ -33,6 +34,8 @@ export default function SalesPage() {
   const products = useQuery({ queryKey: ["products"], queryFn: productService.getAll });
 
   const [paymentMethod, setPaymentMethod] = useState("");
+  const [paymentCondition, setPaymentCondition] = useState<"avista" | "prazo">("avista");
+  const [dueDate, setDueDate] = useState("");
 
   const createSale = useMutation({
     mutationFn: (d: SaleFormData) => saleService.create(d),
@@ -58,7 +61,7 @@ export default function SalesPage() {
 
   const total = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
 
-  const openNew = () => { setCustomer(""); setItems([]); setOpen(true); };
+  const openNew = () => { setCustomer(""); setItems([]); setPaymentMethod(""); setPaymentCondition("avista"); setDueDate(""); setOpen(true); };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,12 +71,11 @@ export default function SalesPage() {
 
   const confirmSale = () => {
     setConfirmOpen(false);
-
     createSale.mutate({
       customer: customer || undefined,
       paymentMethod,
-      paymentCondition: "avista", // ou padrão do seu sistema
-      dueDate: new Date(),        // ou null se backend aceitar
+      paymentCondition,
+      dueDate: paymentCondition === "prazo" ? dueDate : undefined,
       items: items.map((i) => ({
         product: i.product,
         quantity: i.quantity,
@@ -81,10 +83,7 @@ export default function SalesPage() {
       }))
     });
   }
-    const paymentMethods = useQuery({
-      queryKey: ["paymentMethods"],
-      queryFn: saleService.getPaymentMethods
-    });
+    // Payment methods from config
 
     const columns = [
       { key: "customer", label: "Cliente", render: (sale: Sale) => typeof sale.customer === "object" ? sale.customer?.name : "—" },
@@ -183,20 +182,41 @@ export default function SalesPage() {
               </div>
               <div className="space-y-2 border-t pt-4">
                 <Label>Forma de Pagamento</Label>
-
-                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <SelectTrigger className="w-[220px]">
+                <Select value={paymentMethod} onValueChange={(v) => {
+                  setPaymentMethod(v);
+                  setPaymentCondition(getConditionForMethod(v));
+                }}>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
-
                   <SelectContent>
-                    {(paymentMethods.data || []).map((method: any) => (
+                    {PAYMENT_METHODS.map((method) => (
                       <SelectItem key={method.value} value={method.value}>
                         {method.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Condição</Label>
+                  <Select value={paymentCondition} onValueChange={(v) => setPaymentCondition(v as "avista" | "prazo")}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_CONDITIONS.map((c) => (
+                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {paymentCondition === "prazo" && (
+                  <div className="space-y-2">
+                    <Label>Data de Vencimento</Label>
+                    <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required />
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-between border-t pt-4">

@@ -3,13 +3,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppHeader } from "@/components/AppHeader";
 import { DataTable } from "@/components/DataTable";
 import { productService, categoryService, supplierService } from "@/services";
-import type { Product, ProductFormData } from "@/types";
+import type { Product, ProductFormData, ProductAttribute } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmSaveDialog } from "@/components/ConfirmSaveDialog";
 
@@ -37,7 +38,9 @@ export default function ProductsPage() {
     minStock: 10,
     categoryId: "",
     supplierId: "",
+    attributes: [],
   });
+  const [attributes, setAttributes] = useState<ProductAttribute[]>([]);
 
   //  IMPORTANTE: envolver em função para passar o filtro
   const {
@@ -73,20 +76,24 @@ export default function ProductsPage() {
       minStock: 10,
       categoryId: "",
       supplierId: "",
+      attributes: [],
     });
+    setAttributes([]);
     setOpen(true);
   };
 
   const openEdit = (p: Product) => {
     setEditing(p);
+    const attrs = p.attributes || [];
     setForm({
       name: p.name, description: p.description || "", salePrice: p.salePrice, costPrice: p.costPrice,
-      stock: {
-        physical: p.stock?.physical ?? 0,
-      }, minStock: p.minStock || 10,
+      stock: { physical: p.stock?.physical ?? 0 },
+      minStock: p.minStock || 10,
       categoryId: typeof p.category === "object" ? p.category?._id : p.category,
       supplierId: typeof p.supplier === "object" ? p.supplier?._id : p.supplier,
+      attributes: attrs,
     });
+    setAttributes(attrs);
     setOpen(true);
   };
 
@@ -232,6 +239,47 @@ export default function ProductsPage() {
                 <SelectContent>{(suppliers.data || []).map((s) => <SelectItem key={s._id} value={s._id}>{s.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+
+            {/* Atributos Personalizados */}
+            <div className="space-y-3 border-t pt-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">Atributos Personalizados</Label>
+                <Button type="button" variant="outline" size="sm" onClick={() => setAttributes([...attributes, { k: "", v: "" }])}>
+                  <Plus className="mr-1 h-3 w-3" /> Adicionar Atributo
+                </Button>
+              </div>
+              {attributes.map((attr, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Input
+                    placeholder="Nome (ex: Cor)"
+                    value={attr.k}
+                    onChange={(e) => {
+                      const newAttrs = [...attributes];
+                      newAttrs[i] = { ...newAttrs[i], k: e.target.value };
+                      setAttributes(newAttrs);
+                    }}
+                    className="flex-1"
+                  />
+                  <Input
+                    placeholder="Valor (ex: Azul)"
+                    value={attr.v}
+                    onChange={(e) => {
+                      const newAttrs = [...attributes];
+                      newAttrs[i] = { ...newAttrs[i], v: e.target.value };
+                      setAttributes(newAttrs);
+                    }}
+                    className="flex-1"
+                  />
+                  <Button type="button" variant="ghost" size="icon" onClick={() => setAttributes(attributes.filter((_, idx) => idx !== i))} className="text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              {attributes.length === 0 && (
+                <p className="text-sm text-muted-foreground">Nenhum atributo adicionado.</p>
+              )}
+            </div>
+
             <div className="flex justify-end gap-2">
               <Button variant="outline" type="button" onClick={() => setOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={!form.categoryId || !form.supplierId}>{save.isPending ? "Salvando..." : "Salvar"}</Button>
@@ -243,7 +291,7 @@ export default function ProductsPage() {
       <ConfirmSaveDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        onConfirm={() => { setConfirmOpen(false); save.mutate(form); }}
+        onConfirm={() => { setConfirmOpen(false); save.mutate({ ...form, attributes: attributes.filter(a => a.k && a.v) }); }}
         title={editing ? "Confirmar edição" : "Confirmar cadastro"}
         description={editing ? "Deseja salvar as alterações deste produto?" : "Deseja cadastrar este novo produto?"}
         isPending={save.isPending}
