@@ -217,6 +217,7 @@ export default function SalesPage() {
                     <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required />
                   </div>
                 )}
+              </div>
 
               <div className="flex items-center justify-between border-t pt-4">
                 <span className="text-lg font-bold">Total: R$ {total.toFixed(2)}</span>
