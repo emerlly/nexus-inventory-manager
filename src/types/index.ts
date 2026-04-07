@@ -51,14 +51,14 @@ export interface Product {
   minStock?: number;
   category?: Category;
   supplier?: Supplier;
-  attributes?: { k: string; v: string }[];
+  attributes?: { key: string; value: string }[];
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface ProductAttribute {
-  k: string;
-  v: string;
+  key: string;
+  value: string;
 }
 
 export interface ProductFormData {

@@ -102,7 +102,7 @@ export default function ProductsPage() {
   );
 
   const skuPreview = selectedCategory
-    ? `${selectedCategory.prefix}-XXXX`
+    ? `${selectedCategory.prefix}000XXXX`
     : "Selecione uma categoria";
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -244,7 +244,7 @@ export default function ProductsPage() {
             <div className="space-y-3 border-t pt-4">
               <div className="flex items-center justify-between">
                 <Label className="text-base font-semibold">Atributos Personalizados</Label>
-                <Button type="button" variant="outline" size="sm" onClick={() => setAttributes([...attributes, { k: "", v: "" }])}>
+                <Button type="button" variant="outline" size="sm" onClick={() => setAttributes([...attributes, { key: "", value: "" }])}>
                   <Plus className="mr-1 h-3 w-3" /> Adicionar Atributo
                 </Button>
               </div>
@@ -252,20 +252,20 @@ export default function ProductsPage() {
                 <div key={i} className="flex items-center gap-2">
                   <Input
                     placeholder="Nome (ex: Cor)"
-                    value={attr.k}
+                    value={attr.key}
                     onChange={(e) => {
                       const newAttrs = [...attributes];
-                      newAttrs[i] = { ...newAttrs[i], k: e.target.value };
+                      newAttrs[i] = { ...newAttrs[i], key: e.target.value };
                       setAttributes(newAttrs);
                     }}
                     className="flex-1"
                   />
                   <Input
                     placeholder="Valor (ex: Azul)"
-                    value={attr.v}
+                    value={attr.value}
                     onChange={(e) => {
                       const newAttrs = [...attributes];
-                      newAttrs[i] = { ...newAttrs[i], v: e.target.value };
+                      newAttrs[i] = { ...newAttrs[i], value: e.target.value };
                       setAttributes(newAttrs);
                     }}
                     className="flex-1"
@@ -291,7 +291,7 @@ export default function ProductsPage() {
       <ConfirmSaveDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        onConfirm={() => { setConfirmOpen(false); save.mutate({ ...form, attributes: attributes.filter(a => a.k && a.v) }); }}
+        onConfirm={() => { setConfirmOpen(false); save.mutate({ ...form, attributes: attributes.filter(a => a.key && a.value) }); }}
         title={editing ? "Confirmar edição" : "Confirmar cadastro"}
         description={editing ? "Deseja salvar as alterações deste produto?" : "Deseja cadastrar este novo produto?"}
         isPending={save.isPending}

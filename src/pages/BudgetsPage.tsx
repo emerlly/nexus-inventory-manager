@@ -137,7 +137,7 @@ export default function BudgetsPage() {
           toast({
             variant: "destructive",
             title: "Erro ao converter orçamento",
-            description: error.message,
+            description: error?.response?.data?.error || "Ocorreu um erro inesperado",
           }),
       })
       const [confirmOpen, setConfirmOpen] = useState(false);
