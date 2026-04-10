@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format, subMonths, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AppHeader } from "@/components/AppHeader";
-import { paymentService } from "@/services";
+import { paymentService, stockMovementService } from "@/services";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   CalendarIcon, Wallet, ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, AlertTriangle,
 } from "lucide-react";
-import type { Payment } from "@/types";
+import type { Payment, StockMovement } from "@/types";
 
 const SHORTCUTS = [{ label: "7d", days: 7 }, { label: "15d", days: 15 }, { label: "30d", days: 30 }, { label: "90d", days: 90 }];
 
@@ -31,7 +31,9 @@ export default function CashFlowPage() {
   const endStr = format(endDate, "yyyy-MM-dd");
 
   const { data: rawData = [], isLoading } = useQuery({ queryKey: ["payments"], queryFn: paymentService.getAll });
+  const { data: rawMovements = [] } = useQuery({ queryKey: ["stockMovements"], queryFn: stockMovementService.getAll });
   const payments = rawData as Payment[];
+  const movements = rawMovements as StockMovement[];
 
   // Filter by date
   const filtered = useMemo(() => payments.filter(p => {
@@ -40,6 +42,12 @@ export default function CashFlowPage() {
   }), [payments, startStr, endStr]);
 
   const byTab = tab === "all" ? filtered : filtered.filter(p => p.type === tab);
+
+  // Filter stock movements by date
+  const filteredMovements = useMemo(() => movements.filter(m => {
+    const d = (m.createdAt || "").split("T")[0];
+    return d >= startStr && d <= endStr;
+  }), [movements, startStr, endStr]);
 
   const totalReceitas = useMemo(() => filtered.filter(p => p.type === "Receita" && p.status === "Pago").reduce((s, p) => s + (p.amount || 0), 0), [filtered]);
   const totalDespesas = useMemo(() => filtered.filter(p => p.type === "Despesa" && p.status === "Pago").reduce((s, p) => s + (p.amount || 0), 0), [filtered]);
