@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format, subMonths } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { AppHeader } from "@/components/AppHeader";
 import { DataTable } from "@/components/DataTable";
 import { saleService, customerService, productService } from "@/services";
@@ -9,7 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Plus, Trash2, CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmSaveDialog } from "@/components/ConfirmSaveDialog";
 import { PAYMENT_METHODS, PAYMENT_CONDITIONS, getConditionForMethod } from "@/config/paymentOptions";
@@ -28,10 +32,21 @@ export default function SalesPage() {
   const [customer, setCustomer] = useState("");
   const [items, setItems] = useState<SaleItemForm[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [startDate, setStartDate] = useState<Date>(() => subMonths(new Date(), 1));
+  const [endDate, setEndDate] = useState<Date>(new Date());
 
   const { data = [], isLoading } = useQuery({ queryKey: ["sales"], queryFn: saleService.getAll });
   const customers = useQuery({ queryKey: ["customers"], queryFn: customerService.getAll });
   const products = useQuery({ queryKey: ["products"], queryFn: productService.getAll });
+
+  const filteredSales = useMemo(() => {
+    const startStr = format(startDate, "yyyy-MM-dd");
+    const endStr = format(endDate, "yyyy-MM-dd");
+    return (data as Sale[]).filter(s => {
+      const d = (s.createdAt || "").split("T")[0];
+      return d >= startStr && d <= endStr;
+    });
+  }, [data, startDate, endDate]);
 
   const [paymentMethod, setPaymentMethod] = useState("");
   const [paymentCondition, setPaymentCondition] = useState<"avista" | "prazo">("avista");
@@ -117,10 +132,35 @@ export default function SalesPage() {
     return (
       <div className="flex flex-col">
         <AppHeader title="Vendas" />
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-6 space-y-4">
+          {/* Date Filters */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="w-[150px] justify-start">
+                  <CalendarIcon className="mr-2 h-3 w-3" />{format(startDate, "dd/MM/yy")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={startDate} onSelect={d => d && setStartDate(d)} locale={ptBR} className="p-3 pointer-events-auto" />
+              </PopoverContent>
+            </Popover>
+            <span className="text-xs text-muted-foreground">até</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="w-[150px] justify-start">
+                  <CalendarIcon className="mr-2 h-3 w-3" />{format(endDate, "dd/MM/yy")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={endDate} onSelect={d => d && setEndDate(d)} locale={ptBR} className="p-3 pointer-events-auto" />
+              </PopoverContent>
+            </Popover>
+          </div>
+
           <DataTable
             columns={columns}
-            data={data}
+            data={filteredSales}
             loading={isLoading}
             onAdd={openNew}
             addLabel="Nova Venda"
