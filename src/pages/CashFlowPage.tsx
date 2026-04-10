@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format, subMonths, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AppHeader } from "@/components/AppHeader";
-import { paymentService } from "@/services";
+import { paymentService, stockMovementService } from "@/services";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   CalendarIcon, Wallet, ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, AlertTriangle,
 } from "lucide-react";
-import type { Payment } from "@/types";
+import type { Payment, StockMovement } from "@/types";
 
 const SHORTCUTS = [{ label: "7d", days: 7 }, { label: "15d", days: 15 }, { label: "30d", days: 30 }, { label: "90d", days: 90 }];
 
@@ -31,7 +31,9 @@ export default function CashFlowPage() {
   const endStr = format(endDate, "yyyy-MM-dd");
 
   const { data: rawData = [], isLoading } = useQuery({ queryKey: ["payments"], queryFn: paymentService.getAll });
+  const { data: rawMovements = [] } = useQuery({ queryKey: ["stockMovements"], queryFn: stockMovementService.getAll });
   const payments = rawData as Payment[];
+  const movements = rawMovements as StockMovement[];
 
   // Filter by date
   const filtered = useMemo(() => payments.filter(p => {
@@ -40,6 +42,12 @@ export default function CashFlowPage() {
   }), [payments, startStr, endStr]);
 
   const byTab = tab === "all" ? filtered : filtered.filter(p => p.type === tab);
+
+  // Filter stock movements by date
+  const filteredMovements = useMemo(() => movements.filter(m => {
+    const d = (m.createdAt || "").split("T")[0];
+    return d >= startStr && d <= endStr;
+  }), [movements, startStr, endStr]);
 
   const totalReceitas = useMemo(() => filtered.filter(p => p.type === "Receita" && p.status === "Pago").reduce((s, p) => s + (p.amount || 0), 0), [filtered]);
   const totalDespesas = useMemo(() => filtered.filter(p => p.type === "Despesa" && p.status === "Pago").reduce((s, p) => s + (p.amount || 0), 0), [filtered]);
@@ -161,10 +169,49 @@ export default function CashFlowPage() {
           </Card>
         </div>
 
-        {/* Transactions Table */}
+        {/* Stock Movements Table */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Movimentações de Estoque</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Produto</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead className="text-right">Quantidade</TableHead>
+                  <TableHead>Motivo</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredMovements.length === 0 ? (
+                  <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhuma movimentação no período.</TableCell></TableRow>
+                ) : filteredMovements.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")).map((m, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="text-sm">{m.createdAt ? new Date(m.createdAt).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                    <TableCell className="text-sm">{typeof m.product === "object" ? m.product?.name : "—"}</TableCell>
+                    <TableCell>
+                      <Badge className={`text-[10px] ${m.type === "entry" ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}`}>
+                        {m.type === "entry" ? "Entrada" : "Saída"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className={`text-right font-medium text-sm ${m.type === "entry" ? "text-success" : "text-destructive"}`}>
+                      {m.type === "entry" ? "+" : "-"}{m.quantity}
+                    </TableCell>
+                    <TableCell className="text-sm">{m.reason || "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Financial Transactions Table */}
         <Card>
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Movimentações</CardTitle>
+            <CardTitle className="text-base">Transações Financeiras</CardTitle>
             <Tabs value={tab} onValueChange={setTab}>
               <TabsList className="h-8">
                 <TabsTrigger value="all" className="text-xs">Todos</TabsTrigger>

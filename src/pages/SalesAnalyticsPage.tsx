@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import api from "@/services/api";
 import { format, subDays, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AppHeader } from "@/components/AppHeader";
-import { analyticsService, saleService, paymentService } from "@/services";
+import { analyticsService, saleService, paymentService, orderService } from "@/services";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -64,7 +65,7 @@ export default function SalesAnalyticsPage() {
   const topProducts = useQuery({ queryKey: ["analytics", "topProducts", startStr, endStr], queryFn: () => analyticsService.salesByProduct(startStr, endStr, 10) });
   const salesByUser = useQuery({ queryKey: ["analytics", "salesByUser"], queryFn: () => analyticsService.salesByUser() });
   const allSales = useQuery({ queryKey: ["sales"], queryFn: saleService.getAll });
-  const allPayments = useQuery({ queryKey: ["payments"], queryFn: paymentService.getAll });
+  const allPayments = useQuery({ queryKey: ["pendents"], queryFn: () => api.get("/payments/pendents").then(r => r.data) });
   const stockAlerts = useQuery({ queryKey: ["analytics", "stockLow"], queryFn: () => analyticsService.stockLow() });
 
   const periodData = salesByPeriod.data as any[] | undefined;
@@ -90,7 +91,7 @@ export default function SalesAnalyticsPage() {
   const last10 = useMemo(() => [...salesData].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")).slice(0, 10), [salesData]);
 
   // Pending payments
-  const pendingPayments = useMemo(() => paymentsData.filter(p => p.status === "Pendente" || p.status === "Atrasado"), [paymentsData]);
+  const pendingPayments = useMemo(() => Array.isArray(paymentsData) ? paymentsData : [], [paymentsData]);
 
   // Growth chart data
   const growthData = useMemo(() => {
