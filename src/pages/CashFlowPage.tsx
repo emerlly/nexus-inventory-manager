@@ -169,10 +169,49 @@ export default function CashFlowPage() {
           </Card>
         </div>
 
-        {/* Transactions Table */}
+        {/* Stock Movements Table */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Movimentações de Estoque</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Produto</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead className="text-right">Quantidade</TableHead>
+                  <TableHead>Motivo</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredMovements.length === 0 ? (
+                  <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhuma movimentação no período.</TableCell></TableRow>
+                ) : filteredMovements.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")).map((m, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="text-sm">{m.createdAt ? new Date(m.createdAt).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                    <TableCell className="text-sm">{typeof m.product === "object" ? m.product?.name : "—"}</TableCell>
+                    <TableCell>
+                      <Badge className={`text-[10px] ${m.type === "entry" ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}`}>
+                        {m.type === "entry" ? "Entrada" : "Saída"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className={`text-right font-medium text-sm ${m.type === "entry" ? "text-success" : "text-destructive"}`}>
+                      {m.type === "entry" ? "+" : "-"}{m.quantity}
+                    </TableCell>
+                    <TableCell className="text-sm">{m.reason || "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Financial Transactions Table */}
         <Card>
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Movimentações</CardTitle>
+            <CardTitle className="text-base">Transações Financeiras</CardTitle>
             <Tabs value={tab} onValueChange={setTab}>
               <TabsList className="h-8">
                 <TabsTrigger value="all" className="text-xs">Todos</TabsTrigger>
