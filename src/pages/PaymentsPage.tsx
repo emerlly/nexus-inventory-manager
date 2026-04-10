@@ -73,9 +73,9 @@ export default function PaymentsPage() {
       o._id.includes(search);
 
     if (tab === "all") return matchesSearch;
-    if (tab === "Pendente") return matchesSearch && o.paymentStatus !== "Pago" && o.status !== "Cancelado";
-    if (tab === "Pago") return matchesSearch && o.paymentStatus === "Pago";
-    if (tab === "Cancelado") return matchesSearch && o.status === "Cancelado";
+    if (tab === "pendente") return matchesSearch && o.paymentStatus !== "Pago" && o.status !== "Cancelado";
+    if (tab === "pago") return matchesSearch && o.paymentStatus === "Pago";
+    if (tab === "cancelado") return matchesSearch && o.status === "Cancelado";
     return matchesSearch;
   });
 
