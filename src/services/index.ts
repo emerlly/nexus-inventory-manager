@@ -19,7 +19,7 @@ export { productService } from "./productService";
 
 export const userService = createCrudService<User, UserFormData>("/users");
 export const categoryService = createCrudService<Category, CategoryFormData>("/categories");
-export const customerService = createCrudService<Customer, CustomerFormData>("/customers/");
+export const customerService = createCrudService<Customer, CustomerFormData>("/customers");
 export const supplierService = createCrudService<Supplier, SupplierFormData>("/suppliers");
 export const stockMovementService = createCrudService<StockMovement, StockMovementFormData>("/stock/history");
 export const paymentService = createCrudService<Payment, PaymentFormData>("/payments");
