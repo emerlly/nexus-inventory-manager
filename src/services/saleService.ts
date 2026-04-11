@@ -14,11 +14,13 @@ export const saleService = {
 
   // CORRIGIDO: Era api.post('/payment/...') — rota incorreta (singular e sem 's')
   // A rota correta no backend é POST /payments/:id/confirm-payment
-  confirmPayment: (orderId: string) =>
-    api.post(`/payments/${orderId}/confirm-payment`),
+  confirmPayment: async (orderId: string) => {
+    const { data } = await api.post(`/payments/${orderId}/confirm-payment`);
+    return data;
+  },
 
   getAll: async () => {
-    const { data } = await api.get("/sales/");
+    const { data } = await api.get("/sales");
     return data;
   },
 };
