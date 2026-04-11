@@ -39,7 +39,7 @@ const unwrapArray = <T>(payload: unknown): T[] => {
     const envelope = payload as ApiEnvelope<T[]> & { data?: { items?: T[] } };
     if (Array.isArray(envelope.items)) return envelope.items;
     if (Array.isArray(envelope.data)) return envelope.data;
-    if (Array.isArray(envelope.data?.items)) return envelope.data.items;
+    if (envelope.data && typeof envelope.data === "object" && Array.isArray((envelope.data as { items?: T[] }).items)) return (envelope.data as { items?: T[] }).items;
   }
   return [];
 };

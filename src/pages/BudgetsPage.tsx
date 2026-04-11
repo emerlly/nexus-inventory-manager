@@ -56,7 +56,7 @@ export default function BudgetsPage() {
   const [items, setItems] = useState<BudgetItem[]>([]);
   const [viewBudget, setViewBudget] = useState<Budget | null>(null);
 
-  const { data = [], isLoading } = useQuery<Budget[]>({ queryKey: ["budgets"], queryFn: budgetService.getAll });
+  const { data = [], isLoading } = useQuery<Budget[]>({ queryKey: ["budgets"], queryFn: () => budgetService.getAll() as Promise<Budget[]> });
   const customers = useQuery({ queryKey: ["customers"], queryFn: customerService.getAll });
   const products = useQuery({ queryKey: ["products"], queryFn: productService.getAll });
   const company = useQuery({ queryKey: ["company"], queryFn: companyService.get });
@@ -121,6 +121,7 @@ export default function BudgetsPage() {
 
         // depois confirma pagamento
         await orderService.confirmPayment(order._id);
+       
     },
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: ["budgets"] });
@@ -307,7 +308,7 @@ export default function BudgetsPage() {
                   <div ref={printRef} className="p-6 bg-background text-foreground">
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h2 className="text-xl font-bold text-foreground">{company.data?.name || "NexusSystems"}</h2>
+                        <h2 className="text-xl font-bold text-foreground">{company.data?.companyName || "NexusSystems"}</h2>
                         {company.data?.cnpj && <p className="text-xs text-muted-foreground">CNPJ: {company.data.cnpj}</p>}
                         {company.data?.phone && <p className="text-xs text-muted-foreground">Tel: {company.data.phone}</p>}
                         {company.data?.email && <p className="text-xs text-muted-foreground">Email: {company.data.email}</p>}
@@ -396,7 +397,7 @@ export default function BudgetsPage() {
                     <div className="grid grid-cols-2 gap-8 mt-8 mb-4">
                       <div className="text-center">
                         <div className="border-t border-foreground/30 pt-2 mx-4">
-                          <p className="text-xs text-muted-foreground">{company.data?.name || "NexusSystems"}</p>
+                          <p className="text-xs text-muted-foreground">{company.data?.companyName || "NexusSystems"}</p>
                           <p className="text-[10px] text-muted-foreground">Emitente</p>
                         </div>
                       </div>
@@ -411,7 +412,7 @@ export default function BudgetsPage() {
                     </div>
 
                     <p className="text-center text-[10px] text-muted-foreground mt-6">
-                      © {new Date().getFullYear()} {company.data?.name || "NexusSystems"} — Todos os direitos reservados.
+                      © {new Date().getFullYear()} {company.data?.companyName || "NexusSystems"} — Todos os direitos reservados.
                     </p>
                   </div>
                 </>
