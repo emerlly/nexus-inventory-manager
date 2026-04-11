@@ -33,6 +33,9 @@ const PERIOD_SHORTCUTS = [
   { label: "120d", days: 120 }
 ];
 
+type SalesPeriodPoint = { period?: string; revenue?: number; count?: number };
+type ProfitPeriodPoint = { period?: string; revenue?: number; profit?: number; cost?: number; count?: number };
+
 /* ─── KPI Card ─── */
 function KpiCard({ title, value, sub, icon: Icon, variant = "default", onClick, badge }: {
   title: string; value: string | number; sub?: string; icon: React.ElementType;
@@ -115,18 +118,21 @@ export default function DashboardPage() {
   const allPayments = useQuery({ queryKey: ["payments"], queryFn: paymentService.getAll });
   const products = useQuery({ queryKey: ["products"], queryFn: productService.getAll });
 
-  const periodData = salesByPeriod.data as any[] | undefined;
-  const prevData = prevPeriod.data as any[] | undefined;
-  const profitData = profitByPeriod.data as any[] | undefined;
-  const salesData = (allSales.data || []) as Sale[];
-  const paymentDate = (allPayments.data || []) as Payment[];
+  const periodData = (Array.isArray(salesByPeriod.data) ? salesByPeriod.data : []) as SalesPeriodPoint[];
+  const prevData = (Array.isArray(prevPeriod.data) ? prevPeriod.data : []) as SalesPeriodPoint[];
+  const profitData = (Array.isArray(profitByPeriod.data) ? profitByPeriod.data : []) as ProfitPeriodPoint[];
+  const salesData = (Array.isArray(allSales.data) ? allSales.data : []) as Sale[];
+  const paymentDate = (Array.isArray(allPayments.data) ? allPayments.data : []) as Payment[];
 
   // KPIs
-  const revenue = useMemo(() => periodData?.reduce((s: number, p: any) => s + (p.revenue || 0), 0) ?? 0, [periodData]);
-  const prevRevenue = useMemo(() => prevData?.reduce((s: number, p: any) => s + (p.revenue || 0), 0) ?? 0, [prevData]);
-  const profit = useMemo(() => profitData?.reduce((s: number, p: any) => s + (p.profit || 0), 0) ?? 0, [profitData]);
+  const revenue = useMemo(() => periodData.reduce((s, p) => s + (p.revenue || 0), 0), [periodData]);
+  const prevRevenue = useMemo(() => prevData.reduce((s, p) => s + (p.revenue || 0), 0), [prevData]);
+  const profit = useMemo(() => profitData.reduce((s, p) => s + (p.profit || 0), 0), [profitData]);
   const revenueChange = prevRevenue > 0 ? ((revenue - prevRevenue) / prevRevenue) * 100 : 0;
-  const salesCount = periodData?.length ?? 0;
+  const salesCount = useMemo(
+    () => periodData.reduce((acc, item) => acc + (item.count || 0), 0),
+    [periodData]
+  );
   const ticket = salesCount ? revenue / salesCount : 0;
   const lowStockCount = stockAlerts.data?.count ?? 0;
  
@@ -196,10 +202,6 @@ export default function DashboardPage() {
       { key: "status", label: "Status" },
     ],
   });
-  // Dentro do componente, após as queries
-  console.log('salesByPeriod data:', salesByPeriod.data);
-  console.log('profitByPeriod data:', profitByPeriod.data);
-  console.log('allSales data (primeiras 5):', allSales.data?.slice(0, 5));
   return (
     <div className="flex flex-col">
       <AppHeader title="Dashboard" />
