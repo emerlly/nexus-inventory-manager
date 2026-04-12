@@ -18,7 +18,6 @@ import { DetailDialog, DetailItem } from "@/components/DetailDialog";
 // CORRIGIDO: Status alinhados com o enum do OrderModel do backend
 // Removido "Produzindo" (não existe no backend), adicionado "Enviado"
 const STATUS_STEPS = [
-  { key: "Pendente", label: "Pendente" },
   { key: "Reservado", label: "Reservado" },
   { key: "Separando", label: "Separando" },
   { key: "Faturado", label: "Faturado" },
@@ -29,7 +28,6 @@ const STATUS_STEPS = [
 
 // CORRIGIDO: Chaves agora em maiúsculo para corresponder aos valores do backend
 const statusColors: Record<string, string> = {
-  Pendente: "bg-muted text-muted-foreground",
   Reservado: "bg-yellow-100 text-yellow-700",
   Separando: "bg-blue-100 text-blue-700",
   Faturado: "bg-green-100 text-green-700",
@@ -110,7 +108,7 @@ export default function OrdersPage() {
       toast({
         variant: "destructive",
         title: "Erro ao atualizar status",
-        description: error.response?.data?.message || "Tente novamente mais tarde.",
+        description: error.response?.data?.error || "Tente novamente mais tarde.",
       }),
   });
 

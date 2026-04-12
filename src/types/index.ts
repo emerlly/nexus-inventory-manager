@@ -337,6 +337,7 @@ export interface Company {
   _id: string;
   companyName: string;
   document?: string;
+  cnpj?: string;
   email?: string;
   phone?: string;
   address?: string;
