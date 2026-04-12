@@ -1,10 +1,9 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import api from "@/services/api";
 import { format, subDays, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AppHeader } from "@/components/AppHeader";
-import { analyticsService, saleService, paymentService, orderService } from "@/services";
+import { analyticsService, saleService, paymentService } from "@/services";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +23,12 @@ import type { Sale, Payment } from "@/types";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--success))", "hsl(var(--warning))", "hsl(var(--destructive))", "hsl(215,70%,60%)", "hsl(280,60%,55%)", "hsl(340,65%,50%)", "hsl(170,55%,45%)", "hsl(45,80%,55%)", "hsl(200,60%,50%)"];
 const SHORTCUTS = [{ label: "7d", days: 7 }, { label: "15d", days: 15 }, { label: "30d", days: 30 }, { label: "90d", days: 90 }];
+
+type SalesPeriodPoint = { period?: string; revenue?: number; count?: number };
+type ProfitPeriodPoint = { period?: string; revenue?: number; cost?: number; profit?: number; count?: number };
+type TopProductPoint = { product?: string; total?: number; count?: number };
+type SalesByUserPoint = { user?: string; total?: number; count?: number };
+type StockPoint = { _id?: string; name?: string; quantity?: number; minStock?: number };
 
 function Metric({ title, value, change, icon: Icon, variant = "default" }: {
   title: string; value: string; change?: number; icon: React.ElementType; variant?: "default" | "success" | "warning";
@@ -62,26 +67,28 @@ export default function SalesAnalyticsPage() {
   const salesByPeriod = useQuery({ queryKey: ["analytics", "salesByPeriod", startStr, endStr], queryFn: () => analyticsService.salesByPeriod(startStr, endStr) });
   const prevPeriod = useQuery({ queryKey: ["analytics", "salesByPeriod", prevStart, prevEnd], queryFn: () => analyticsService.salesByPeriod(prevStart, prevEnd) });
   const profitByPeriod = useQuery({ queryKey: ["analytics", "profitByPeriod", startStr, endStr], queryFn: () => analyticsService.profitByPeriod(startStr, endStr) });
+  const prevProfitPeriod = useQuery({ queryKey: ["analytics", "profitByPeriod", prevStart, prevEnd], queryFn: () => analyticsService.profitByPeriod(prevStart, prevEnd) });
   const topProducts = useQuery({ queryKey: ["analytics", "topProducts", startStr, endStr], queryFn: () => analyticsService.salesByProduct(startStr, endStr, 10) });
   const salesByUser = useQuery({ queryKey: ["analytics", "salesByUser"], queryFn: () => analyticsService.salesByUser() });
   const allSales = useQuery({ queryKey: ["sales"], queryFn: saleService.getAll });
-  const allPayments = useQuery({ queryKey: ["pendents"], queryFn: () => api.get("/payments/pendents").then(r => r.data) });
+  const allPayments = useQuery({ queryKey: ["pendents"], queryFn: paymentService.getPendents });
   const stockAlerts = useQuery({ queryKey: ["analytics", "stockLow"], queryFn: () => analyticsService.stockLow() });
 
-  const periodData = salesByPeriod.data as any[] | undefined;
-  const prevData = prevPeriod.data as any[] | undefined;
-  const profitData = profitByPeriod.data as any[] | undefined;
-  const topProdData = topProducts.data as any[] | undefined;
-  const salesUserData = salesByUser.data as any[] | undefined;
-  const salesData = (allSales.data || []) as Sale[];
-  const paymentsData = (allPayments.data || []) as Payment[];
-  const stockData = stockAlerts.data as any[] | undefined;
+  const periodData = (Array.isArray(salesByPeriod.data) ? salesByPeriod.data : []) as SalesPeriodPoint[];
+  const prevData = (Array.isArray(prevPeriod.data) ? prevPeriod.data : []) as SalesPeriodPoint[];
+  const profitData = (Array.isArray(profitByPeriod.data) ? profitByPeriod.data : []) as ProfitPeriodPoint[];
+  const prevProfitData = (Array.isArray(prevProfitPeriod.data) ? prevProfitPeriod.data : []) as ProfitPeriodPoint[];
+  const topProdData = (Array.isArray(topProducts.data) ? topProducts.data : []) as TopProductPoint[];
+  const salesUserData = (Array.isArray(salesByUser.data) ? salesByUser.data : []) as SalesByUserPoint[];
+  const salesData = (Array.isArray(allSales.data) ? allSales.data : []) as Sale[];
+  const paymentsData = (Array.isArray(allPayments.data) ? allPayments.data : []) as Payment[];
+  const stockData = (Array.isArray(stockAlerts.data) ? stockAlerts.data : []) as StockPoint[];
 
-  const revenue = useMemo(() => periodData?.reduce((s: number, p: any) => s + (p.revenue || 0), 0) ?? 0, [periodData]);
-  const prevRevenue = useMemo(() => prevData?.reduce((s: number, p: any) => s + (p.revenue || 0), 0) ?? 0, [prevData]);
-  const profit = useMemo(() => profitData?.reduce((s: number, p: any) => s + (p.profit || 0), 0) ?? 0, [profitData]);
-  const prevProfit = useMemo(() => prevData?.reduce((s: number, p: any) => s + (p.profit || 0), 0) ?? 0, [prevData]);
-  const salesCount = periodData?.length ?? 0;
+  const revenue = useMemo(() => periodData.reduce((s, p) => s + (p.revenue || 0), 0), [periodData]);
+  const prevRevenue = useMemo(() => prevData.reduce((s, p) => s + (p.revenue || 0), 0), [prevData]);
+  const profit = useMemo(() => profitData.reduce((s, p) => s + (p.profit || 0), 0), [profitData]);
+  const prevProfit = useMemo(() => prevProfitData.reduce((s, p) => s + (p.profit || 0), 0), [prevProfitData]);
+  const salesCount = useMemo(() => periodData.reduce((acc, item) => acc + (item.count || 0), 0), [periodData]);
   const ticket = salesCount ? revenue / salesCount : 0;
   const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
   const revenueChange = prevRevenue > 0 ? ((revenue - prevRevenue) / prevRevenue) * 100 : 0;
@@ -91,13 +98,13 @@ export default function SalesAnalyticsPage() {
   const last10 = useMemo(() => [...salesData].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")).slice(0, 10), [salesData]);
 
   // Pending payments
-  const pendingPayments = useMemo(() => Array.isArray(paymentsData) ? paymentsData : [], [paymentsData]);
+  const pendingPayments = useMemo(() => paymentsData, [paymentsData]);
 
   // Growth chart data
   const growthData = useMemo(() => {
-    if (!periodData?.length) return [];
+    if (!periodData.length) return [];
     let acc = 0;
-    return periodData.map((d: any) => { acc += d.revenue || 0; return { ...d, accumulated: acc }; });
+    return periodData.map((d) => { acc += d.revenue || 0; return { ...d, accumulated: acc }; });
   }, [periodData]);
 
   const setShortcut = (d: number) => { setStartDate(subDays(new Date(), d)); setEndDate(new Date()); };
@@ -179,7 +186,7 @@ export default function SalesAnalyticsPage() {
             <CardContent className="h-72">
               {topProducts.isLoading ? <Skeleton className="h-full w-full" /> : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={(topProdData || []).slice(0, 10)} layout="vertical">
+                  <BarChart data={topProdData.slice(0, 10)} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis type="number" tick={{ fontSize: 11 }} />
                     <YAxis dataKey="product" type="category" width={110} tick={{ fontSize: 10 }} />
@@ -196,8 +203,8 @@ export default function SalesAnalyticsPage() {
               {topProducts.isLoading ? <Skeleton className="h-full w-full" /> : (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={(topProdData || []).slice(0, 10)} dataKey="total" nameKey="product" cx="50%" cy="50%" outerRadius={85} label={({ name, percent }: any) => `${name} (${(percent * 100).toFixed(0)}%)`}>
-                      {(topProdData || []).slice(0, 10).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                    <Pie data={topProdData.slice(0, 10)} dataKey="total" nameKey="product" cx="50%" cy="50%" outerRadius={85} label={({ name, percent }: { name: string; percent: number }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
+                      {topProdData.slice(0, 10).map((_, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                     </Pie>
                     <Tooltip formatter={(v: number) => `R$ ${v.toFixed(2)}`} />
                   </PieChart>
@@ -280,7 +287,7 @@ export default function SalesAnalyticsPage() {
                 <Table>
                   <TableHeader><TableRow><TableHead>Vendedor</TableHead><TableHead className="text-right">Vendas</TableHead><TableHead className="text-right">Total</TableHead><TableHead className="text-right">Média</TableHead></TableRow></TableHeader>
                   <TableBody>
-                    {(salesUserData || []).map((u: any, i: number) => (
+                    {salesUserData.map((u, i: number) => (
                       <TableRow key={i}>
                         <TableCell className="font-medium text-sm">{u.user}</TableCell>
                         <TableCell className="text-right text-sm">{u.count}</TableCell>
@@ -300,13 +307,13 @@ export default function SalesAnalyticsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {stockAlerts.isLoading ? <Skeleton className="h-48 w-full" /> : !stockData?.length ? (
+              {stockAlerts.isLoading ? <Skeleton className="h-48 w-full" /> : !stockData.length ? (
                 <p className="py-8 text-center text-muted-foreground text-sm">Nenhum alerta.</p>
               ) : (
                 <Table>
                   <TableHeader><TableRow><TableHead>Produto</TableHead><TableHead className="text-right">Atual</TableHead><TableHead className="text-right">Mínimo</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
                   <TableBody>
-                    {(stockData || []).slice(0, 10).map((p: any) => (
+                    {stockData.slice(0, 10).map((p) => (
                       <TableRow key={p._id}>
                         <TableCell className="font-medium text-sm">{p.name}</TableCell>
                         <TableCell className="text-right text-sm">{p.quantity}</TableCell>

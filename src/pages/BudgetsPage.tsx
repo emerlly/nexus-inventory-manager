@@ -35,6 +35,14 @@ interface Budget {
   createdAt?: string;
 }
 
+type ConvertSaleResponse = {
+  _id?: string;
+  order?: { _id?: string };
+  sale?: { _id?: string };
+  orderId?: string;
+  saleId?: string;
+};
+
 const statusColors: Record<string, string> = {
   Rascunho: "bg-muted text-muted-foreground",
   Pendente: "bg-warning/15 text-warning",
@@ -103,7 +111,7 @@ export default function BudgetsPage() {
 
   const convertToSale = useMutation({
     mutationFn: async ({ budget, paymentMethod }: { budget: Budget; paymentMethod: string }) => {
-      const order = await saleService.create({
+      const result = await saleService.create({
         customer: typeof budget.customer === "object"
           ? budget.customer?._id
           : budget.customer,
@@ -117,10 +125,19 @@ export default function BudgetsPage() {
           quantity: it.quantity,
           unitPrice: it.unitPrice,
         })),
-      })
+      }) as ConvertSaleResponse;
 
-        // depois confirma pagamento
-        await orderService.confirmPayment(order._id);
+      const orderId = result.order?._id || result.orderId || result._id;
+
+      if (!orderId) {
+        throw new Error("Não foi possível identificar o ID do pedido retornado na conversão.");
+      }
+
+      // Depois confirma pagamento do pedido gerado na conversão
+      await orderService.confirmPayment(orderId);
+
+      // Garante status consistente do orçamento no frontend
+      await budgetService.update(budget._id, { status: "Convertido" });
     },
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: ["budgets"] });
@@ -137,7 +154,7 @@ export default function BudgetsPage() {
           toast({
             variant: "destructive",
             title: "Erro ao converter orçamento",
-            description: error?.response?.data?.error || "Ocorreu um erro inesperado",
+            description: error?.response?.data?.error || error?.message || "Ocorreu um erro inesperado",
           }),
       })
       const [confirmOpen, setConfirmOpen] = useState(false);
