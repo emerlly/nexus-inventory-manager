@@ -59,7 +59,19 @@ export default function SalesPage() {
       setOpen(false);
       toast({ title: "Venda registrada com sucesso!" });
     },
-    onError: () => toast({ variant: "destructive", title: "Erro ao registrar venda" }),
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "Erro inesperado";
+
+      toast({
+        variant: "destructive",
+        title: "Erro ao registrar venda",
+        description: message,
+      });
+    }
   });
 
   const addItem = () => setItems([...items, { product: "", productName: "", quantity: 1, unitPrice: 0 }]);

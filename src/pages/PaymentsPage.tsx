@@ -6,13 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -61,6 +54,7 @@ export default function PaymentsPage() {
       toast({
         variant: "destructive",
         title: "Erro ao confirmar pagamento",
+        description: message,
     
       });
     }
@@ -73,7 +67,7 @@ export default function PaymentsPage() {
       o._id.includes(search);
 
     if (tab === "all") return matchesSearch;
-    if (tab === "pendente") return matchesSearch && o.paymentStatus !== "Pago" && o.status !== "Cancelado";
+    if (tab === "pendente") return matchesSearch && o.paymentStatus !== "Pago" && o.status !== "Atrasado";
     if (tab === "pago") return matchesSearch && o.paymentStatus === "Pago";
     if (tab === "cancelado") return matchesSearch && o.status === "Cancelado";
     return matchesSearch;
