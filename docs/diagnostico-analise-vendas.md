@@ -95,3 +95,20 @@ Além disso, o frontend agora suporta (compatibilidade):
 2. Garantir índice por `companyId + createdAt` nas coleções de vendas/pedidos/pagamentos.
 3. Consolidar nomenclatura de campos agregados (`revenue`, `profit`, `count`, `period`).
 4. Criar testes de contrato para endpoints do dashboard e reports.
+
+
+## 7) Falha crítica identificada na conversão de orçamento
+
+Sintoma observado:
+- Requisição para `PUT /orders/undefined/confirm-payment`.
+- Backend responde com erro de cast de ObjectId (`"undefined"`).
+
+Causa raiz no frontend:
+- O fluxo de conversão assumia que `saleService.create(...)` retornava `_id` na raiz.
+- Porém o payload real vem no formato `{ order: {...}, sale: {...} }`.
+- Resultado: envio de `order._id` inexistente (`undefined`) para `orderService.confirmPayment(...)`.
+
+Correção aplicada:
+- Extração robusta do ID do pedido com fallback (`result.order?._id || result.orderId || result._id`).
+- Validação explícita com erro amigável quando não há ID.
+- Atualização do orçamento para status `Convertido` após confirmação de pagamento.

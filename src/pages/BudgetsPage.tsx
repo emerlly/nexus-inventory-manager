@@ -35,6 +35,14 @@ interface Budget {
   createdAt?: string;
 }
 
+type ConvertSaleResponse = {
+  _id?: string;
+  order?: { _id?: string };
+  sale?: { _id?: string };
+  orderId?: string;
+  saleId?: string;
+};
+
 const statusColors: Record<string, string> = {
   Rascunho: "bg-muted text-muted-foreground",
   Pendente: "bg-warning/15 text-warning",
