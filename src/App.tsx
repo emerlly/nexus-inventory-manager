@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RoleGuard } from "@/components/RoleGuard";
 import { AppLayout } from "@/components/AppLayout";
+import { PERMISSIONS } from "@/constants/permissions";
 import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
 import UsersPage from "@/pages/UsersPage";
@@ -33,8 +34,8 @@ import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const guarded = (Component: React.ComponentType) => (
-  <RoleGuard><Component /></RoleGuard>
+const guarded = (Component: React.ComponentType, requiredPermissions: string[] = []) => (
+  <RoleGuard requiredPermissions={requiredPermissions}><Component /></RoleGuard>
 );
 
 const App = () => (
@@ -55,25 +56,25 @@ const App = () => (
                   </ProtectedRoute>
                 }
               >
-                <Route path="/" element={guarded(DashboardPage)} />
-                <Route path="/customers" element={guarded(CustomersPage)} />
-                <Route path="/suppliers" element={guarded(SuppliersPage)} />
-                <Route path="/categories" element={guarded(CategoriesPage)} />
-                <Route path="/products" element={guarded(ProductsPage)} />
-                <Route path="/sales" element={guarded(SalesPage)} />
-                <Route path="/sales/analytics" element={guarded(SalesAnalyticsPage)} />
-                <Route path="/stock/movements" element={guarded(StockMovementsPage)} />
-                <Route path="/orders" element={guarded(OrdersPage)} />
-                <Route path="/payments" element={guarded(PaymentsPage)} />
-                <Route path="/financeiro" element={guarded(FinanceiroPage)} />
-                <Route path="/budgets" element={guarded(BudgetsPage)} />
-                <Route path="/pricing" element={guarded(PricingCalculatorPage)} />
-                <Route path="/cashflow" element={guarded(CashFlowPage)} />
-                <Route path="/crm" element={guarded(CrmPage)} />
-                <Route path="/inventory" element={guarded(InventoryPage)} />
-                <Route path="/users" element={guarded(UsersPage)} />
-                <Route path="/settings/company" element={guarded(CompanySettingsPage)} />
-                <Route path="/settings/integrations" element={guarded(IntegrationSettingsPage)} />
+                <Route path="/" element={guarded(DashboardPage, [PERMISSIONS.DASHBOARD_VIEW])} />
+                <Route path="/customers" element={guarded(CustomersPage, [PERMISSIONS.CUSTOMERS_VIEW])} />
+                <Route path="/suppliers" element={guarded(SuppliersPage, [PERMISSIONS.CUSTOMERS_VIEW])} />
+                <Route path="/categories" element={guarded(CategoriesPage, [PERMISSIONS.CATEGORIES_VIEW])} />
+                <Route path="/products" element={guarded(ProductsPage, [PERMISSIONS.PRODUCTS_VIEW])} />
+                <Route path="/sales" element={guarded(SalesPage, [PERMISSIONS.SALES_VIEW])} />
+                <Route path="/sales/analytics" element={guarded(SalesAnalyticsPage, [PERMISSIONS.SALES_VIEW])} />
+                <Route path="/stock/movements" element={guarded(StockMovementsPage, [PERMISSIONS.INVENTORY_VIEW])} />
+                <Route path="/orders" element={guarded(OrdersPage, [PERMISSIONS.ORDERS_VIEW])} />
+                <Route path="/payments" element={guarded(PaymentsPage, [PERMISSIONS.PAYMENTS_VIEW])} />
+                <Route path="/financeiro" element={guarded(FinanceiroPage, [PERMISSIONS.PAYMENTS_VIEW])} />
+                <Route path="/budgets" element={guarded(BudgetsPage, [PERMISSIONS.ORDERS_VIEW])} />
+                <Route path="/pricing" element={guarded(PricingCalculatorPage, [PERMISSIONS.SALES_VIEW])} />
+                <Route path="/cashflow" element={guarded(CashFlowPage, [PERMISSIONS.PAYMENTS_VIEW])} />
+                <Route path="/crm" element={guarded(CrmPage, [PERMISSIONS.CUSTOMERS_VIEW])} />
+                <Route path="/inventory" element={guarded(InventoryPage, [PERMISSIONS.INVENTORY_VIEW])} />
+                <Route path="/users" element={guarded(UsersPage, [PERMISSIONS.USERS_VIEW])} />
+                <Route path="/settings/company" element={guarded(CompanySettingsPage, [PERMISSIONS.COMPANY_SETTINGS])} />
+                <Route path="/settings/integrations" element={guarded(IntegrationSettingsPage, [PERMISSIONS.COMPANY_SETTINGS])} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
