@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/contexts/PermissionContext";
 import { Search, Package, CheckCircle2, Eye, ChevronDown, ChevronUp } from "lucide-react";
 import { DetailDialog, DetailItem } from "@/components/DetailDialog";
 
@@ -36,8 +36,7 @@ const statusColors: Record<string, string> = {
   Cancelado: "bg-red-100 text-red-700",
 };
 
-
-const STATUS_CHANGE_ROLES = ["admin", "manager", "stockist", "operator"];
+const ORDER_STATUS_UPDATE_PERMISSION = "orders:update_status";
 
 function StatusStepper({ currentStatus }: { currentStatus: OrderStatus }) {
   const flowSteps = STATUS_STEPS.filter((s) => s.key !== "Cancelado");
@@ -84,7 +83,7 @@ function StatusStepper({ currentStatus }: { currentStatus: OrderStatus }) {
 export default function OrdersPage() {
   const qc = useQueryClient();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { hasPermission } = usePermissions();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [detailOrder, setDetailOrder] = useState<Order | null>(null);
@@ -95,7 +94,7 @@ export default function OrdersPage() {
     queryFn: orderService.getAll,
   });
 
-  const canChangeStatus = STATUS_CHANGE_ROLES.includes(user?.role || "");
+  const canChangeStatus = hasPermission(ORDER_STATUS_UPDATE_PERMISSION);
 
   const updateStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>

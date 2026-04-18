@@ -24,7 +24,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
-import { hasRouteAccess } from "@/config/permissions";
+import { usePermissions } from "@/contexts/PermissionContext";
 import {
   Sidebar,
   SidebarContent,
@@ -71,10 +71,10 @@ const settingsNav = [
 
 export function AppSidebar() {
   const { user, logout } = useAuth();
-  const role = user?.role;
+  const { canAccessRoute } = usePermissions();
 
   const filterByAccess = (items: typeof mainNav) =>
-    items.filter((item) => hasRouteAccess(role, item.url));
+    items.filter((item) => canAccessRoute(item.url));
 
   const visibleMain = filterByAccess(mainNav);
   const visibleRegister = filterByAccess(registerNav);

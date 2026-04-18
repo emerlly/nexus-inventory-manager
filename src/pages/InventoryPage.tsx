@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inventoryService, type Inventory, type InventoryItem, type InventoryFormData } from "@/services/inventoryService";
 import { productService } from "@/services/productService";
-import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/contexts/PermissionContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,10 +49,10 @@ function DiffCell({ diff }: { diff: number | null }) {
 
 /* ================================================================ */
 export default function InventoryPage() {
-  const { user } = useAuth();
+  const { hasPermission } = usePermissions();
   const { toast } = useToast();
   const qc = useQueryClient();
-  const isManager = user?.role === "admin" || user?.role === "gerente";
+  const canApproveInventory = hasPermission("inventory:approve");
 
   /* ─── State ─── */
   const [createOpen, setCreateOpen] = useState(false);
@@ -274,8 +274,8 @@ export default function InventoryPage() {
                         )}
                         {(inv.status === "Pendente" || inv.status === "Aprovado") && (
                           <Button size="sm" variant="outline" onClick={() => openReview(inv)}>
-                            {isManager ? <FileCheck className="mr-1 h-3.5 w-3.5" /> : <Eye className="mr-1 h-3.5 w-3.5" />}
-                            {isManager && inv.status === "Pendente" ? "Revisar" : "Visualizar"}
+                            {canApproveInventory ? <FileCheck className="mr-1 h-3.5 w-3.5" /> : <Eye className="mr-1 h-3.5 w-3.5" />}
+                            {canApproveInventory && inv.status === "Pendente" ? "Revisar" : "Visualizar"}
                           </Button>
                         )}
                       </TableCell>
@@ -343,7 +343,7 @@ export default function InventoryPage() {
               </Button>
             </>
           )}
-          {viewMode === "review" && isManager && activeInventory?.status === "Pendente" && (
+          {viewMode === "review" && canApproveInventory && activeInventory?.status === "Pendente" && (
             <>
               <Button size="sm" variant="outline" onClick={() => setRecountOpen(true)}>
                 <RotateCcw className="mr-1 h-3.5 w-3.5" /> Solicitar Recontagem

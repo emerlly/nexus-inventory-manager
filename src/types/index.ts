@@ -7,6 +7,8 @@ export interface LoginRequest {
 export interface LoginResponse {
   token: string;
   user: User;
+  permissions?: string[];
+  allowedRoutes?: string[];
 }
 
 export interface RegisterRequest {
@@ -25,6 +27,12 @@ export interface User {
   updatedAt?: string;
   company?: string;
   active?: boolean;
+}
+
+export interface MeResponse {
+  user: User;
+  permissions?: string[];
+  allowedRoutes?: string[];
 }
 
 export interface UserFormData {
