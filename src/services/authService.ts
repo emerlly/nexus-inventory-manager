@@ -1,5 +1,5 @@
 import api from "./api";
-import type { LoginRequest, LoginResponse, RegisterRequest } from "@/types";
+import type { LoginRequest, LoginResponse, RegisterRequest, MeResponse } from "@/types";
 
 export const authService = {
   login: async (data: LoginRequest): Promise<LoginResponse> => {
@@ -8,6 +8,10 @@ export const authService = {
   },
   register: async (data: RegisterRequest) => {
     const res = await api.post("/auth/register", data);
+    return res.data;
+  },
+  me: async (): Promise<MeResponse> => {
+    const res = await api.get("/auth/me");
     return res.data;
   },
 };

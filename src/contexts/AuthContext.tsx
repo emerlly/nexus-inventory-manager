@@ -8,6 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   loading: boolean;
 }
 
@@ -17,33 +18,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    const savedToken = localStorage.getItem("nexus_token");
-    const savedUser = localStorage.getItem("nexus_user");
-    if (savedToken && savedUser) {
-      setToken(savedToken);
-      try { setUser(JSON.parse(savedUser)); } catch { /* ignore */ }
-    }
-    setLoading(false);
-  }, []);
-
-  const login = useCallback(async (email: string, password: string) => {
-    const res = await authService.login({ email, password });
-    localStorage.setItem("nexus_token", res.token);
-    localStorage.setItem("nexus_user", JSON.stringify(res.user));
-    setToken(res.token);
-    setUser(res.user);
-  }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem("nexus_token");
-    localStorage.removeItem("nexus_user");
     setToken(null);
     setUser(null);
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const me = await authService.me();
+      setUser(me.user);
+    } catch {
+      logout();
+    }
+  }, [logout]);
+
+  useEffect(() => {
+    const savedToken = localStorage.getItem("nexus_token");
+
+    if (!savedToken) {
+      setLoading(false);
+      return;
+    }
+
+    setToken(savedToken);
+    refreshUser().finally(() => setLoading(false));
+  }, [refreshUser]);
+
+  const login = useCallback(async (email: string, password: string) => {
+    const res = await authService.login({ email, password });
+
+    localStorage.setItem("nexus_token", res.token);
+    setToken(res.token);
+    setUser(res.user);
+
+    try {
+      const me = await authService.me();
+      setUser(me.user);
+    } catch {
+      setUser(res.user);
+    }
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated: !!token, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated: !!token, login, logout, refreshUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { PermissionProvider } from "@/contexts/PermissionContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RoleGuard } from "@/components/RoleGuard";
@@ -44,37 +45,39 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="/" element={guarded(DashboardPage)} />
-              <Route path="/customers" element={guarded(CustomersPage)} />
-              <Route path="/suppliers" element={guarded(SuppliersPage)} />
-              <Route path="/categories" element={guarded(CategoriesPage)} />
-              <Route path="/products" element={guarded(ProductsPage)} />
-              <Route path="/sales" element={guarded(SalesPage)} />
-              <Route path="/sales/analytics" element={guarded(SalesAnalyticsPage)} />
-              <Route path="/stock/movements" element={guarded(StockMovementsPage)} />
-              <Route path="/orders" element={guarded(OrdersPage)} />
-              <Route path="/payments" element={guarded(PaymentsPage)} />
-              <Route path="/financeiro" element={guarded(FinanceiroPage)} />
-              <Route path="/budgets" element={guarded(BudgetsPage)} />
-              <Route path="/pricing" element={guarded(PricingCalculatorPage)} />
-              <Route path="/cashflow" element={guarded(CashFlowPage)} />
-              <Route path="/crm" element={guarded(CrmPage)} />
-              <Route path="/inventory" element={guarded(InventoryPage)} />
-              <Route path="/users" element={guarded(UsersPage)} />
-              <Route path="/settings/company" element={guarded(CompanySettingsPage)} />
-              <Route path="/settings/integrations" element={guarded(IntegrationSettingsPage)} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <PermissionProvider>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/" element={guarded(DashboardPage)} />
+                <Route path="/customers" element={guarded(CustomersPage)} />
+                <Route path="/suppliers" element={guarded(SuppliersPage)} />
+                <Route path="/categories" element={guarded(CategoriesPage)} />
+                <Route path="/products" element={guarded(ProductsPage)} />
+                <Route path="/sales" element={guarded(SalesPage)} />
+                <Route path="/sales/analytics" element={guarded(SalesAnalyticsPage)} />
+                <Route path="/stock/movements" element={guarded(StockMovementsPage)} />
+                <Route path="/orders" element={guarded(OrdersPage)} />
+                <Route path="/payments" element={guarded(PaymentsPage)} />
+                <Route path="/financeiro" element={guarded(FinanceiroPage)} />
+                <Route path="/budgets" element={guarded(BudgetsPage)} />
+                <Route path="/pricing" element={guarded(PricingCalculatorPage)} />
+                <Route path="/cashflow" element={guarded(CashFlowPage)} />
+                <Route path="/crm" element={guarded(CrmPage)} />
+                <Route path="/inventory" element={guarded(InventoryPage)} />
+                <Route path="/users" element={guarded(UsersPage)} />
+                <Route path="/settings/company" element={guarded(CompanySettingsPage)} />
+                <Route path="/settings/integrations" element={guarded(IntegrationSettingsPage)} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </PermissionProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

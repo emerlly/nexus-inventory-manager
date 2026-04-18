@@ -1,23 +1,29 @@
-import { useAuth } from "@/contexts/AuthContext";
 import { Navigate, useLocation } from "react-router-dom";
-import { hasRouteAccess } from "@/config/permissions";
+import { usePermissions } from "@/contexts/PermissionContext";
 
 interface RoleGuardProps {
   children: React.ReactNode;
-  allowedRoles?: string[];
+  requiredPermissions?: string[];
+  fallbackPath?: string;
 }
 
-export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
-  const { user } = useAuth();
+export function RoleGuard({ children, requiredPermissions = [], fallbackPath = "/" }: RoleGuardProps) {
   const location = useLocation();
+  const { loading, hasAnyPermission, canAccessRoute } = usePermissions();
 
-  // If allowedRoles provided, use them directly; otherwise check permissions config
-  const hasAccess = allowedRoles
-    ? allowedRoles.includes(user?.role || "")
-    : hasRouteAccess(user?.role, location.pathname);
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
-  if (!user || !hasAccess) {
-    return <Navigate to="/" replace />;
+  const routeAllowed = canAccessRoute(location.pathname);
+  const permissionAllowed = requiredPermissions.length === 0 || hasAnyPermission(requiredPermissions);
+
+  if (!routeAllowed || !permissionAllowed) {
+    return <Navigate to={fallbackPath} replace />;
   }
 
   return <>{children}</>;
