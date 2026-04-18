@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Save } from "lucide-react";
+import { CompanyGoalsSettings } from '@/components/CompanyGoalsSettings';
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CompanySettingsPage() {
@@ -59,23 +60,24 @@ export default function CompanySettingsPage() {
             <Skeleton className="h-10 w-full" />
           </div>
         ) : (
-          <Card className="max-w-2xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
-                Dados da Empresa
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form
-                onSubmit={(e) => { e.preventDefault(); save.mutate(); }}
-                className="space-y-4"
-              >
-                <div className="space-y-2">
-                  <Label>Nome da Empresa</Label>
-                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="space-y-6 max-w-2xl">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Dados da Empresa
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form
+                  onSubmit={(e) => { e.preventDefault(); save.mutate(); }}
+                  className="space-y-4"
+                >
+                  <div className="space-y-2">
+                    <Label>Nome da Empresa</Label>
+                    <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label>CNPJ</Label>
                     <Input value={form.cnpj} onChange={(e) => setForm({ ...form, cnpj: e.target.value })} placeholder="00.000.000/0000-00" />
@@ -109,8 +111,10 @@ export default function CompanySettingsPage() {
                   </Button>
                 </div>
               </form>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+            <CompanyGoalsSettings />
+          </div>
         )}
       </div>
     </div>

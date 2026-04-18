@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { AppHeader } from "@/components/AppHeader";
+import { SalesProjections } from "@/components/SalesProjections";
 import { analyticsService, saleService, paymentService, productService } from "@/services";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -305,6 +306,9 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Sales Projections */}
+        <SalesProjections />
 
         {/* Recent Sales snapshot */}
         <Card>

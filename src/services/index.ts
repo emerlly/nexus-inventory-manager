@@ -92,13 +92,13 @@ export const companyService = {
 
 export type AnalyticsSource = "reports" | "dashboard";
 
-type SalesByPeriodPoint = {
+export type SalesByPeriodPoint = {
   period: string;
   revenue: number;
   count: number;
 };
 
-type ProfitByPeriodPoint = {
+export type ProfitByPeriodPoint = {
   period: string;
   revenue: number;
   cost: number;
@@ -106,16 +106,27 @@ type ProfitByPeriodPoint = {
   count: number;
 };
 
-type TopProductPoint = {
+export type TopProductPoint = {
   product: string;
   total: number;
   count: number;
 };
 
-type SalesByUserPoint = {
+export type SalesByUserPoint = {
   user: string;
   total: number;
   count: number;
+};
+
+export type SalesProjections = {
+  projectedAnnualRevenue: number;
+  totalSold: number;
+  monthlyGoal: number;
+  breakEvenPoint: number;
+  monthlySales: { month: string; revenue: number; }[];
+  dailyGoalPercentage: number;
+  annualGoalAchievedPercentage: number;
+  totalSalesThisMonth: number;
 };
 
 const buildBase = (source: AnalyticsSource = "dashboard") => `/${source}`;
@@ -214,10 +225,14 @@ export const analyticsService = {
       count: firstDefinedNumber(data, ["count", "total", "items"]) || 0,
     };
   },
-
   profitByPeriod: async (start?: string, end?: string, source: AnalyticsSource = "dashboard") => {
     const rows = await requestArray<unknown>(`${buildBase(source)}/profit-by-period`, { startDate: start, endDate: end });
     return normalizeProfitByPeriod(rows);
+  },
+
+  getSalesProjections: async (source: AnalyticsSource = "dashboard") => {
+    const payload = await api.get(`${buildBase(source)}/sales-projections`).then((r) => r.data);
+    return unwrap<SalesProjections>(payload, {} as SalesProjections);
   },
 };
 

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inventoryService, type Inventory, type InventoryItem, type InventoryFormData } from "@/services/inventoryService";
 import { productService } from "@/services/productService";
 import { usePermissions } from "@/contexts/PermissionContext";
+import { PERMISSIONS } from "@/constants/permissions";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,7 +53,7 @@ export default function InventoryPage() {
   const { hasPermission } = usePermissions();
   const { toast } = useToast();
   const qc = useQueryClient();
-  const canApproveInventory = hasPermission("inventory:approve");
+  const canApproveInventory = hasPermission(PERMISSIONS.INVENTORY_APPROVE);
 
   /* ─── State ─── */
   const [createOpen, setCreateOpen] = useState(false);

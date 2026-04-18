@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { usePermissions } from "@/contexts/PermissionContext";
 import { Search, Package, CheckCircle2, Eye, ChevronDown, ChevronUp } from "lucide-react";
+import { PERMISSIONS } from "@/constants/permissions";
 import { DetailDialog, DetailItem } from "@/components/DetailDialog";
 
 // CORRIGIDO: Status alinhados com o enum do OrderModel do backend
@@ -36,7 +37,7 @@ const statusColors: Record<string, string> = {
   Cancelado: "bg-red-100 text-red-700",
 };
 
-const ORDER_STATUS_UPDATE_PERMISSION = "orders:update_status";
+// Removido ORDER_STATUS_UPDATE_PERMISSION fixo
 
 function StatusStepper({ currentStatus }: { currentStatus: OrderStatus }) {
   const flowSteps = STATUS_STEPS.filter((s) => s.key !== "Cancelado");
@@ -94,7 +95,7 @@ export default function OrdersPage() {
     queryFn: orderService.getAll,
   });
 
-  const canChangeStatus = hasPermission(ORDER_STATUS_UPDATE_PERMISSION);
+  const canChangeStatus = hasPermission(PERMISSIONS.ORDERS_UPDATE_STATUS);
 
   const updateStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>

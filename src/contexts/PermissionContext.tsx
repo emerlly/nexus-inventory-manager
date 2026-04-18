@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { authService } from "@/services";
 import { useAuth } from "@/contexts/AuthContext";
+import { PERMISSIONS } from "@/constants/permissions";
 
 interface PermissionContextType {
   permissions: string[];
@@ -45,6 +46,20 @@ const extractAllowedRoutes = (me: unknown): string[] => {
   return normalizeStringArray((nestedUser as Record<string, unknown>).allowedRoutes);
 };
 
+// Mapeamento de permissões para rotas (Fallback se o backend não enviar allowedRoutes)
+const PERMISSION_TO_ROUTES: Record<string, string[]> = {
+  [PERMISSIONS.DASHBOARD_VIEW]: ["/"],
+  [PERMISSIONS.PRODUCTS_VIEW]: ["/products"],
+  [PERMISSIONS.SALES_VIEW]: ["/sales", "/sales/analytics"],
+  [PERMISSIONS.ORDERS_VIEW]: ["/orders", "/budgets"],
+  [PERMISSIONS.PAYMENTS_VIEW]: ["/payments", "/financeiro", "/cashflow"],
+  [PERMISSIONS.CUSTOMERS_VIEW]: ["/customers"],
+  [PERMISSIONS.CATEGORIES_VIEW]: ["/categories"],
+  [PERMISSIONS.INVENTORY_VIEW]: ["/inventory"],
+  [PERMISSIONS.USERS_VIEW]: ["/users"],
+  [PERMISSIONS.COMPANY_SETTINGS]: ["/settings/company", "/settings/integrations"],
+};
+
 export function PermissionProvider({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
   const [permissions, setPermissions] = useState<string[]>([]);
@@ -62,8 +77,22 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
 
     try {
       const me = await authService.me();
-      setPermissions(extractPermissions(me));
-      setAllowedRoutes(extractAllowedRoutes(me).map(normalizePath));
+      const perms = extractPermissions(me);
+      let routes = extractAllowedRoutes(me).map(normalizePath);
+
+      // Fallback: Se o backend não enviou rotas, gera com base nas permissões
+      if (routes.length === 0) {
+        const generatedRoutes = new Set<string>();
+        perms.forEach(p => {
+          if (PERMISSION_TO_ROUTES[p]) {
+            PERMISSION_TO_ROUTES[p].forEach(r => generatedRoutes.add(r));
+          }
+        });
+        routes = Array.from(generatedRoutes).map(normalizePath);
+      }
+
+      setPermissions(perms);
+      setAllowedRoutes(routes);
     } catch {
       setPermissions([]);
       setAllowedRoutes([]);
@@ -84,10 +113,10 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
       hasPermission: (permission: string) => permissions.includes(permission),
       hasAnyPermission: (required: string[]) => required.some((permission) => permissions.includes(permission)),
       canAccessRoute: (path: string) => {
-        if (allowedRoutes.length === 0) return true;
+        if (allowedRoutes.length === 0) return false; // Mudado para false para ser restritivo
         const normalizedPath = normalizePath(path);
         if (allowedRoutes.includes(normalizedPath)) return true;
-        return allowedRoutes.some((route) => normalizedPath.startsWith(`${route}/`));
+        return allowedRoutes.some((route) => route !== "/" && normalizedPath.startsWith(`${route}/`));
       },
       refreshPermissions,
     }),
