@@ -26,24 +26,54 @@ const normalizeStringArray = (value: unknown): string[] => {
   return value.filter((item): item is string => typeof item === "string");
 };
 
+const getNested = (obj: Record<string, unknown>, path: string[]): unknown => {
+  return path.reduce<unknown>((acc, key) => {
+    if (!acc || typeof acc !== "object") return undefined;
+    return (acc as Record<string, unknown>)[key];
+  }, obj);
+};
+
+const normalizePermissions = (value: string[]): string[] => {
+  return Array.from(new Set(value.map((permission) => permission.trim().toLowerCase()).filter(Boolean)));
+};
+
 const extractPermissions = (me: unknown): string[] => {
   if (!me || typeof me !== "object") return [];
   const response = me as Record<string, unknown>;
-  const direct = normalizeStringArray(response.permissions);
-  if (direct.length > 0) return direct;
-  const nestedUser = response.user;
-  if (!nestedUser || typeof nestedUser !== "object") return [];
-  return normalizeStringArray((nestedUser as Record<string, unknown>).permissions);
+
+  const candidates: unknown[] = [
+    response.permissions,
+    response.rolePermissions,
+    response.role_permissions,
+    response.userPermissions,
+    response.user_permissions,
+    getNested(response, ["user", "permissions"]),
+    getNested(response, ["user", "rolePermissions"]),
+    getNested(response, ["user", "role_permissions"]),
+    getNested(response, ["data", "permissions"]),
+    getNested(response, ["data", "user", "permissions"]),
+  ];
+
+  const firstNonEmpty = candidates.map(normalizeStringArray).find((list) => list.length > 0) || [];
+  return normalizePermissions(firstNonEmpty);
 };
 
 const extractAllowedRoutes = (me: unknown): string[] => {
   if (!me || typeof me !== "object") return [];
   const response = me as Record<string, unknown>;
-  const direct = normalizeStringArray(response.allowedRoutes);
-  if (direct.length > 0) return direct;
-  const nestedUser = response.user;
-  if (!nestedUser || typeof nestedUser !== "object") return [];
-  return normalizeStringArray((nestedUser as Record<string, unknown>).allowedRoutes);
+
+  const candidates: unknown[] = [
+    response.allowedRoutes,
+    response.allowed_routes,
+    response.routes,
+    getNested(response, ["user", "allowedRoutes"]),
+    getNested(response, ["user", "allowed_routes"]),
+    getNested(response, ["data", "allowedRoutes"]),
+    getNested(response, ["data", "allowed_routes"]),
+    getNested(response, ["data", "user", "allowedRoutes"]),
+  ];
+
+  return candidates.map(normalizeStringArray).find((list) => list.length > 0) || [];
 };
 
 // Mapeamento de permissões para rotas (Fallback se o backend não enviar allowedRoutes)
@@ -53,9 +83,9 @@ const PERMISSION_TO_ROUTES: Record<string, string[]> = {
   [PERMISSIONS.SALES_VIEW]: ["/sales", "/sales/analytics"],
   [PERMISSIONS.ORDERS_VIEW]: ["/orders", "/budgets"],
   [PERMISSIONS.PAYMENTS_VIEW]: ["/payments", "/financeiro", "/cashflow"],
-  [PERMISSIONS.CUSTOMERS_VIEW]: ["/customers"],
+  [PERMISSIONS.CUSTOMERS_VIEW]: ["/customers", "/suppliers", "/crm"],
   [PERMISSIONS.CATEGORIES_VIEW]: ["/categories"],
-  [PERMISSIONS.INVENTORY_VIEW]: ["/inventory"],
+  [PERMISSIONS.INVENTORY_VIEW]: ["/inventory", "/stock/movements"],
   [PERMISSIONS.USERS_VIEW]: ["/users"],
   [PERMISSIONS.COMPANY_SETTINGS]: ["/settings/company", "/settings/integrations"],
 };
@@ -111,9 +141,9 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
       allowedRoutes,
       loading,
       hasPermission: (permission: string) => permissions.includes(permission),
-      hasAnyPermission: (required: string[]) => required.some((permission) => permissions.includes(permission)),
+      hasAnyPermission: (required: string[]) => required.some((permission) => permissions.includes(permission.toLowerCase())),
       canAccessRoute: (path: string) => {
-        if (allowedRoutes.length === 0) return false; // Mudado para false para ser restritivo
+        if (allowedRoutes.length === 0) return true;
         const normalizedPath = normalizePath(path);
         if (allowedRoutes.includes(normalizedPath)) return true;
         return allowedRoutes.some((route) => route !== "/" && normalizedPath.startsWith(`${route}/`));
