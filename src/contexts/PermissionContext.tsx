@@ -20,6 +20,31 @@ const normalizePath = (path: string) => {
   return path.replace(/\/+$/, "") || "/";
 };
 
+const normalizeStringArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string");
+};
+
+const extractPermissions = (me: unknown): string[] => {
+  if (!me || typeof me !== "object") return [];
+  const response = me as Record<string, unknown>;
+  const direct = normalizeStringArray(response.permissions);
+  if (direct.length > 0) return direct;
+  const nestedUser = response.user;
+  if (!nestedUser || typeof nestedUser !== "object") return [];
+  return normalizeStringArray((nestedUser as Record<string, unknown>).permissions);
+};
+
+const extractAllowedRoutes = (me: unknown): string[] => {
+  if (!me || typeof me !== "object") return [];
+  const response = me as Record<string, unknown>;
+  const direct = normalizeStringArray(response.allowedRoutes);
+  if (direct.length > 0) return direct;
+  const nestedUser = response.user;
+  if (!nestedUser || typeof nestedUser !== "object") return [];
+  return normalizeStringArray((nestedUser as Record<string, unknown>).allowedRoutes);
+};
+
 export function PermissionProvider({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
   const [permissions, setPermissions] = useState<string[]>([]);
@@ -37,8 +62,8 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
 
     try {
       const me = await authService.me();
-      setPermissions(me.permissions || []);
-      setAllowedRoutes((me.allowedRoutes || []).map(normalizePath));
+      setPermissions(extractPermissions(me));
+      setAllowedRoutes(extractAllowedRoutes(me).map(normalizePath));
     } catch {
       setPermissions([]);
       setAllowedRoutes([]);
@@ -59,6 +84,7 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
       hasPermission: (permission: string) => permissions.includes(permission),
       hasAnyPermission: (required: string[]) => required.some((permission) => permissions.includes(permission)),
       canAccessRoute: (path: string) => {
+        if (allowedRoutes.length === 0) return true;
         const normalizedPath = normalizePath(path);
         if (allowedRoutes.includes(normalizedPath)) return true;
         return allowedRoutes.some((route) => normalizedPath.startsWith(`${route}/`));
