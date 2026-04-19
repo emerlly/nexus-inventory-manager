@@ -320,7 +320,7 @@ export interface Payment {
   description: string;
   type: PaymentType;
   amount: number;
-  status: PaymentStatus;
+  paymentStatus: PaymentStatus;
   dueDate: string;
   paidAt?: string;
   customer?: Customer | string;
@@ -328,6 +328,8 @@ export interface Payment {
   sale?: Sale | string;
   user?: User | string;
   createdAt?: string;
+  totalValue?: number; // CORRIGIDO: era 'total', o backend retorna 'totalValue'
+  name?: string; // CORRIGIDO: era 'title', o backend retorna 'name'
 }
 
 export interface PaymentFormData {

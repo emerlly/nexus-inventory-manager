@@ -22,7 +22,7 @@ export function RoleGuard({ children, requiredPermissions = [], fallbackPath = "
   const routeAllowed = canAccessRoute(location.pathname);
   const permissionAllowed = requiredPermissions.length === 0 || hasAnyPermission(requiredPermissions);
 
-  if (!routeAllowed || !permissionAllowed) {
+  if (!routeAllowed && !permissionAllowed) {
     return <Navigate to={fallbackPath} replace />;
   }
 

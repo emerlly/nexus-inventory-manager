@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import type { Sale, Payment } from "@/types";
 
-const COLORS = ["hsl(var(--primary))", "hsl(var(--success))", "hsl(var(--warning))", "hsl(var(--destructive))", "hsl(215,70%,60%)", "hsl(280,60%,55%)", "hsl(340,65%,50%)", "hsl(170,55%,45%)", "hsl(45,80%,55%)", "hsl(200,60%,50%)"];
+const COLORS = ["hsl(var(--primary))", "hsl(var(--success))", "hsl(var(--warning))", "hsl(var(--secondary))", "hsl(215,70%,60%)", "hsl(280,60%,55%)", "hsl(340,65%,50%)", "hsl(170,55%,45%)", "hsl(45,80%,55%)", "hsl(200,60%,50%)"];
 const SHORTCUTS = [{ label: "7d", days: 7 }, { label: "15d", days: 15 }, { label: "30d", days: 30 }, { label: "90d", days: 90 }];
 
 type SalesPeriodPoint = { period?: string; revenue?: number; count?: number };
@@ -255,20 +255,39 @@ export default function SalesAnalyticsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Vencimento</TableHead>
-                    <TableHead>Descrição</TableHead>
+                    <TableHead>Cliente</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pendingPayments.slice(0, 10).map((p, i) => (
+                  {pendingPayments.slice(0, 10).map((o, i) => (
                     <TableRow key={i}>
-                      <TableCell className="text-sm">{p.dueDate ? new Date(p.dueDate).toLocaleDateString("pt-BR") : "—"}</TableCell>
-                      <TableCell className="text-sm">{p.description}</TableCell>
-                      <TableCell><Badge variant={p.type === "Receita" ? "default" : "secondary"} className="text-[10px]">{p.type === "Receita" ? "Receita" : "Despesa"}</Badge></TableCell>
-                      <TableCell className="text-right font-medium text-sm">R$ {p.amount?.toFixed(2)}</TableCell>
-                      <TableCell><Badge variant={p.status === "Atrasado" ? "destructive" : "secondary"} className="text-[10px]">{p.status}</Badge></TableCell>
+                      <TableCell className="text-sm">
+                        {o.dueDate ? new Date(o.dueDate).toLocaleDateString("pt-BR") : "—"}
+                      </TableCell>
+
+                      <TableCell className="text-sm">
+                        {typeof o.customer === "object" ? o.customer?.name || "—" : "—"}
+                      </TableCell>
+
+                      <TableCell>
+                        <Badge className="text-[10px]">Venda</Badge>
+                      </TableCell>
+
+                      <TableCell className="text-right font-medium text-sm">
+                        R$ {o.totalValue?.toFixed(2)}
+                      </TableCell>
+
+                      <TableCell>
+                        <Badge
+                          variant={o.paymentStatus === "Atrasado" ? "destructive" : "secondary"}
+                          className="text-[10px]"
+                        >
+                          {o.paymentStatus}
+                        </Badge>
+                      </TableCell>
                     </TableRow>
                   ))}
                   {pendingPayments.length === 0 && <TableRow><TableCell colSpan={5} className="text-center py-6 text-muted-foreground">Nenhuma pendência.</TableCell></TableRow>}
