@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { AppHeader } from "@/components/AppHeader";
-import { orderService, productService } from "@/services";
+import { orderService } from "@/services";
 import type { Order, OrderStatus } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,348 +12,386 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { usePermissions } from "@/contexts/PermissionContext";
-import { Search, Package, CheckCircle2, Eye, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Package, Eye, LayoutGrid, List as ListIcon, CalendarIcon, X } from "lucide-react";
 import { PERMISSIONS } from "@/constants/permissions";
-import { DetailDialog, DetailItem } from "@/components/DetailDialog";
+import { OrderKanban, KANBAN_COLUMNS } from "@/components/orders/OrderKanban";
+import { OrderTimeline } from "@/components/orders/OrderTimeline";
 
-// CORRIGIDO: Status alinhados com o enum do OrderModel do backend
-// Removido "Produzindo" (não existe no backend), adicionado "Enviado"
-const STATUS_STEPS = [
-  { key: "Reservado", label: "Reservado" },
-  { key: "Separando", label: "Separando" },
-  { key: "Faturado", label: "Faturado" },
-  { key: "Enviado", label: "Enviado" },
-  { key: "Entregue", label: "Entregue" },
-
-];
-
-// CORRIGIDO: Chaves agora em maiúsculo para corresponder aos valores do backend
 const statusColors: Record<string, string> = {
-  Reservado: "bg-yellow-100 text-yellow-700",
-  Separando: "bg-blue-100 text-blue-700",
-  Faturado: "bg-green-100 text-green-700",
-  Enviado: "bg-indigo-100 text-indigo-700",
-  Entregue: "bg-emerald-100 text-emerald-700",
-  Cancelado: "bg-red-100 text-red-700",
+  Reservado: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  Separando: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  Faturado: "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300",
+  Enviado: "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300",
+  Entregue: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+  Cancelado: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
 };
 
-// Removido ORDER_STATUS_UPDATE_PERMISSION fixo
-
-function StatusStepper({ currentStatus }: { currentStatus: OrderStatus }) {
-  const flowSteps = STATUS_STEPS.filter((s) => s.key !== "Cancelado");
-  const currentIdx = flowSteps.findIndex((s) => s.key === currentStatus);
-  const isCancelled = currentStatus === "Cancelado";
-
-  if (isCancelled) {
-    return <Badge className={statusColors.Cancelado}>Cancelado</Badge>;
-  }
-
-  return (
-    <div className="flex items-center gap-1">
-      {flowSteps.map((step, idx) => {
-        const isDone = idx < currentIdx;
-        const isCurrent = idx === currentIdx;
-        return (
-          <div key={step.key} className="flex items-center gap-1">
-            <div
-              className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors ${isDone
-                  ? "bg-success text-success-foreground"
-                  : isCurrent
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                }`}
-            >
-              {isDone ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
-            </div>
-            <span
-              className={`hidden text-xs xl:inline ${isCurrent ? "font-semibold text-foreground" : "text-muted-foreground"
-                }`}
-            >
-              {step.label}
-            </span>
-            {idx < flowSteps.length - 1 && (
-              <div className={`mx-1 h-0.5 w-4 rounded ${isDone ? "bg-success" : "bg-border"}`} />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
+function isOverdue(o: Order) {
+  if (!o.createdAt || ["Entregue", "Cancelado"].includes(o.status)) return false;
+  return (Date.now() - new Date(o.createdAt).getTime()) / 86400000 > 7;
 }
 
 export default function OrdersPage() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const { hasPermission } = usePermissions();
+  const canChangeStatus = hasPermission(PERMISSIONS.ORDERS_UPDATE_STATUS);
+
+  const [view, setView] = useState<"kanban" | "list">("kanban");
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterSeller, setFilterSeller] = useState<string>("all");
+  const [filterUrgency, setFilterUrgency] = useState<string>("all");
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
   const [detailOrder, setDetailOrder] = useState<Order | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const { data = [], isLoading } = useQuery({
+  const { data = [], isLoading } = useQuery<Order[]>({
     queryKey: ["orders"],
     queryFn: orderService.getAll,
   });
 
-  const canChangeStatus = hasPermission(PERMISSIONS.ORDERS_UPDATE_STATUS);
-
   const updateStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>
       orderService.updateStatus(id, { status }),
+    onMutate: async ({ id, status }) => {
+      await qc.cancelQueries({ queryKey: ["orders"] });
+      const prev = qc.getQueryData<Order[]>(["orders"]);
+      qc.setQueryData<Order[]>(["orders"], (old) =>
+        (old || []).map((o) => (o._id === id ? { ...o, status } : o))
+      );
+      return { prev };
+    },
+    onError: (error: any, _v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(["orders"], ctx.prev);
+      toast({
+        variant: "destructive",
+        title: "Erro ao atualizar status",
+        description: error?.response?.data?.error || "Tente novamente.",
+      });
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders"] });
       toast({ title: "Status atualizado!" });
     },
-    onError: (error: any) =>
-      toast({
-        variant: "destructive",
-        title: "Erro ao atualizar status",
-        description: error.response?.data?.error || "Tente novamente mais tarde.",
-      }),
   });
 
-  const filtered = data.filter((o: Order) => {
-    const customerName = typeof o.customer === "object" ? o.customer?.name : "";
-    const matchSearch =
-      !search ||
-      customerName?.toLowerCase().includes(search.toLowerCase()) ||
-      o._id.includes(search);
-    const matchStatus = filterStatus === "all" || o.status === filterStatus;
-    return matchSearch && matchStatus;
-  });
+  const sellers = useMemo(() => {
+    const map = new Map<string, string>();
+    data.forEach((o) => {
+      const s: any = o.seller;
+      if (s && typeof s === "object" && s._id) map.set(s._id, s.name || "—");
+    });
+    return Array.from(map, ([id, name]) => ({ id, name }));
+  }, [data]);
 
-  const toggleExpand = (id: string) => setExpandedId(expandedId === id ? null : id);
+  const filtered = useMemo(() => {
+    return data.filter((o) => {
+      const customerName = typeof o.customer === "object" ? o.customer?.name || "" : "";
+      if (search) {
+        const s = search.toLowerCase();
+        if (!customerName.toLowerCase().includes(s) && !o._id.toLowerCase().includes(s)) return false;
+      }
+      if (filterStatus !== "all" && o.status !== filterStatus) return false;
+      if (filterSeller !== "all") {
+        const sid = typeof o.seller === "object" ? (o.seller as any)?._id : o.seller;
+        if (sid !== filterSeller) return false;
+      }
+      if (filterUrgency === "overdue" && !isOverdue(o)) return false;
+      if (filterUrgency === "ontime" && isOverdue(o)) return false;
+      if (o.createdAt) {
+        const d = new Date(o.createdAt);
+        if (startDate && d < startDate) return false;
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          if (d > end) return false;
+        }
+      }
+      return true;
+    });
+  }, [data, search, filterStatus, filterSeller, filterUrgency, startDate, endDate]);
 
-  const getDetailFields = (o: Order) => [
-    { label: "ID", value: `#${o._id.slice(-15)}` },
-    { label: "Status", value: o.status },
-    { label: "Status Pagamento", value: o.paymentStatus || "—" },
-    { label: "Forma de Pagamento", value: o.paymentMethod || "—" },
-    // CORRIGIDO: totalValue em vez de totalOrder
-    { label: "Total", value: `R$ ${o.totalValue?.toFixed(2)}` },
-    {
-      label: "Cliente",
-      value: typeof o.customer === "object" ? o.customer?.name || "—" : "—",
-    },
-    {
-      label: "Data",
-      value: o.createdAt ? new Date(o.createdAt).toLocaleDateString("pt-BR") : "—",
-    },
-  ];
- 
-
-  const getDetailItems = (order: any): DetailItem => {
-    return {
-      columns: [
-        { key: "product", label: "Produto" },
-        { key: "quantity", label: "Qtd" },
-        { key: "unitPrice", label: "Preço Unit." },
-        { key: "total", label: "Total" },
-      ],
-      data: order.items.map((item: any) => ({
-        product: typeof item.product === "object"
-          ? item.product.name
-          : item.product,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice.toFixed(2),
-        total: (item.quantity * item.unitPrice).toFixed(2),
-      })),
-    };
+  const handleStatusChange = (id: string, status: OrderStatus) => {
+    if (!canChangeStatus) {
+      toast({ variant: "destructive", title: "Sem permissão para alterar status" });
+      return;
+    }
+    updateStatus.mutate({ id, status });
   };
+
+  const clearFilters = () => {
+    setSearch("");
+    setFilterStatus("all");
+    setFilterSeller("all");
+    setFilterUrgency("all");
+    setStartDate(undefined);
+    setEndDate(undefined);
+  };
+
+  const hasFilters =
+    search || filterStatus !== "all" || filterSeller !== "all" || filterUrgency !== "all" || startDate || endDate;
 
   return (
     <div className="flex flex-col">
       <AppHeader title="Acompanhamento de Pedidos" />
       <div className="flex-1 space-y-4 p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por cliente ou ID..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-56">
-              <SelectValue placeholder="Filtrar status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {STATUS_STEPS.map((s) => (
-                <SelectItem key={s.key} value={s.key}>
-                  {s.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Toolbar */}
+        <Card>
+          <CardContent className="space-y-3 p-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative min-w-[220px] flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por cliente ou ID..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+
+              <div className="flex items-center gap-1 rounded-md border p-1">
+                <Button
+                  size="sm"
+                  variant={view === "kanban" ? "default" : "ghost"}
+                  onClick={() => setView("kanban")}
+                  className="h-8"
+                >
+                  <LayoutGrid className="mr-1.5 h-4 w-4" /> Kanban
+                </Button>
+                <Button
+                  size="sm"
+                  variant={view === "list" ? "default" : "ghost"}
+                  onClick={() => setView("list")}
+                  className="h-8"
+                >
+                  <ListIcon className="mr-1.5 h-4 w-4" /> Lista
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="h-9 w-44"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  {KANBAN_COLUMNS.map((s) => (
+                    <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filterSeller} onValueChange={setFilterSeller}>
+                <SelectTrigger className="h-9 w-44"><SelectValue placeholder="Vendedor" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos vendedores</SelectItem>
+                  {sellers.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filterUrgency} onValueChange={setFilterUrgency}>
+                <SelectTrigger className="h-9 w-44"><SelectValue placeholder="Urgência" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas urgências</SelectItem>
+                  <SelectItem value="overdue">Atrasados (&gt;7 dias)</SelectItem>
+                  <SelectItem value="ontime">No prazo</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9">
+                    <CalendarIcon className="mr-1.5 h-4 w-4" />
+                    {startDate ? format(startDate, "dd/MM/yyyy") : "Início"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={startDate} onSelect={setStartDate} locale={ptBR} />
+                </PopoverContent>
+              </Popover>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9">
+                    <CalendarIcon className="mr-1.5 h-4 w-4" />
+                    {endDate ? format(endDate, "dd/MM/yyyy") : "Fim"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={endDate} onSelect={setEndDate} locale={ptBR} />
+                </PopoverContent>
+              </Popover>
+
+              {hasFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9">
+                  <X className="mr-1 h-4 w-4" /> Limpar
+                </Button>
+              )}
+
+              <div className="ml-auto text-sm text-muted-foreground">
+                {filtered.length} pedido(s)
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-32 w-full rounded-lg" />
-            ))}
+          <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
+            {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-72 rounded-lg" />)}
           </div>
         ) : !filtered.length ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <Package className="mb-3 h-12 w-12" />
             <p className="text-lg font-medium">Nenhum pedido encontrado</p>
           </div>
+        ) : view === "kanban" ? (
+          <OrderKanban
+            orders={filtered}
+            onStatusChange={handleStatusChange}
+            onOpen={setDetailOrder}
+          />
         ) : (
-          <div className="space-y-4">
-            {filtered.map((order: Order) => {
-              const customerName =
-                typeof order.customer === "object" ? order.customer?.name : "—";
-              const isExpanded = expandedId === order._id;
-
-              return (
-                <Card key={order._id} className="overflow-hidden">
-                  <CardContent className="p-5">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-3">
-                          <span className="font-mono text-sm text-muted-foreground">
-                            #{order._id.slice(-15)}
-                          </span>
-                          {/* CORRIGIDO: statusColors com chaves em maiúsculo */}
-                          <Badge className={statusColors[order.status] || "bg-muted"}>
-                            {STATUS_STEPS.find((s) => s.key === order.status)?.label ||
-                              order.status}
-                          </Badge>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => setDetailOrder(order)}
-                            title="Ver detalhes"
-                          >
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Itens</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((o) => {
+                    const cn = typeof o.customer === "object" ? o.customer?.name : "—";
+                    return (
+                      <TableRow key={o._id} className={isOverdue(o) ? "bg-destructive/5" : ""}>
+                        <TableCell className="font-mono text-xs">#{o._id.slice(-8)}</TableCell>
+                        <TableCell className="font-medium">{cn}</TableCell>
+                        <TableCell>{o.createdAt ? new Date(o.createdAt).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                        <TableCell>
+                          <Badge className={statusColors[o.status] || "bg-muted"}>{o.status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">{o.items?.length ?? 0}</TableCell>
+                        <TableCell className="text-right font-semibold">R$ {o.totalValue?.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon" onClick={() => setDetailOrder(o)}>
                             <Eye className="h-4 w-4" />
                           </Button>
-                        </div>
-                        <p className="font-medium">{customerName}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {order.items?.length ?? 0}{" "}
-                          {order.items?.length === 1 ? "item" : "itens"} · R${" "}
-                          {/* CORRIGIDO: totalValue em vez de totalOrder */}
-                          {order.totalValue?.toFixed(2)}
-                        </p>
-                        {order.createdAt && (
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(order.createdAt).toLocaleDateString("pt-BR")}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-start gap-3 lg:items-end">
-                        <StatusStepper currentStatus={order.status} />
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toggleExpand(order._id)}
-                          >
-                            {isExpanded ? (
-                              <ChevronUp className="mr-1 h-4 w-4" />
-                            ) : (
-                              <ChevronDown className="mr-1 h-4 w-4" />
-                            )}
-                            Itens
-                          </Button>
-                          {canChangeStatus &&
-                            order.status !== "Entregue" &&
-                            (
-                              <Select
-                                value={order.status}
-                                onValueChange={(v) =>
-                                  updateStatus.mutate({
-                                    id: order._id,
-                                    status: v as OrderStatus,
-                                  })
-                                }
-                              >
-                                <SelectTrigger className="h-8 w-52 text-xs">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {STATUS_STEPS.map((s) => (
-                                    <SelectItem key={s.key} value={s.key}>
-                                      {s.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {isExpanded && (
-                      <div className="mt-4 rounded-lg border bg-muted/30 p-4">
-                        <h4 className="mb-3 text-sm font-semibold text-foreground">
-                          Itens do Pedido
-                        </h4>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Produto</TableHead>
-                              <TableHead className="text-right">Qtd</TableHead>
-                              <TableHead className="text-right">Preço Unit.</TableHead>
-                              <TableHead className="text-right">Subtotal</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {(order.items || []).map((item, idx) => (
-                              <TableRow key={idx}>
-                                <TableCell>
-                                  {typeof item.product === "object"
-                                    ? item.product?.name
-                                    : item.product}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {item.quantity}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  R$ {item.unitPrice?.toFixed(2)}
-                                </TableCell>
-                                {/* CORRIGIDO: totalPrice em vez de total */}
-                                <TableCell className="text-right">
-                                  R$ {item.totalPrice?.toFixed(2)}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                            <TableRow className="font-semibold">
-                              <TableCell colSpan={3} className="text-right">
-                                Total
-                              </TableCell>
-                              {/* CORRIGIDO: totalValue em vez de totalOrder */}
-                              <TableCell className="text-right">
-                                R$ {order.totalValue?.toFixed(2)}
-                              </TableCell>
-                            </TableRow>
-                          </TableBody>
-                        </Table>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         )}
       </div>
 
-      {detailOrder && (
-        <DetailDialog
-          open={!!detailOrder}
-          onOpenChange={() => setDetailOrder(null)}
-          title="Detalhes do Pedido"
-          fields={getDetailFields(detailOrder)}
-          items={getDetailItems(detailOrder)}
-        />
-      )}
+      {/* Detail dialog with timeline */}
+      <Dialog open={!!detailOrder} onOpenChange={(o) => !o && setDetailOrder(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Pedido</DialogTitle>
+          </DialogHeader>
+          {detailOrder && (
+            <div className="space-y-5">
+              <div className="rounded-lg border bg-muted/30 p-4">
+                <OrderTimeline status={detailOrder.status} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3 md:grid-cols-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">ID</p>
+                  <p className="font-mono text-sm">#{detailOrder._id.slice(-15)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Cliente</p>
+                  <p className="text-sm font-medium">
+                    {typeof detailOrder.customer === "object" ? detailOrder.customer?.name : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Data</p>
+                  <p className="text-sm font-medium">
+                    {detailOrder.createdAt ? new Date(detailOrder.createdAt).toLocaleDateString("pt-BR") : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Pagamento</p>
+                  <p className="text-sm font-medium">{detailOrder.paymentMethod || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Status Pagamento</p>
+                  <p className="text-sm font-medium">{detailOrder.paymentStatus || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Total</p>
+                  <p className="text-sm font-semibold text-primary">R$ {detailOrder.totalValue?.toFixed(2)}</p>
+                </div>
+              </div>
+
+              {canChangeStatus && detailOrder.status !== "Entregue" && detailOrder.status !== "Cancelado" && (
+                <div className="flex items-center gap-2 rounded-lg border p-3">
+                  <span className="text-sm font-medium">Alterar status:</span>
+                  <Select
+                    value={detailOrder.status}
+                    onValueChange={(v) => {
+                      handleStatusChange(detailOrder._id, v as OrderStatus);
+                      setDetailOrder({ ...detailOrder, status: v as OrderStatus });
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-52"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {KANBAN_COLUMNS.map((s) => (
+                        <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div>
+                <h4 className="mb-2 text-sm font-semibold">Itens do Pedido</h4>
+                <div className="rounded-lg border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Produto</TableHead>
+                        <TableHead className="text-right">Qtd</TableHead>
+                        <TableHead className="text-right">Preço</TableHead>
+                        <TableHead className="text-right">Subtotal</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(detailOrder.items || []).map((item, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{typeof item.product === "object" ? item.product?.name : item.product}</TableCell>
+                          <TableCell className="text-right">{item.quantity}</TableCell>
+                          <TableCell className="text-right">R$ {item.unitPrice?.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">R$ {item.totalPrice?.toFixed(2)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
