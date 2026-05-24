@@ -1,18 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { companyService } from "@/services";
+import type { Company } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-
-interface Company {
-  monthlyGoal?: number;
-  annualGoal?: number;
-  breakEvenPoint?: number;
-}
 
 interface CompanyGoalsSettingsProps {
   className?: string;
@@ -29,12 +24,14 @@ export function CompanyGoalsSettings({ className }: CompanyGoalsSettingsProps) {
   const { data: company, isLoading } = useQuery<Company>({
     queryKey: ["company"],
     queryFn: companyService.get,
-    onSuccess: (data) => {
-      setMonthlyGoal(String(data.monthlyGoal ?? 0));
-      setAnnualGoal(String(data.annualGoal ?? 0));
-      setBreakEvenPoint(String(data.breakEvenPoint ?? 0));
-    },
   });
+
+  useEffect(() => {
+    if (!company) return;
+    setMonthlyGoal(String(company.monthlyGoal ?? 0));
+    setAnnualGoal(String(company.annualGoal ?? 0));
+    setBreakEvenPoint(String(company.breakEvenPoint ?? 0));
+  }, [company]);
 
   const updateMutation = useMutation({
     mutationFn: (data: Partial<Company>) => companyService.update(data),

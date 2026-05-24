@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppHeader } from "@/components/AppHeader";
 import { DataTable } from "@/components/DataTable";
 import { supplierService } from "@/services";
+import { useFetch } from "@/hooks/useQueryWrapper";
 import api from "@/services/api";
 import { Loader2 } from "lucide-react";
 import type { Supplier, SupplierFormData } from "@/types";
@@ -41,7 +42,10 @@ export default function SuppliersPage() {
   const [form, setForm] = useState<SupplierFormData>(emptyForm);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
-  const { data = [], isLoading } = useQuery({ queryKey: ["suppliers"], queryFn: supplierService.getAll });
+  const [page, setPage] = useState(1);
+  const [limit] = useState(50);
+  const { data: suppliersPage, isLoading } = useFetch(["suppliers", page, limit], () => supplierService.getPage(page, limit));
+  const data = suppliersPage?.items || [];
 
   const save = useMutation({
     mutationFn: (d: SupplierFormData) => editing ? supplierService.update(editing._id, d) : supplierService.create(d),
@@ -174,6 +178,21 @@ export default function SuppliersPage() {
           onDelete={(c) => del.mutate(c)}
           addLabel="Novo Fornecedor"
         />
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <Button variant="outline" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || isLoading}>
+            Anterior
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Pagina {suppliersPage?.page || page} de {suppliersPage?.pages || 1}
+          </span>
+          <Button
+            variant="outline"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page >= (suppliersPage?.pages || 1) || isLoading}
+          >
+            Proxima
+          </Button>
+        </div>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>

@@ -31,18 +31,18 @@ export interface InventoryFormData {
 }
 
 export const inventoryService = {
-  getAll: () => api.get("/inventories").then((r) => r.data),
-  getById: (id: string) => api.get(`/inventories/${id}`).then((r) => r.data),
-  create: (data: InventoryFormData) => api.post("/inventories", data).then((r) => r.data),
+  getAll: () => api.get("/inventories").then((r) => r.data.data),
+  getById: (id: string) => api.get(`/inventories/${id}`).then((r) => r.data.data),
+  create: (data: InventoryFormData) => api.post("/inventories", data).then((r) => r.data.data),
   updateItems: (id: string, items: InventoryItem[]) =>
-    api.patch(`/inventories/${id}/update`, { items }).then((r) => r.data),
+    api.patch(`/inventories/${id}/update`, { items }).then((r) => r.data.data),
   finalize: (id: string) =>
-    api.put(`/inventories/${id}/finalize`).then((r) => r.data),
+    api.put(`/inventories/${id}/finalize`).then((r) => r.data.data),
   approve: (id: string) =>
-    api.put(`/inventories/${id}/approve`).then((r) => r.data),
+    api.put(`/inventories/${id}/approve`).then((r) => r.data.data),
   recount: (id: string, justification: string) =>
-    api.put(`/inventories/${id}/recount`, { justification }).then((r) => r.data),
-  delete: (id: string) => api.delete(`/inventories/${id}`).then((r) => r.data),
+    api.put(`/inventories/${id}/recount`, { justification }).then((r) => r.data.data),
+  delete: (id: string) => api.delete(`/inventories/${id}`).then((r) => r.data.data),
   submit: (id: string, items: InventoryItem[]) =>
-    api.patch(`/inventories/${id}/submit`, { items }).then((r) => r.data)
+    api.patch(`/inventories/${id}/submit`, { items }).then((r) => r.data.data)
 }

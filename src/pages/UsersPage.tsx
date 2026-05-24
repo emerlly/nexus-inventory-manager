@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppHeader } from "@/components/AppHeader";
 import { DataTable } from "@/components/DataTable";
 import { userService } from "@/services";
+import { useFetch } from "@/hooks/useQueryWrapper";
 import type { User, UserFormData } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -17,10 +18,13 @@ export default function UsersPage() {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
-  const [form, setForm] = useState<UserFormData>({ name: "", email: "", password: "", role: "user" });
+  const [form, setForm] = useState<UserFormData>({ name: "", email: "", cpf: "", password: "", role: "operator" });
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(50);
 
-  const { data = [], isLoading } = useQuery({ queryKey: ["users"], queryFn: userService.getAll });
+  const { data: usersPage, isLoading } = useFetch(["users", page, limit], () => userService.getPage(page, limit));
+  const data = usersPage?.items || [];
 
   const save = useMutation({
     mutationFn: (d: UserFormData) => editing ? userService.update(editing._id, d) : userService.create(d),
@@ -34,7 +38,7 @@ export default function UsersPage() {
     onError: () => toast({ variant: "destructive", title: "Erro ao excluir" }),
   });
 
-  const openNew = () => { setEditing(null); setForm({ name: "", email: "", password: "", role: "user" }); setOpen(true); };
+  const openNew = () => { setEditing(null); setForm({ name: "", email: "", cpf: "", password: "", role: "operator" }); setOpen(true); };
   const openEdit = (u: User) => { setEditing(u); setForm({ name: u.name, email: u.email, role: u.role }); setOpen(true); };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -62,6 +66,21 @@ export default function UsersPage() {
           addLabel="Novo Usuário"
           searchPlaceholder="Buscar usuários..."
         />
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <Button variant="outline" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || isLoading}>
+            Anterior
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Pagina {usersPage?.page || page} de {usersPage?.pages || 1}
+          </span>
+          <Button
+            variant="outline"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page >= (usersPage?.pages || 1) || isLoading}
+          >
+            Proxima
+          </Button>
+        </div>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -84,13 +103,22 @@ export default function UsersPage() {
                 <Input type="password" value={form.password || ""} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
               </div>
             )}
+            {!editing && (
+              <div className="space-y-2">
+                <Label>CPF</Label>
+                <Input value={form.cpf || ""} onChange={(e) => setForm({ ...form, cpf: e.target.value })} required />
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Perfil</Label>
-              <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
+              <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as UserFormData["role"] })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="operator">Operador</SelectItem>
+                  <SelectItem value="seller">Vendedor</SelectItem>
+                  <SelectItem value="stockist">Estoquista</SelectItem>
+                  <SelectItem value="manager">Gerente</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="user">Usuário</SelectItem>
                 </SelectContent>
               </Select>
             </div>

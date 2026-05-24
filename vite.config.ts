@@ -7,7 +7,7 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
+    port: 5173,
     hmr: {
       overlay: false,
     },
@@ -17,5 +17,8 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  define: {
+    "process.env.VITE_API_URL": JSON.stringify(process.env.VITE_API_URL || "http://localhost:5000/api"),
   },
 }));

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import type { User } from "@/types";
 import { authService } from "@/services";
 
@@ -10,6 +10,7 @@ interface AuthContextType {
   logout: () => void;
   refreshUser: () => Promise<void>;
   loading: boolean;
+  error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -18,18 +19,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const logout = useCallback(() => {
-    localStorage.removeItem("nexus_token");
+    authService.logout();
     setToken(null);
     setUser(null);
+    setError(null);
   }, []);
 
   const refreshUser = useCallback(async () => {
     try {
+      setError(null);
       const me = await authService.me();
       setUser(me.user);
-    } catch {
+    } catch (err) {
+      console.error("Erro ao atualizar usuario:", err);
       logout();
     }
   }, [logout]);
@@ -46,23 +51,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser().finally(() => setLoading(false));
   }, [refreshUser]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const res = await authService.login({ email, password });
+  const login = useCallback(
+    async (email: string, password: string) => {
+      try {
+        setError(null);
+        setLoading(true);
 
-    localStorage.setItem("nexus_token", res.token);
-    setToken(res.token);
-    setUser(res.user);
+        const res = await authService.login({ email, password });
 
-    try {
-      const me = await authService.me();
-      setUser(me.user);
-    } catch {
-      setUser(res.user);
-    }
-  }, []);
+        localStorage.setItem("nexus_token", res.token);
+        if (res.refreshToken) {
+          localStorage.setItem("nexus_refresh_token", res.refreshToken);
+        }
+        setToken(res.token);
+        setUser(res.user);
+
+        try {
+          const me = await authService.me();
+          setUser(me.user);
+        } catch (err) {
+          console.warn("Nao foi possivel atualizar usuario apos login; mantendo dados do login.", err);
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Erro ao fazer login";
+        setError(message);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [refreshUser]
+  );
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated: !!token, login, logout, refreshUser, loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        isAuthenticated: !!token,
+        login,
+        logout,
+        refreshUser,
+        loading,
+        error,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

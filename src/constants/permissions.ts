@@ -1,40 +1,50 @@
 export const PERMISSIONS = {
-  // Vendas
-  SALES_VIEW: 'sales.view',
-  SALES_CREATE: 'sales.create',
-  SALES_EDIT: 'sales.edit',
-  SALES_DELETE: 'sales.delete',
-  SALES_CONFIRM_PAYMENT: 'sales.confirm_payment',
+  SALES_VIEW: "sales.view",
+  SALES_CREATE: "sales.create",
+  SALES_EDIT: "sales.edit",
+  SALES_DELETE: "sales.delete",
+  SALES_CONFIRM_PAYMENT: "sales.confirm_payment",
 
-  // Pedidos
-  ORDERS_VIEW: 'orders.view',
-  ORDERS_CREATE: 'orders.create',
-  ORDERS_UPDATE_STATUS: 'orders.update_status',
-  ORDERS_SEND: 'orders.send',
+  ORDERS_VIEW: "orders.view",
+  ORDERS_CREATE: "orders.create",
+  ORDERS_UPDATE_STATUS: "orders.update_status",
+  ORDERS_SEND: "orders.send",
 
-  // Produtos e Categorias
-  PRODUCTS_VIEW: 'products.view',
-  PRODUCTS_MANAGE: 'products.manage',
-  CATEGORIES_VIEW: 'categories.view',
-  CATEGORIES_MANAGE: 'categories.manage',
+  PRODUCTS_VIEW: "products.view",
+  PRODUCTS_MANAGE: "products.manage",
+  PRODUCTS_CREATE: "products.manage",
+  PRODUCTS_UPDATE: "products.manage",
+  PRODUCTS_DELETE: "products.manage",
 
-  // Financeiro e Dashboard
-  DASHBOARD_VIEW: 'dashboard.view',
-  PAYMENTS_VIEW: 'payments.view',
-  PAYMENTS_MANAGE: 'payments.manage',
+  CATEGORIES_VIEW: "categories.view",
+  CATEGORIES_MANAGE: "categories.manage",
+  CATEGORIES_CREATE: "categories.manage",
+  CATEGORIES_UPDATE: "categories.manage",
+  CATEGORIES_DELETE: "categories.manage",
 
-  // Clientes
-  CUSTOMERS_VIEW: 'customers.view',
-  CUSTOMERS_MANAGE: 'customers.manage',
+  DASHBOARD_VIEW: "dashboard.view",
+  REPORTS_VIEW: "reports.view",
+  PAYMENTS_VIEW: "payments.view",
+  PAYMENTS_MANAGE: "payments.manage",
 
-  // Configurações e Usuários
-  USERS_VIEW: 'users.view',
-  USERS_MANAGE: 'users.manage',
-  COMPANY_SETTINGS: 'company.settings',
-  SYSTEM_ADMIN: 'system.admin',
+  CUSTOMERS_VIEW: "customers.view",
+  CUSTOMERS_MANAGE: "customers.manage",
+  CUSTOMERS_CREATE: "customers.manage",
+  CUSTOMERS_UPDATE: "customers.manage",
+  CUSTOMERS_DELETE: "customers.manage",
 
-  // Inventário
-  INVENTORY_VIEW: 'inventory.view',
-  INVENTORY_MANAGE: 'inventory.manage',
-  INVENTORY_APPROVE: 'inventory.approve'
+  SUPPLIERS_VIEW: "products.view",
+  SUPPLIERS_CREATE: "products.manage",
+  SUPPLIERS_UPDATE: "products.manage",
+  SUPPLIERS_DELETE: "products.manage",
+
+  USERS_VIEW: "users.view",
+  USERS_MANAGE: "users.manage",
+  USERS_DELETE: "users.manage",
+  COMPANY_SETTINGS: "company.settings",
+  SYSTEM_ADMIN: "system.admin",
+
+  INVENTORY_VIEW: "inventory.view",
+  INVENTORY_MANAGE: "inventory.manage",
+  INVENTORY_APPROVE: "inventory.approve",
 } as const;

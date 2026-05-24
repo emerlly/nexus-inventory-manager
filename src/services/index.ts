@@ -7,43 +7,15 @@ import type {
   Supplier, SupplierFormData,
   StockMovement, StockMovementFormData,
   Payment, PaymentFormData,
-  Company,
+  Company, Quote,
 } from "@/types";
+import { extractData, extractList, handleApiError } from "@/utils/apiClient";
+import type { ApiResponse } from "@/utils/apiClient";
 
 export { authService } from "./authService";
 export { orderService } from "./orderService";
 export { saleService } from "./saleService";
 export { productService } from "./productService";
-
-/* ================= Shared response adapters ================= */
-
-type ApiEnvelope<T> = {
-  success?: boolean;
-  data?: T;
-  items?: T extends Array<unknown> ? T : never;
-  meta?: Record<string, unknown>;
-};
-
-const unwrap = <T>(payload: unknown, fallback: T): T => {
-  if (payload == null) return fallback;
-  if (typeof payload === "object" && payload !== null) {
-    const envelope = payload as ApiEnvelope<T>;
-    if (envelope.data !== undefined) return envelope.data;
-  }
-  return payload as T;
-};
-
-const unwrapArray = <T>(payload: unknown): T[] => {
-  if (Array.isArray(payload)) return payload;
-  if (payload && typeof payload === "object") {
-    const envelope = payload as ApiEnvelope<T[]> & { data?: { items?: T[] } };
-    if (Array.isArray(envelope.items)) return envelope.items;
-    if (Array.isArray(envelope.data)) return envelope.data;
-    if (Array.isArray(envelope.data?.items)) return envelope.data.items;
-    if (envelope.data && typeof envelope.data === "object" && Array.isArray((envelope.data as { items?: T[] }).items)) return (envelope.data as { items?: T[] }).items;
-  }
-  return [];
-};
 
 const n = (value: unknown): number => (typeof value === "number" && Number.isFinite(value) ? value : 0);
 
@@ -65,27 +37,93 @@ export const stockMovementService = createCrudService<StockMovement, StockMoveme
 export const paymentService = {
   ...createCrudService<Payment, PaymentFormData>("/payments"),
   getPendents: async () => {
-    const res = await api.get("/payments/pendents");
-    return unwrapArray<Payment>(res.data);
+    try {
+      const response = await api.get<ApiResponse<Payment[]> | Payment[]>("/payments/pendents");
+      return extractList<Payment>(response).items;
+    } catch (error) {
+      console.error("Erro ao buscar pagamentos pendentes:", error);
+      throw new Error(handleApiError(error));
+    }
   },
 };
 
 /* ================= BUDGET ================= */
 
 export const budgetService = {
-  getAll: async () => unwrapArray(await api.get("/quotes").then((r) => r.data)),
-  getById: async (id: string) => unwrap(await api.get(`/quotes/${id}`).then((r) => r.data), {}),
-  create: async (data: unknown) => unwrap(await api.post("/quotes", data).then((r) => r.data), {}),
-  update: async (id: string, data: unknown) => unwrap(await api.put(`/quotes/${id}`, data).then((r) => r.data), {}),
-  delete: async (id: string) => unwrap(await api.delete(`/quotes/${id}`).then((r) => r.data), {}),
-  approve: async (id: string, data: unknown) => unwrap(await api.put(`/quotes/${id}/approve`, data).then((r) => r.data), {}),
+  getPage: async (page = 1, limit = 50) => {
+    try {
+      const response = await api.get<ApiResponse<Quote[]> | Quote[]>("/quotes", { params: { page, limit } });
+      return extractList<Quote>(response);
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  },
+  getAll: async () => {
+    const page = await budgetService.getPage(1, 50);
+    return page.items;
+  },
+  getById: async (id: string) => {
+    try {
+      const response = await api.get<ApiResponse<Quote> | Quote>(`/quotes/${id}`);
+      return extractData<Quote>(response);
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  },
+  create: async (data: unknown) => {
+    try {
+      const response = await api.post<ApiResponse<Quote> | Quote>("/quotes", data);
+      return extractData<Quote>(response);
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  },
+  update: async (id: string, data: unknown) => {
+    try {
+      const response = await api.put<ApiResponse<Quote> | Quote>(`/quotes/${id}`, data);
+      return extractData<Quote>(response);
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  },
+  delete: async (id: string) => {
+    try {
+      const response = await api.delete<ApiResponse<Quote> | Quote>(`/quotes/${id}`);
+      return extractData<Quote>(response);
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  },
+  approve: async (id: string, data: unknown) => {
+    try {
+      const response = await api.put<ApiResponse<Quote> | Quote>(`/quotes/${id}/approve`, data);
+      return extractData<Quote>(response);
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  },
 };
 
 /* ================= COMPANY ================= */
 
 export const companyService = {
-  get: async () => unwrap<Company>(await api.get("/company").then((r) => r.data), {} as Company),
-  update: async (data: Partial<Company>) => unwrap<Company>(await api.put("/company", data).then((r) => r.data), {} as Company),
+  get: async () => {
+    try {
+      const response = await api.get<ApiResponse<Company> | Company>("/company");
+      return extractData<Company>(response);
+    } catch (error) {
+      console.warn("Erro ao buscar dados da empresa:", error);
+      return {} as Company;
+    }
+  },
+  update: async (data: Partial<Company>) => {
+    try {
+      const response = await api.put<ApiResponse<Company> | Company>("/company", data);
+      return extractData<Company>(response);
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  },
 };
 
 /* ================= ANALYTICS ================= */
@@ -132,8 +170,8 @@ export type SalesProjections = {
 const buildBase = (source: AnalyticsSource = "dashboard") => `/${source}`;
 
 const requestArray = async <T>(url: string, params?: unknown): Promise<T[]> => {
-  const payload = await api.get(url, { params }).then((r) => r.data);
-  return unwrapArray<T>(payload);
+  const response = await api.get<ApiResponse<T[]> | T[]>(url, { params });
+  return extractList<T>(response).items;
 };
 
 const normalizeSalesByPeriod = (rows: unknown[]): SalesByPeriodPoint[] =>
@@ -194,8 +232,13 @@ const normalizeStockLow = (rows: unknown[]) =>
 
 export const analyticsService = {
   summary: async (start?: string, end?: string) => {
-    const payload = await api.get("/dashboard/summary", { params: { startDate: start, endDate: end } }).then((r) => r.data);
-    return unwrap<Record<string, unknown>>(payload, {});
+    try {
+      const response = await api.get<ApiResponse<Record<string, unknown>> | Record<string, unknown>>("/dashboard/summary", { params: { startDate: start, endDate: end } });
+      return extractData<Record<string, unknown>>(response);
+    } catch (error) {
+      console.warn("Erro ao buscar sumario:", error);
+      return {};
+    }
   },
 
   salesByPeriod: async (start: string, end: string) => {
@@ -219,8 +262,8 @@ export const analyticsService = {
   },
 
   stockLowCount: async () => {
-    const payload = await api.get("/products/low-stock/count").then((r) => r.data);
-    const data = unwrap<Record<string, unknown>>(payload, {});
+    const response = await api.get<ApiResponse<Record<string, unknown>> | Record<string, unknown>>("/products/low-stock/count");
+    const data = extractData<Record<string, unknown>>(response);
     return {
       count: firstDefinedNumber(data, ["count", "total", "items"]) || 0,
     };
@@ -231,8 +274,13 @@ export const analyticsService = {
   },
 
   getSalesProjections: async (source: AnalyticsSource = "dashboard") => {
-    const payload = await api.get(`${buildBase(source)}/sales-projections`).then((r) => r.data);
-    return unwrap<SalesProjections>(payload, {} as SalesProjections);
+    try {
+      const response = await api.get<ApiResponse<SalesProjections> | SalesProjections>(`${buildBase(source)}/sales-projections`);
+      return extractData<SalesProjections>(response);
+    } catch (error) {
+      console.warn("Erro ao buscar projecoes:", error);
+      return {} as SalesProjections;
+    }
   },
 };
 

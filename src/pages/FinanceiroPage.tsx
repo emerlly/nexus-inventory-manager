@@ -17,9 +17,12 @@ import { PAYMENT_METHODS, PAYMENT_CONDITIONS, getConditionForMethod } from "@/co
 
 const statusColors: Record<PaymentStatus, string> = {
   Pendente: "bg-warning/15 text-warning border-warning/30",
+  Processando: "bg-blue-500/15 text-blue-600 border-blue-500/30",
   Pago: "bg-success/15 text-success border-success/30",
+  Falhou: "bg-destructive/15 text-destructive border-destructive/30",
   Atrasado: "bg-destructive/15 text-destructive border-destructive/30",
   Cancelado: "bg-muted text-muted-foreground",
+  Espirado: "bg-muted text-muted-foreground",
 };
 
 const typeLabels: Record<PaymentType, string> = {

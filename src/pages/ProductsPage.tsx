@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppHeader } from "@/components/AppHeader";
 import { DataTable } from "@/components/DataTable";
 import { productService, categoryService, supplierService } from "@/services";
+import { useFetch } from "@/hooks/useQueryWrapper";
 import type { Product, ProductFormData, ProductAttribute } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,8 @@ export default function ProductsPage() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [showLowStock, setShowLowStock] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(50);
 
   const [form, setForm] = useState<ProductFormData>({
     name: "",
@@ -42,17 +45,18 @@ export default function ProductsPage() {
   });
   const [attributes, setAttributes] = useState<ProductAttribute[]>([]);
 
-  //  IMPORTANTE: envolver em função para passar o filtro
   const {
-    data: products = [],
+    data: productsPage,
     isLoading,
-  } = useQuery({
-    queryKey: ["products", showLowStock],
-    queryFn: () => showLowStock ? productService.getLowStock() : productService.getAll(),
-  });
+  } = useFetch(["products", showLowStock, page, limit], () =>
+    showLowStock ? productService.getLowStockPage(page, limit) : productService.getPage(page, limit)
+  );
 
-  const categories = useQuery({ queryKey: ["categories"], queryFn: categoryService.getAll });
-  const suppliers = useQuery({ queryKey: ["suppliers"], queryFn: supplierService.getAll });
+  const categories = useFetch(["categories", 1, 50], () => categoryService.getPage(1, 50));
+  const suppliers = useFetch(["suppliers", 1, 50], () => supplierService.getPage(1, 50));
+  const products = productsPage?.items || [];
+  const categoryItems = categories.data?.items || [];
+  const supplierItems = suppliers.data?.items || [];
 
   const save = useMutation({
     mutationFn: (d: ProductFormData) => editing ? productService.update(editing._id, d) : productService.create(d),
@@ -97,7 +101,7 @@ export default function ProductsPage() {
     setOpen(true);
   };
 
-  const selectedCategory = categories.data?.find(
+  const selectedCategory = categoryItems.find(
     (c) => c._id === form.categoryId
   );
 
@@ -147,6 +151,21 @@ export default function ProductsPage() {
           onDelete={(p) => del.mutate(p)}
           addLabel="Novo Produto"
         />
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <Button variant="outline" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || isLoading}>
+            Anterior
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Pagina {productsPage?.page || page} de {productsPage?.pages || 1}
+          </span>
+          <Button
+            variant="outline"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page >= (productsPage?.pages || 1) || isLoading}
+          >
+            Proxima
+          </Button>
+        </div>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -229,14 +248,14 @@ export default function ProductsPage() {
               <Label>Categoria</Label>
               <Select value={form.categoryId} onValueChange={(v) => setForm({ ...form, categoryId: v })}>
                 <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                <SelectContent>{(categories.data || []).map((c) => <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{categoryItems.map((c) => <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <Label>Fornecedor</Label>
               <Select value={form.supplierId} onValueChange={(v) => setForm({ ...form, supplierId: v })}>
                 <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                <SelectContent>{(suppliers.data || []).map((s) => <SelectItem key={s._id} value={s._id}>{s.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{supplierItems.map((s) => <SelectItem key={s._id} value={s._id}>{s.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
 

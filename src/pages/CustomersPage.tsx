@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppHeader } from "@/components/AppHeader";
 import { DataTable } from "@/components/DataTable";
 import { customerService } from "@/services";
+import { useFetch } from "@/hooks/useQueryWrapper";
 import api from "@/services/api";
 import type { Customer, CustomerFormData } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -46,11 +47,11 @@ export default function CustomersPage() {
   const [form, setForm] = useState<CustomerFormData>(emptyForm);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(50);
 
-  const { data = [], isLoading } = useQuery({
-    queryKey: ["customers"],
-    queryFn: customerService.getAll,
-  });
+  const { data: customersPage, isLoading } = useFetch(["customers", page, limit], () => customerService.getPage(page, limit));
+  const data = customersPage?.items || [];
 
   function mapCustomerToApi(form: CustomerFormData) {
     return {
@@ -228,6 +229,21 @@ export default function CustomersPage() {
           onDelete={(c) => del.mutate(c)}
           addLabel="Novo Cliente"
         />
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <Button variant="outline" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || isLoading}>
+            Anterior
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Pagina {customersPage?.page || page} de {customersPage?.pages || 1}
+          </span>
+          <Button
+            variant="outline"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page >= (customersPage?.pages || 1) || isLoading}
+          >
+            Proxima
+          </Button>
+        </div>
 
       </div>
 

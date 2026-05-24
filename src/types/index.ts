@@ -1,3 +1,29 @@
+// ===== Shared =====
+export interface Address {
+  cep?: string;
+  street?: string;
+  number?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  complement?: string;
+}
+
+export type UserRole =
+  | "root"
+  | "admin"
+  | "manager"
+  | "operator"
+  | "seller"
+  | "customer"
+  | "stockist"
+  | "gerente"
+  | "vendedor"
+  | "estoquista"
+  | "operador"
+  | "cliente"
+  | "dev";
+
 // ===== Auth =====
 export interface LoginRequest {
   email: string;
@@ -6,27 +32,28 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   token: string;
+  refreshToken?: string;
   user: User;
   permissions?: string[];
   allowedRoutes?: string[];
 }
 
-export interface RegisterRequest {
-  name: string;
-  email: string;
-  password: string;
-}
+export interface RegisterRequest extends UserFormData {}
 
 // ===== User =====
 export interface User {
   _id: string;
+  id?: string;
   name: string;
   email: string;
-  role: string;
-  createdAt?: string;
-  updatedAt?: string;
+  cpf?: string;
+  role: UserRole;
+  companyId?: string;
   company?: string;
   active?: boolean;
+  permissions?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface MeResponse {
@@ -39,29 +66,18 @@ export interface UserFormData {
   name: string;
   email: string;
   password?: string;
-  role: string;
+  role: UserRole;
   cpf?: string;
+  companyId?: string;
   active?: boolean;
   address?: string;
 }
 
 // ===== Product =====
-export interface Product {
-  _id: string;
-  name: string;
-  description?: string;
-  SKU?: string;
-  salePrice: number;
-  costPrice?: number;
-  stock: {
-    physical: number;
-  };
-  minStock?: number;
-  category?: Category;
-  supplier?: Supplier;
-  attributes?: { key: string; value: string }[];
-  createdAt?: string;
-  updatedAt?: string;
+export interface ProductImage {
+  url: string;
+  isPrimary?: boolean;
+  order?: number;
 }
 
 export interface ProductAttribute {
@@ -69,9 +85,33 @@ export interface ProductAttribute {
   value: string;
 }
 
+export interface Product {
+  _id: string;
+  name: string;
+  description?: string;
+  SKU?: string;
+  images?: ProductImage[];
+  category: Category | string;
+  supplier: Supplier | string;
+  companyId?: string;
+  costPrice: number;
+  salePrice: number;
+  stock: {
+    physical: number;
+    reserved?: number;
+  };
+  minStock?: number;
+  active?: boolean;
+  attributes?: ProductAttribute[];
+  availableStock?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface ProductFormData {
   name: string;
   description?: string;
+  SKU?: string;
   salePrice: number;
   costPrice?: number;
   stock: {
@@ -88,7 +128,9 @@ export interface Category {
   _id: string;
   name: string;
   description?: string;
+  companyId?: string;
   createdAt?: string;
+  updatedAt?: string;
   active?: boolean;
   prefix?: string;
 }
@@ -107,23 +149,16 @@ export interface Customer {
   email?: string;
   phone?: string;
   createdAt?: string;
+  updatedAt?: string;
   cpf?: string;
-  active?: boolean;
+  active: boolean;
   password?: string;
   company?: string;
   companyId?: string;
   role?: string;
-  document?: string;
-  documentType: string;
-  address: {
-    cep?: string;
-    street?: string;
-    city?: string;
-    state?: string;
-    complement?: string;
-    number?: string;
-    neighborhood?: string;
-  };
+  document: string;
+  documentType: "CPF" | "CNPJ";
+  address: Address;
 }
 
 export type CustomerFormData = {
@@ -133,15 +168,7 @@ export type CustomerFormData = {
   phone?: string;
   documentType: "CPF" | "CNPJ";
   document: string;
-  address: {
-    cep?: string;
-    street?: string;
-    number?: string;
-    neighborhood?: string;
-    city?: string;
-    state?: string;
-    complement?: string;
-  };
+  address: Address;
 };
 
 // ===== Supplier =====
@@ -149,20 +176,14 @@ export interface Supplier {
   _id: string;
   name: string;
   email?: string;
-  documentType: string;
-  document: string,
-  address: {
-    cep?: string;
-    street?: string;
-    city?: string;
-    state?: string;
-    complement?: string;
-    number?: string;
-    neighborhood?: string;
-  },
+  documentType: "CPF" | "CNPJ";
+  document: string;
+  address: Address;
   phone?: string;
-  active: boolean,
+  active: boolean;
+  companyId?: string;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface seller {
@@ -179,35 +200,30 @@ export interface SupplierFormData {
   name: string;
   email?: string;
   phone?: string;
-  address: {
-    cep?: string;
-    street?: string;
-    city?: string;
-    state?: string;
-    complement?: string;
-    number?: string;
-    neighborhood?: string;
-  },
-  active: boolean,
-  documentType: string,
-  document: string,
+  address: Address;
+  active: boolean;
+  documentType: "CPF" | "CNPJ";
+  document: string;
 }
 
 // ===== Stock Movement =====
 export interface StockMovement {
   _id: string;
   product: Product | string;
-  type: "entry" | "exit";
+  productId?: string;
+  type: "entry" | "exit" | "in" | "out" | "adjustment";
   quantity: number;
   reason?: string;
   user?: User | string;
   createdAt?: string;
+  updatedAt?: string;
   order?: string;
 }
 
 export interface StockMovementFormData {
-  product: string;
-  type: "entry" | "exit";
+  product?: string;
+  productId?: string;
+  type: "entry" | "exit" | "in" | "out" | "adjustment";
   quantity: number;
   reason?: string;
 }
@@ -217,7 +233,7 @@ export interface SaleItem {
   product: Product | string;
   quantity: number;
   unitPrice: number;
-  totalPrice: number; // CORRIGIDO: era 'total', o backend retorna 'totalPrice'
+  totalPrice: number;
 }
 
 export interface Sale {
@@ -227,6 +243,7 @@ export interface Sale {
   totalValue: number;
   user?: User | string;
   createdAt?: string;
+  updatedAt?: string;
   seller?: seller | string;
   paymentMethod?: string;
   status?: string;
@@ -242,6 +259,31 @@ export interface SaleFormData {
     quantity: number;
     unitPrice: number;
   }[];
+}
+
+// ===== Quote/Budget =====
+export type QuoteStatus = "Rascunho" | "Pendente" | "Aprovado" | "Convertido" | "Cancelado";
+
+export interface QuoteItem {
+  product: Product | string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface Quote {
+  _id: string;
+  customer: Customer | string;
+  items: QuoteItem[];
+  totalValue: number;
+  status: QuoteStatus;
+  createdBy?: User | string;
+  validUntil?: string;
+  sale?: Sale | string;
+  convertedToSale?: boolean;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // ===== Reports =====
@@ -280,7 +322,6 @@ export interface StockLow {
 }
 
 // ===== Order =====
-// CORRIGIDO: Status alinhados com o enum do OrderModel do backend
 export type OrderStatus =
   | "Pendente"
   | "Reservado"
@@ -294,7 +335,7 @@ export interface Order {
   _id: string;
   customer?: Customer | string;
   items: SaleItem[];
-  totalValue: number;   // CORRIGIDO: era 'totalOrder', o backend retorna 'totalValue'
+  totalValue: number;
   status: OrderStatus;
   paymentStatus?: string;
   paymentMethod?: string;
@@ -312,53 +353,66 @@ export interface OrderFormData {
 }
 
 // ===== Payment =====
-export type PaymentStatus = "Pendente" | "Pago" | "Atrasado" | "Cancelado";
+export type PaymentStatus = "Pendente" | "Processando" | "Pago" | "Falhou" | "Cancelado" | "Espirado" | "Atrasado";
 export type PaymentType = "Receita" | "Despesa";
 
 export interface Payment {
   _id: string;
-  description: string;
-  type: PaymentType;
+  description?: string;
+  type?: PaymentType;
   amount: number;
-  paymentStatus: PaymentStatus;
-  dueDate: string;
+  status?: PaymentStatus;
+  paymentStatus?: PaymentStatus;
+  dueDate?: string;
+  method?: string;
   paidAt?: string;
   customer?: Customer | string;
   supplier?: Supplier | string;
   sale?: Sale | string;
+  order?: Order | string;
   user?: User | string;
   createdAt?: string;
-  totalValue?: number; // CORRIGIDO: era 'total', o backend retorna 'totalValue'
-  name?: string; // CORRIGIDO: era 'title', o backend retorna 'name'
+  updatedAt?: string;
+  totalValue?: number;
+  name?: string;
 }
 
 export interface PaymentFormData {
-  description: string;
-  type: PaymentType;
+  description?: string;
+  type?: PaymentType;
   amount: number;
-  status: PaymentStatus;
-  dueDate: string;
+  status?: PaymentStatus;
+  dueDate?: string;
   customer?: string;
   supplier?: string;
+  saleId?: string;
+  method?: string;
 }
 
 // ===== Company =====
 export interface Company {
   _id: string;
-  companyName: string;
+  companyName?: string;
+  name?: string;
   document?: string;
   cnpj?: string;
   email?: string;
   phone?: string;
   address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
   logo?: string;
   updatedAt?: string;
   paymentLink?: string;
   paymentToken?: string;
   webhookUrl?: string;
   apiKey?: string;
-  plan: string;
-  status: string;
+  plan?: string;
+  status?: string;
+  monthlyGoal?: number;
+  annualGoal?: number;
+  breakEvenPoint?: number;
 }
 
 export interface Reports {

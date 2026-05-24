@@ -21,13 +21,14 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email.trim().toLowerCase(), password);
       navigate("/", { replace: true });
-    } catch {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro ao fazer login";
       toast({
         variant: "destructive",
         title: "Erro ao fazer login",
-        description: "Verifique suas credenciais e tente novamente.",
+        description: message,
       });
     } finally {
       setLoading(false);
