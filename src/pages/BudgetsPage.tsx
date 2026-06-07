@@ -173,8 +173,10 @@ export default function BudgetsPage() {
           unitPrice: item.unitPrice,
         })),
       });
-      
-      await orderService.confirmPayment(order._id);
+      console.log("Venda criada:", order);
+      // support different response shapes: saleId or sale._id or _id
+      const saleId = (order as any).saleId ?? (order as any).sale?._id ?? (order as any)._id;
+      if (saleId) await orderService.confirmPayment(saleId);
     },
     onSuccess: async () => {
       await refreshBudgets();
@@ -190,7 +192,7 @@ export default function BudgetsPage() {
       toast({
         variant: "destructive",
         title: "Erro ao converter orçamento",
-        description: error?.response?.data?.error || "Ocorreu um erro inesperado",
+        description: error?.response?.data?.message || "Ocorreu um erro inesperado",
       }),
   });
 
