@@ -17,7 +17,7 @@ export interface Inventory {
   location?: string;
   status: InventoryStatus;
   responsibleUser?: { _id: string; name: string } | string;
-  items: InventoryItem[];
+  data: InventoryItem[];
   recountJustification?: string;
   approvedBy?: { _id: string; name: string } | string;
   approvedAt?: string;

@@ -148,8 +148,8 @@ export default function InventoryPage() {
 
   /* ─── Helpers ─── */
   const openCount = useCallback((inv: Inventory) => {
-    const items: InventoryItem[] = inv.items?.length
-      ? inv.items.map((item) => {
+    const items: InventoryItem[] = inv.data?.length
+      ? inv.data.map((item) => {
         const product = productMap[String(item.product)];
 
         return {
@@ -174,7 +174,7 @@ export default function InventoryPage() {
   }, [products, productMap]);
 
   const openReview = useCallback((inv: Inventory) => {
-    const items = (inv.items || []).map((item) => {
+    const items = (inv.data || []).map((item) => {
       const product = productMap[String(item.product)];
 
       return {
@@ -480,7 +480,7 @@ export default function InventoryPage() {
             <AlertDialogAction onClick={() => {
               const hasCounted = countItems.some(i => i.countedQuantity !== null);
 
-              console.log("sla", hasCounted)
+             
               if (!hasCounted) {
                 toast({
                   title: "Atenção",
